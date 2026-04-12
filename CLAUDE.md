@@ -98,6 +98,14 @@ agent-reviewer/
 └── package.json                     # Created during first GSD code phase
 ```
 
+## Prompt Transparency
+
+Every AI-generated document in `docs/` **must** have a companion `.prompt.md` file that records how it was produced. See `docs/PROMPTING.md` for the full convention.
+
+- Record the exact prompt, the agent architecture (which agents, parallel vs sequential, why), methodology, model/tools used, limitations, and reproduction steps.
+- The `.prompt.md` sits next to the output it describes (e.g., `analysis.md` + `analysis.prompt.md`).
+- Be honest about limitations — what wasn't verified, what data might be stale, what biases exist.
+
 ## Code Conventions
 
 ### TypeScript Rules
@@ -133,10 +141,144 @@ Use objects instead of long parameter lists.
 - Write rules that prevent the same mistake
 - Review lessons at session start
 
-## Active Technologies
-- TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod (001-arwf-judge-system)
-- PostgreSQL via Neon (Vercel Marketplace), Drizzle ORM with `@neondatabase/serverless` driver (001-arwf-judge-system)
-- TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem (001-arwf-judge-system)
+<!-- GSD:project-start source:PROJECT.md -->
+## Project
 
-## Recent Changes
-- 001-arwf-judge-system: Added TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod
+**Agent Reviewer — AI Judge for IPE City Grants**
+
+An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4 specialized Judge Agents to score proposals across Technical Feasibility, Impact Potential, Cost Efficiency, and Team Capability. Evaluations are transparent, weighted, and published to an on-chain reputation registry (ERC-8004). This is the first product in the IPE City ecosystem — replacing an informal grant process with structured, accountable AI evaluation.
+
+**Core Value:** Every grant proposal gets a fair, transparent, reproducible evaluation — with scores, justifications, and on-chain proof that the process happened.
+
+### Constraints
+
+- **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
+- **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
+- **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache rebuildable from chain events
+- **AI provider**: OpenAI direct (GPT-4o) via OpenAI SDK
+- **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), viem for TypeScript chain interactions
+- **Smart contracts**: Solidity + Foundry for contract development
+- **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
+- **Prompt transparency**: All AI-generated docs need `.prompt.md` companions
+<!-- GSD:project-end -->
+
+<!-- GSD:stack-start source:research/STACK.md -->
+## Technology Stack
+
+## Recommended Stack
+### Core Framework
+| Technology | Version | Purpose | Why | Confidence |
+|------------|---------|---------|-----|------------|
+| Next.js | 15.x (App Router) | Web framework | Already decided. App Router enables RSC for fast initial loads, Server Actions for form handling. Next.js API routes handle the write pipeline (IPFS pin → chain tx) and SSE for real-time progress. | HIGH |
+| TypeScript | 5.7+ (strict) | Language | Already decided. Strict mode + no `any` policy aligns with Zod validation at boundaries. | HIGH |
+| Bun | 1.3+ | Runtime & package manager | Already decided. Faster installs and test runs than Node. | HIGH |
+### Storage & Backend
+| Technology | Version | Purpose | Why | Confidence |
+|------------|---------|---------|-----|------------|
+| IPFS (Pinata/web3.storage) | -- | Content storage | Content-addressed, immutable, public, decentralized. Proposal content and evaluation results pinned to IPFS. Content hashes stored on-chain for verification. | HIGH |
+| viem | 2.47.x | TypeScript Ethereum client | Type-safe, tree-shakeable. Used server-side in Next.js API routes to read/write on-chain data. Better TypeScript inference than ethers.js. | HIGH |
+### AI / LLM
+| Technology | Version | Purpose | Why | Confidence |
+|------------|---------|---------|-----|------------|
+| openai (Node SDK) | 6.x | OpenAI API client | Already decided. Direct SDK gives full control over structured output, no abstraction layer overhead. v6 supports `client.beta.chat.completions.parse()` with Zod schemas natively. | HIGH |
+| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) OpenAI structured output via `zodResponseFormat()`, (2) API request/response validation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
+### On-Chain / Web3
+| Technology | Version | Purpose | Why | Confidence |
+|------------|---------|---------|-----|------------|
+| Foundry (forge, cast, anvil) | 1.6.x | Smart contract development | Best-in-class Solidity toolchain. Native Solidity tests (no JS context switching), fast compilation, built-in fuzzing. `anvil` for local testnet, `cast` for CLI interactions. | HIGH |
+| Solidity | 0.8.24+ | Smart contract language | Required for ERC-8004. Use 0.8.24+ for latest optimizations and custom errors. | HIGH |
+| OpenZeppelin Contracts | 5.x | Contract base classes | ERC-8004 Identity Registry extends ERC-721. OpenZeppelin provides battle-tested ERC-721, access control, and upgradeable patterns. | HIGH |
+### UI
+| Technology | Version | Purpose | Why | Confidence |
+|------------|---------|---------|-----|------------|
+| Tailwind CSS | 4.x | Styling | Already decided. Utility-first, works great with shadcn/ui. | HIGH |
+| shadcn/ui | latest | Component library | Already decided. Copy-paste components, full control, no version lock-in. | HIGH |
+### Deployment
+| Technology | Version | Purpose | Why | Confidence |
+|------------|---------|---------|-----|------------|
+| Vercel | -- | Frontend + API hosting | Already decided. Native Next.js support. API routes handle IPFS pinning and chain transactions server-side. | HIGH |
+| Base Sepolia | -- | Testnet | Base L2 testnet over Ethereum Sepolia. Lower gas costs, ERC-8004 is confirmed expanding to Base. Faster block times for better DX during development. | MEDIUM |
+### Supporting Libraries
+| Library | Version | Purpose | When to Use | Confidence |
+|---------|---------|---------|-------------|------------|
+| zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to OpenAI's JSON Schema format for structured output. OpenAI SDK includes this internally via `zodResponseFormat`, so may not need directly. | MEDIUM |
+## Architecture Decisions
+### Next.js API Routes + OpenAI Integration Pattern
+### IPFS + On-Chain Storage Pattern
+### OpenAI Structured Output Pattern
+### ERC-8004 Contract Scope
+- **IdentityRegistry**: `register()`, `setAgentURI()`, `getMetadata()` -- register projects
+- **ReputationRegistry**: `giveFeedback()`, `getSummary()`, `readFeedback()` -- publish evaluation scores
+- **Skip ValidationRegistry** for v1 -- adds complexity without value until there are multiple validators
+## Alternatives Considered
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| LLM Client | openai SDK direct | @ai-sdk/openai (Vercel AI SDK) | Adds streaming/provider abstraction overhead for a non-streaming, single-provider use case |
+| Ethereum Client | viem | ethers.js v6 | Larger bundle, weaker TS types, migration fragmentation |
+| Ethereum Client | viem (server-side) | wagmi (React hooks) | No wallet UI needed; on-chain writes are server-side from Next.js API routes |
+| Contract Toolchain | Foundry | Hardhat | Foundry is faster, Solidity-native tests, no JS dependency bloat |
+| Testnet | Base Sepolia | Ethereum Sepolia | Lower gas, faster blocks, ERC-8004 expanding to Base |
+| Storage | On-chain + IPFS | Convex DB | All data is public and write-once; web3-native storage aligns with transparency values, eliminates vendor lock-in |
+| Storage | On-chain + IPFS | Arweave | IPFS is simpler to integrate; Arweave adds permanent storage guarantee but higher complexity and cost |
+## Installation
+# Core application (Next.js + TypeScript + Tailwind + shadcn/ui)
+# AI (OpenAI SDK + Zod)
+# Web3 (viem for chain interactions, IPFS client for content storage)
+# UI (shadcn/ui components)
+# Dev dependencies
+# Smart contracts (separate directory: contracts/)
+# Install Foundry via foundryup
+# In contracts/ directory
+## Environment Variables
+### IPFS Provider
+### On-Chain (RPC + Contract Addresses)
+### Vercel / .env.local
+## Sources
+- [OpenAI Structured Outputs guide](https://platform.openai.com/docs/guides/structured-outputs)
+- [OpenAI Node SDK (npm)](https://www.npmjs.com/package/openai) -- v6.33.0
+- [viem documentation](https://viem.sh/)
+- [ERC-8004 specification](https://eips.ethereum.org/EIPS/eip-8004)
+- [ERC-8004 reference contracts](https://github.com/erc-8004/erc-8004-contracts)
+- [Foundry toolchain](https://github.com/foundry-rs/foundry)
+- [Zod + OpenAI structured output pattern](https://hooshmand.net/zod-zodresponseformat-structured-outputs-openai/)
+- [Pinata IPFS SDK](https://docs.pinata.cloud/)
+- [The Graph documentation](https://thegraph.com/docs/)
+<!-- GSD:stack-end -->
+
+<!-- GSD:conventions-start source:CONVENTIONS.md -->
+## Conventions
+
+Conventions not yet established. Will populate as patterns emerge during development.
+<!-- GSD:conventions-end -->
+
+<!-- GSD:architecture-start source:ARCHITECTURE.md -->
+## Architecture
+
+Architecture not yet mapped. Follow existing patterns found in the codebase.
+<!-- GSD:architecture-end -->
+
+<!-- GSD:skills-start source:skills/ -->
+## Project Skills
+
+No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, or `.github/skills/` with a `SKILL.md` index file.
+<!-- GSD:skills-end -->
+
+<!-- GSD:workflow-start source:GSD defaults -->
+## GSD Workflow Enforcement
+
+Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+
+Use these entry points:
+- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
+- `/gsd-debug` for investigation and bug fixing
+- `/gsd-execute-phase` for planned phase work
+
+Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
+<!-- GSD:workflow-end -->
+
+<!-- GSD:profile-start -->
+## Developer Profile
+
+> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
+> This section is managed by `generate-claude-profile` -- do not edit manually.
+<!-- GSD:profile-end -->
