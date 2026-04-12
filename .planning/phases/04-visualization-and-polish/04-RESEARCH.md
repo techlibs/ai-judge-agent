@@ -324,17 +324,17 @@ function ScoreRadarChart({ scores, aggregateScore }: ScoreRadarChartProps) {
 | A2 | shadcn/ui chart component will already be available (added in an earlier phase or addable independently) | Standard Stack | Would need to run `bunx shadcn@latest add chart` as a task step |
 | A3 | Existing pages from Phase 1/2 use Tailwind utility classes (not custom CSS) | Common Pitfalls | Responsive audit would be more complex if custom CSS is involved |
 
-## Open Questions (RESOLVED)
+## Open Questions
 
-1. **Evaluation data shape from Phase 2** -- RESOLVED
+1. **Evaluation data shape from Phase 2**
    - What we know: Each evaluation has 4 dimension scores (technical, impact, cost, team) with values 0-100
-   - What's unclear: ~~Exact Convex document structure and query API for fetching scores~~
-   - Resolution: Phase 2 uses `ProposalEvaluation.dimensions[]` array (not Convex). Each entry is `{ dimension: EvaluationDimension, output: { score, ... }, audit }`. Data is fetched from IPFS/on-chain. The chart component maps this to `Array<{ dimension: string, score: number }>`. See Phase 4 Plan 01 Task 1 interfaces block and Task 2 data mapping.
+   - What's unclear: Exact Convex document structure and query API for fetching scores
+   - Recommendation: Phase 4 planning should reference Phase 2's schema. The chart component just needs `Array<{ dimension: string, score: number }>`.
 
-2. **Bar chart vs radar chart** -- RESOLVED
+2. **Bar chart vs radar chart**
    - What we know: Requirements say "radar chart or bar chart" -- both are supported by shadcn/ui chart
-   - What's unclear: ~~User preference~~
-   - Resolution: Radar chart selected as primary visualization. Confirmed during Phase 4 discussion (04-CONTEXT.md). Radar better shows balance across dimensions at a glance and is the more visually distinctive choice for Demo Day.
+   - What's unclear: User preference
+   - Recommendation: Use radar chart as primary (better for showing balance across dimensions at a glance). Optionally add a bar chart variant if time permits. Radar is the more visually distinctive choice for "Demo Day."
 
 ## Sources
 
