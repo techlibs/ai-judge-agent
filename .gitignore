@@ -44,3 +44,5 @@ bun.lockb
 
 # Note: .planning/ is NOT ignored — GSD artifacts are version-controlled
 # Note: .self-improvement/ is NOT ignored — lessons persist across sessions
+.superpowers/
+.worktrees/
