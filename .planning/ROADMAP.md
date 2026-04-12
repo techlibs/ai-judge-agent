@@ -79,11 +79,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can see a visual chart (radar or bar) showing the 4-dimension score breakdown for any evaluated proposal
   2. All pages render correctly and are usable on mobile devices
-**Plans**: TBD
+**Plans**: 1 plan
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Score radar chart, summary card, and responsive design audit
 
 ## Progress
 
