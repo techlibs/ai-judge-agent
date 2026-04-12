@@ -31,13 +31,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. User can click into any proposal to see its full details (fetched from IPFS)
   6. All pages are publicly accessible without any login or authentication
   7. If a read cache is used, it can be fully rebuilt from on-chain events and IPFS content
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — ERC-8004 smart contracts (IdentityRegistry + ReputationRegistry) with Foundry
+- [ ] 01-02-PLAN.md — Next.js bootstrap, shadcn/ui, shared types/schemas, app shell
+- [ ] 01-03-PLAN.md — Proposal submission flow (IPFS pin + on-chain register + form UI)
+- [ ] 01-04-PLAN.md — Proposal browsing flow (on-chain read + IPFS fetch + list/detail pages)
 
 ### Phase 2: AI Evaluation Pipeline
 **Goal**: Every submitted proposal receives independent AI evaluation across 4 dimensions, with results stored on IPFS, scores published on-chain, and real-time progress visible to users
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. On-Chain Foundation and Proposals | 0/3 | Not started | - |
+| 1. On-Chain Foundation and Proposals | 0/4 | Planning complete | - |
 | 2. AI Evaluation Pipeline | 0/3 | Not started | - |
 | 3. Reputation History and Querying | 0/1 | Not started | - |
 | 4. Visualization and Polish | 0/1 | Not started | - |
