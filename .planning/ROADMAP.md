@@ -66,10 +66,10 @@ Plans:
   1. User can view the full reputation history for any project, showing all past evaluations with scores and timestamps
   2. Reputation data is queryable via indexed on-chain events (The Graph subgraph or read cache rebuilt from chain)
   3. Each evaluation entry links to its on-chain transaction for independent verification
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Reputation chain reader, API route, and history UI with on-chain verification links
 
 ### Phase 4: Visualization and Polish
 **Goal**: Evaluation results are visually compelling and the application works well on all devices for Demo Day
@@ -93,5 +93,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. On-Chain Foundation and Proposals | 0/4 | Planning complete | - |
 | 2. AI Evaluation Pipeline | 0/3 | Planning complete | - |
-| 3. Reputation History and Querying | 0/1 | Not started | - |
+| 3. Reputation History and Querying | 0/1 | Planning complete | - |
 | 4. Visualization and Polish | 0/1 | Not started | - |
