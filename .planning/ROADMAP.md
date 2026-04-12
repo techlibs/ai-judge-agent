@@ -51,13 +51,12 @@ Plans:
   5. User can view the evaluation results page showing per-dimension breakdown with scores, justifications, recommendations, and key findings, plus the weighted aggregate score
   6. User can see a before/after comparison demonstrating naive vs structured prompt evaluation output
   7. Each evaluation stores a complete audit trail on IPFS (prompt sent, model used, raw response, parsed score, timestamp)
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md — Evaluation schemas, constants, prompts, and 4 judge agent functions with OpenAI structured output
+- [ ] 02-02-PLAN.md — Evaluation orchestration API with SSE progress, IPFS storage, and on-chain score publication
+- [ ] 02-03-PLAN.md — Evaluation UI: results page, real-time progress, dimension cards, prompt comparison
 
 ### Phase 3: Reputation History and Querying
 **Goal**: Users can view on-chain reputation history per project, with indexed queries for fast access and verification links to on-chain transactions
@@ -93,6 +92,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. On-Chain Foundation and Proposals | 0/4 | Planning complete | - |
-| 2. AI Evaluation Pipeline | 0/3 | Not started | - |
+| 2. AI Evaluation Pipeline | 0/3 | Planning complete | - |
 | 3. Reputation History and Querying | 0/1 | Not started | - |
 | 4. Visualization and Polish | 0/1 | Not started | - |
