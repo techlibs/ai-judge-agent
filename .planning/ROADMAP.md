@@ -25,12 +25,15 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Requirements**: PROP-01, PROP-02, PROP-03, PROP-04, UI-04, STORE-01, STORE-03, STORE-04, CHAIN-01, CHAIN-02, CHAIN-03
 **Success Criteria** (what must be TRUE):
   1. ERC-8004 IdentityRegistry and ReputationRegistry smart contracts are deployed and functional on testnet
-  2. User can fill out and submit a proposal form — content is pinned to IPFS and the content hash is registered on-chain
-  3. When a proposal is first submitted, the project identity is registered on-chain via IdentityRegistry
-  4. User can view a list of all submitted proposals showing their status and scores
-  5. User can click into any proposal to see its full details (fetched from IPFS)
-  6. All pages are publicly accessible without any login or authentication
-  7. If a read cache is used, it can be fully rebuilt from on-chain events and IPFS content
+  2. All contract write functions enforce RBAC (OpenZeppelin AccessControl)
+  3. User can fill out and submit a proposal form — content is pinned to IPFS and the content hash is registered on-chain
+  4. When a proposal is first submitted, the project identity is registered on-chain via IdentityRegistry
+  5. User can view a list of all submitted proposals showing their status and scores
+  6. User can click into any proposal to see its full details (fetched from IPFS)
+  7. All pages are publicly accessible without any login or authentication
+  8. If a read cache is used, it can be fully rebuilt from on-chain events and IPFS content
+  9. Rate limiting active on proposal submission endpoint
+  10. Contracts are non-upgradeable. Migration strategy: pause, redeploy, replay events.
 **Plans**: 4 plans
 
 Plans:
@@ -51,6 +54,7 @@ Plans:
   5. User can view the evaluation results page showing per-dimension breakdown with scores, justifications, recommendations, and key findings, plus the weighted aggregate score
   6. User can see a before/after comparison demonstrating naive vs structured prompt evaluation output
   7. Each evaluation stores a complete audit trail on IPFS (prompt sent, model used, raw response, parsed score, timestamp)
+  8. Rate limiting active on evaluation trigger endpoint
 **Plans**: 3 plans
 
 Plans:

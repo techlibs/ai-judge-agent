@@ -74,6 +74,41 @@ Deferred to future release. Tracked but not in current roadmap.
 - **AUTH-01**: User authentication for proposal submitters
 - **AUTH-02**: Role-based access (submitter, reviewer, admin)
 
+### Security
+
+- [ ] **SEC-01**: All smart contract write functions must enforce role-based access control via OpenZeppelin AccessControl
+- [ ] **SEC-02**: All cost-generating API endpoints must enforce per-IP and global rate limits via persistent Redis-backed rate limiting
+- [ ] **SEC-03**: All user-submitted text fields must have server-side max length validation. Proposal text max 10KB. Request body max 256KB.
+- [ ] **SEC-04**: ReputationRegistry and ValidationRegistry must receive IdentityRegistry address via constructor, not a separate initialize() function.
+- [ ] **SEC-05**: setAgentWallet is removed for v1. Agent wallet management requires full EIP-712 verification and is deferred to v2.
+- [ ] **SEC-06**: MilestoneManager must include a fund recovery mechanism for unreleased milestone funds, callable only by admin.
+- [ ] **SEC-07**: All smart contract functions that transfer ETH must use OpenZeppelin ReentrancyGuard with nonReentrant modifier.
+- [ ] **SEC-08**: Application must serve security headers: CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, HSTS with max-age 31536000.
+- [ ] **SEC-09**: All IPFS-sourced content must be HTML-sanitized before rendering. No dangerouslySetInnerHTML with external content. URL schemes must be validated (reject javascript: URIs).
+- [ ] **SEC-10**: AI judge system must include anti-prompt-injection defenses: hardened system prompts, score anomaly detection (flag all-high/all-low/extreme-divergence), and input preprocessing to strip injection patterns.
+- [ ] **SEC-11**: GET endpoints must be read-only with no write side effects. Evaluation finalization must be triggered via POST. Evaluation pipeline must be idempotent.
+- [ ] **SEC-12**: Streaming evaluation endpoints must set maxDuration=60, use AbortController with 90s timeout, and enforce a global cap of 10 concurrent evaluations.
+- [ ] **SEC-13**: Webhook API keys must be per-platform, not global. Key validation must use constant-time comparison.
+- [ ] **SEC-14**: Cron endpoints must validate Vercel CRON_SECRET via Authorization bearer header.
+- [ ] **SEC-15**: Webhook endpoints must verify request body integrity via HMAC-SHA256 signature in X-Signature-256 header.
+- [ ] **SEC-16**: All smart contracts must inherit OpenZeppelin Pausable with admin-controlled pause/unpause. Write functions must use whenNotPaused modifier. Fund recovery functions must remain callable when paused.
+- [ ] **SEC-17**: IdentityRegistry must enforce a MAX_SUPPLY cap (1000 for v1) to prevent storage bloat attacks.
+- [ ] **SEC-18**: ReputationRegistry view functions must be paginated or bounded to prevent out-of-gas DoS. readAllFeedback: max 100 per call. getSummary clientAddresses: max 50. Max feedback per agent: 10000.
+- [ ] **SEC-19**: Mutating API routes must validate Origin header against allowed origins list.
+- [ ] **SEC-20**: ReputationRegistry average calculations must use basis point scaling (10000x) to avoid integer division truncation.
+- [ ] **SEC-21**: ReputationRegistry must normalize valueDecimals before aggregation, or enforce a fixed valueDecimals=2 for v1.
+- [ ] **SEC-22**: ReputationRegistry feedback structs must use an explicit exists flag rather than checking against default values.
+- [ ] **SEC-23**: Content must be scanned for residual PII patterns after sanitization and before IPFS pinning. Reject if PII detected.
+- [ ] **SEC-25**: ETH transfers in MilestoneManager should use a gas cap of 10000 as defense-in-depth alongside nonReentrant.
+- [ ] **SEC-26**: ReputationRegistry must verify agentId exists in IdentityRegistry before accepting feedback.
+- [ ] **SEC-27**: IdentityRegistry tokens must be soulbound (non-transferable). Override _update to block transfers between non-zero addresses.
+- [ ] **SEC-29**: Security-relevant events (rate limits, auth failures, score anomalies, PII detection) must be logged in structured JSON format.
+- [ ] **SEC-30**: All API requests must be tagged with a unique request ID for end-to-end tracing.
+- [ ] **SEC-31**: Score front-running risk documented. Commit-reveal pattern required before mainnet deployment (v2).
+- [ ] **SEC-32**: IPFS client must use a provider interface to support multi-provider pinning in v2. Single provider (Pinata) accepted for v1.
+- [ ] **SEC-36**: IPFS content must be validated with Zod schema on fetch, not cast with as Type.
+- [ ] **SEC-37**: Chain transaction retries must use exponential backoff: initial 1s, multiplier 2x, max 30s, 5 attempts.
+
 ## Out of Scope
 
 | Feature | Reason |
