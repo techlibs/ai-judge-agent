@@ -52,14 +52,14 @@ Exceptions: none
 
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 16px | 400 (regular) | 1.5 | Proposal descriptions, form labels, general text |
-| Label | 14px | 500 (medium) | 1.4 | Form field labels, badge text, metadata captions, table headers |
+| Body | 16px | 400 (regular) | 1.5 | Proposal descriptions, general text |
+| Label | 14px | 400 (regular) | 1.4 | Form field labels, badge text, metadata captions, table headers |
 | Heading | 24px | 600 (semibold) | 1.2 | Page titles ("Submit a Proposal", "All Proposals"), card titles |
-| Display | 32px | 700 (bold) | 1.1 | Landing header only ("IPE City Grants") |
+| Display | 32px | 600 (semibold) | 1.1 | Landing header only ("IPE City Grants") |
 
 **Font stack:** `Inter, ui-sans-serif, system-ui, -apple-system, sans-serif`
 
-**Constraints:** Maximum 2 weights per page render. Body pages use 400 + 600. Display weight (700) appears only on the landing/home route.
+**Declared weights:** 2 total — 400 (regular) and 600 (semibold). Labels are differentiated from Body by size (14px vs 16px), not weight. Display uses 600 (same as Heading) and is differentiated by size (32px vs 24px).
 
 ---
 
@@ -89,6 +89,8 @@ The palette uses shadcn/ui default neutral theme with a single deliberate accent
 ## Component Inventory
 
 ### Page: Proposal List (`/proposals`)
+
+**Focal point:** Primary visual anchor is the "Submit Proposal" CTA button in the PageHeader, positioned top-right at the entry point of the grant submission flow.
 
 | Component | shadcn Base | Behavior |
 |-----------|-------------|----------|
