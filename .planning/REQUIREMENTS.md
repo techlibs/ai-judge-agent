@@ -14,6 +14,13 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PROP-03**: Proposal status transitions through: submitted → evaluating → evaluated
 - [ ] **PROP-04**: User can view full proposal details on a dedicated page
 
+### Storage (On-Chain + IPFS)
+
+- [ ] **STORE-01**: Proposal content stored on IPFS with content hash recorded on-chain
+- [ ] **STORE-02**: Evaluation results (per-judge + aggregate) stored on IPFS with content hashes on-chain
+- [ ] **STORE-03**: On-chain contract stores scores and IPFS content hashes as the canonical source of truth
+- [ ] **STORE-04**: Any off-chain read cache (if used) must be fully rebuildable from on-chain events and IPFS content
+
 ### AI Evaluation
 
 - [ ] **EVAL-01**: 4 independent Judge Agents evaluate each proposal (Tech 25%, Impact 30%, Cost 20%, Team 25%)
@@ -21,8 +28,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **EVAL-03**: Weighted aggregate score (S0) computed from 4 dimension scores
 - [ ] **EVAL-04**: IPE City values (pro-technology, pro-freedom, pro-human-progress) embedded as evaluation context in each agent prompt
 - [ ] **EVAL-05**: Structured scoring rubric with calibrated bands per dimension (0-20, 21-40, 41-60, 61-80, 81-100)
-- [ ] **EVAL-06**: Evaluation audit trail stored (prompt sent, model used, raw response, parsed score, timestamp)
-- [ ] **EVAL-07**: Real-time evaluation progress visible to users (Convex subscriptions update as each agent completes)
+- [ ] **EVAL-06**: Evaluation audit trail stored on IPFS (prompt sent, model used, raw response, parsed score, timestamp)
+- [ ] **EVAL-07**: Real-time evaluation progress visible to users (via SSE or polling from Next.js API routes)
 - [ ] **EVAL-08**: Before/after prompt comparison showing naive vs structured evaluation output
 
 ### On-Chain / Reputation
@@ -31,7 +38,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CHAIN-02**: ERC-8004 ReputationRegistry smart contract deployed to testnet
 - [ ] **CHAIN-03**: Project identity registered on-chain when first proposal is submitted
 - [ ] **CHAIN-04**: Evaluation hash published to ReputationRegistry after aggregate score computed
-- [ ] **CHAIN-05**: Reputation history per project queryable from Convex (stores on-chain tx refs)
+- [ ] **CHAIN-05**: Reputation history per project queryable from on-chain events (indexed via The Graph or read cache)
 
 ### UI / Dashboard
 
@@ -88,6 +95,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROP-02 | Phase 1 | Pending |
 | PROP-03 | Phase 1 | Pending |
 | PROP-04 | Phase 1 | Pending |
+| STORE-01 | Phase 1 | Pending |
+| STORE-02 | Phase 2 | Pending |
+| STORE-03 | Phase 1 | Pending |
+| STORE-04 | Phase 1 | Pending |
 | EVAL-01 | Phase 2 | Pending |
 | EVAL-02 | Phase 2 | Pending |
 | EVAL-03 | Phase 2 | Pending |
@@ -96,10 +107,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVAL-06 | Phase 2 | Pending |
 | EVAL-07 | Phase 2 | Pending |
 | EVAL-08 | Phase 2 | Pending |
-| CHAIN-01 | Phase 3 | Pending |
-| CHAIN-02 | Phase 3 | Pending |
-| CHAIN-03 | Phase 3 | Pending |
-| CHAIN-04 | Phase 3 | Pending |
+| CHAIN-01 | Phase 1 | Pending |
+| CHAIN-02 | Phase 1 | Pending |
+| CHAIN-03 | Phase 1 | Pending |
+| CHAIN-04 | Phase 2 | Pending |
 | CHAIN-05 | Phase 3 | Pending |
 | UI-01 | Phase 2 | Pending |
 | UI-02 | Phase 4 | Pending |
@@ -108,8 +119,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-05 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 22 total
-- Mapped to phases: 22
+- v1 requirements: 26 total
+- Mapped to phases: 26
 - Unmapped: 0
 
 ---

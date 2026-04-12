@@ -154,9 +154,9 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 
 - **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
 - **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
-- **Database**: Convex DB (following learn-to-fly-prod patterns — domain-driven server/ structure)
+- **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache rebuildable from chain events
 - **AI provider**: OpenAI direct (GPT-4o) via OpenAI SDK
-- **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), typed interfaces in Convex
+- **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), viem for TypeScript chain interactions
 - **Smart contracts**: Solidity + Foundry for contract development
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
 - **Prompt transparency**: All AI-generated docs need `.prompt.md` companions
@@ -169,25 +169,24 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ### Core Framework
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| Next.js | 15.x (App Router) | Web framework | Already decided. App Router enables RSC for fast initial loads, Server Actions for form handling. Convex handles real-time data, so Next.js focuses on rendering + routing. | HIGH |
+| Next.js | 15.x (App Router) | Web framework | Already decided. App Router enables RSC for fast initial loads, Server Actions for form handling. Next.js API routes handle the write pipeline (IPFS pin → chain tx) and SSE for real-time progress. | HIGH |
 | TypeScript | 5.7+ (strict) | Language | Already decided. Strict mode + no `any` policy aligns with Zod validation at boundaries. | HIGH |
-| Bun | 1.3+ | Runtime & package manager | Already decided. Faster installs and test runs than Node. Convex CLI works fine under Bun. | HIGH |
-### Database & Backend
+| Bun | 1.3+ | Runtime & package manager | Already decided. Faster installs and test runs than Node. | HIGH |
+### Storage & Backend
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| Convex | 1.35.x | Database + backend functions | Already decided. Real-time subscriptions for live evaluation updates. Actions for OpenAI calls. Scheduling for fire-and-forget evaluation pipelines. Team has production experience. | HIGH |
-| @convex-dev/workflow | 0.3.x | Durable multi-step evaluation | Orchestrates the 4 judge agents as a durable workflow: if one step fails, it retries without re-running completed steps. Each agent evaluation becomes a workflow step. Perfect for the "submit proposal -> run 4 agents -> compute aggregate -> publish hash" pipeline. | HIGH |
+| IPFS (Pinata/web3.storage) | -- | Content storage | Content-addressed, immutable, public, decentralized. Proposal content and evaluation results pinned to IPFS. Content hashes stored on-chain for verification. | HIGH |
+| viem | 2.47.x | TypeScript Ethereum client | Type-safe, tree-shakeable. Used server-side in Next.js API routes to read/write on-chain data. Better TypeScript inference than ethers.js. | HIGH |
 ### AI / LLM
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
 | openai (Node SDK) | 6.x | OpenAI API client | Already decided. Direct SDK gives full control over structured output, no abstraction layer overhead. v6 supports `client.beta.chat.completions.parse()` with Zod schemas natively. | HIGH |
-| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) OpenAI structured output via `zodResponseFormat()`, (2) Convex validator generation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
+| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) OpenAI structured output via `zodResponseFormat()`, (2) API request/response validation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
 ### On-Chain / Web3
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
 | Foundry (forge, cast, anvil) | 1.6.x | Smart contract development | Best-in-class Solidity toolchain. Native Solidity tests (no JS context switching), fast compilation, built-in fuzzing. `anvil` for local testnet, `cast` for CLI interactions. | HIGH |
 | Solidity | 0.8.24+ | Smart contract language | Required for ERC-8004. Use 0.8.24+ for latest optimizations and custom errors. | HIGH |
-| viem | 2.47.x | TypeScript Ethereum client | Type-safe, tree-shakeable, ~35KB bundle. Used server-side in Convex actions to publish evaluation hashes on-chain. Better TypeScript inference than ethers.js, actively maintained by wagmi team. | HIGH |
 | OpenZeppelin Contracts | 5.x | Contract base classes | ERC-8004 Identity Registry extends ERC-721. OpenZeppelin provides battle-tested ERC-721, access control, and upgradeable patterns. | HIGH |
 ### UI
 | Technology | Version | Purpose | Why | Confidence |
@@ -197,17 +196,15 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ### Deployment
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| Vercel | -- | Frontend hosting | Already decided. Native Next.js support. Build command: `npx convex deploy --cmd 'bun run build'` to deploy Convex + Next.js together. | HIGH |
-| Convex Cloud | -- | Backend hosting | Convex functions deploy to Convex Cloud automatically. Vercel integration handles env vars. | HIGH |
+| Vercel | -- | Frontend + API hosting | Already decided. Native Next.js support. API routes handle IPFS pinning and chain transactions server-side. | HIGH |
 | Base Sepolia | -- | Testnet | Base L2 testnet over Ethereum Sepolia. Lower gas costs, ERC-8004 is confirmed expanding to Base. Faster block times for better DX during development. | MEDIUM |
 ### Supporting Libraries
 | Library | Version | Purpose | When to Use | Confidence |
 |---------|---------|---------|-------------|------------|
-| convex-helpers | latest | Convex utilities | Zod-to-Convex validator conversion, custom function wrappers, relationship helpers. Saves boilerplate. | MEDIUM |
 | zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to OpenAI's JSON Schema format for structured output. OpenAI SDK includes this internally via `zodResponseFormat`, so may not need directly. | MEDIUM |
 ## Architecture Decisions
-### Convex + OpenAI Integration Pattern
-### Convex + On-Chain Bridge Pattern
+### Next.js API Routes + OpenAI Integration Pattern
+### IPFS + On-Chain Storage Pattern
 ### OpenAI Structured Output Pattern
 ### ERC-8004 Contract Scope
 - **IdentityRegistry**: `register()`, `setAgentURI()`, `getMetadata()` -- register projects
@@ -217,38 +214,35 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
 | LLM Client | openai SDK direct | @ai-sdk/openai (Vercel AI SDK) | Adds streaming/provider abstraction overhead for a non-streaming, single-provider use case |
-| LLM Client | openai SDK direct | @convex-dev/agent | Designed for conversational agents with threads/memory; our judges are stateless evaluators |
 | Ethereum Client | viem | ethers.js v6 | Larger bundle, weaker TS types, migration fragmentation |
-| Ethereum Client | viem (server-side) | wagmi (React hooks) | No wallet UI needed; on-chain writes are server-side from Convex actions |
+| Ethereum Client | viem (server-side) | wagmi (React hooks) | No wallet UI needed; on-chain writes are server-side from Next.js API routes |
 | Contract Toolchain | Foundry | Hardhat | Foundry is faster, Solidity-native tests, no JS dependency bloat |
 | Testnet | Base Sepolia | Ethereum Sepolia | Lower gas, faster blocks, ERC-8004 expanding to Base |
-| Workflow | @convex-dev/workflow | Manual scheduling | Workflow provides retry, step tracking, parallel execution out of the box |
+| Storage | On-chain + IPFS | Convex DB | All data is public and write-once; web3-native storage aligns with transparency values, eliminates vendor lock-in |
+| Storage | On-chain + IPFS | Arweave | IPFS is simpler to integrate; Arweave adds permanent storage guarantee but higher complexity and cost |
 ## Installation
-# Core application
-# Convex components
-# Web3 (for Convex actions -- server-side only)
-# UI
+# Core application (Next.js + TypeScript + Tailwind + shadcn/ui)
+# AI (OpenAI SDK + Zod)
+# Web3 (viem for chain interactions, IPFS client for content storage)
+# UI (shadcn/ui components)
 # Dev dependencies
 # Smart contracts (separate directory: contracts/)
 # Install Foundry via foundryup
 # In contracts/ directory
 ## Environment Variables
-### Convex Dashboard
+### IPFS Provider
+### On-Chain (RPC + Contract Addresses)
 ### Vercel / .env.local
 ## Sources
-- [Convex Actions documentation](https://docs.convex.dev/functions/actions)
-- [Convex Next.js App Router setup](https://docs.convex.dev/client/nextjs/app-router/)
-- [Convex + Vercel deployment](https://docs.convex.dev/production/hosting/vercel)
-- [@convex-dev/workflow component](https://www.convex.dev/components/workflow)
 - [OpenAI Structured Outputs guide](https://platform.openai.com/docs/guides/structured-outputs)
 - [OpenAI Node SDK (npm)](https://www.npmjs.com/package/openai) -- v6.33.0
-- [Convex npm package](https://www.npmjs.com/package/convex) -- v1.35.1
 - [viem documentation](https://viem.sh/)
 - [ERC-8004 specification](https://eips.ethereum.org/EIPS/eip-8004)
 - [ERC-8004 reference contracts](https://github.com/erc-8004/erc-8004-contracts)
 - [Foundry toolchain](https://github.com/foundry-rs/foundry)
 - [Zod + OpenAI structured output pattern](https://hooshmand.net/zod-zodresponseformat-structured-outputs-openai/)
-- [Convex anti-pattern: calling actions from clients](https://docs.convex.dev/functions/actions)
+- [Pinata IPFS SDK](https://docs.pinata.cloud/)
+- [The Graph documentation](https://thegraph.com/docs/)
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
