@@ -10,11 +10,25 @@ Read endpoints serve data from the **SQLite cache** (Turso) for performance. Eve
 
 ---
 
+## Rate Limiting
+
+All cost-generating endpoints are rate-limited via `@upstash/ratelimit` with `@upstash/redis` backend (persists across Vercel cold starts).
+
+| Endpoint | Limit | Key |
+|----------|-------|-----|
+| POST /api/webhooks/proposals | 5 requests/hour | per-IP |
+| POST /api/evaluate/[id] | 10 requests/hour | per-IP + 10/min global |
+| GET /api/evaluate/[id]/[dimension] | 10 requests/hour | per-IP |
+
+**Response on limit exceeded**: HTTP 429 with `Retry-After` header and body `{ "error": "RATE_LIMITED", "retryAfter": <seconds> }`.
+
+---
+
 ## POST /api/webhooks/proposals
 
 Ingests a grant proposal from a registered funding platform.
 
-**Flow**: Validate → Sanitize PII → Pin to IPFS → Submit to Chain → Cache materializes via sync
+**Flow**: Validate API key → Verify HMAC signature → Validate body size (max 256KB) → Validate field lengths → Sanitize PII → Pin to IPFS → Submit to Chain → Cache materializes via sync
 
 ### Request
 
@@ -22,6 +36,7 @@ Ingests a grant proposal from a registered funding platform.
 ```
 Content-Type: application/json
 X-API-Key: <platform-api-key>
+X-Signature-256: sha256=<hex-encoded HMAC of request body>
 ```
 
 **Body**:
@@ -48,7 +63,28 @@ X-API-Key: <platform-api-key>
 }
 ```
 
-**Validation**: Zod schema at boundary. `teamMembers` are hashed into `teamProfileHash` before IPFS pinning (PII sanitization per FR-006). Raw team data never reaches IPFS or chain.
+**Validation**: Zod schema at boundary with max length constraints:
+```typescript
+title: z.string().min(1).max(200),
+description: z.string().min(1).max(10000),
+technicalDescription: z.string().min(1).max(10000),
+budgetBreakdown: z.array(z.object({
+  category: z.string().min(1).max(100),
+  amount: z.number().min(0).max(100_000_000),
+  description: z.string().min(1).max(500),
+})).max(20),
+teamMembers: z.array(z.object({
+  role: z.string().min(1).max(100),
+  experience: z.string().min(1).max(500),
+})).max(20),
+budgetAmount: z.number().min(0).max(100_000_000),
+budgetCurrency: z.string().max(10),
+category: z.string().min(1).max(100),
+externalId: z.string().min(1).max(200),
+fundingRoundId: z.string().min(1).max(200),
+```
+
+`teamMembers` are hashed into `teamProfileHash` before IPFS pinning (PII sanitization per FR-006). Raw team data never reaches IPFS or chain.
 
 ### Response
 
@@ -87,6 +123,22 @@ X-API-Key: <platform-api-key>
   "message": "Proposal with externalId 'gitcoin-proposal-12345' already exists for this platform"
 }
 ```
+
+**413 Payload Too Large** (body exceeds 256KB):
+```json
+{
+  "error": "PAYLOAD_TOO_LARGE"
+}
+```
+
+**429 Too Many Requests** (rate limited):
+```json
+{
+  "error": "RATE_LIMITED",
+  "retryAfter": 3200
+}
+```
+Headers: `Retry-After: <seconds until reset>`
 
 ---
 
@@ -245,9 +297,57 @@ Returns aggregate statistics for a funding round. Public endpoint. **Reads DERIV
 
 ---
 
+## POST /api/evaluate/[id]/finalize
+
+Triggers finalization of a completed evaluation (IPFS upload + on-chain submission). Called when all 4 judges complete, or explicitly by client. Separated from GET status endpoint to prevent write side-effects on reads.
+
+**Auth**: Internal (server-side only, or authenticated client)
+
+### Response
+
+**200 OK**:
+```json
+{
+  "proposalId": "0xabc123...",
+  "evaluationContentCid": "bafybeih...",
+  "txHash": "0xdef456...",
+  "status": "published"
+}
+```
+
+**409 Conflict** (already finalized):
+```json
+{
+  "error": "ALREADY_FINALIZED",
+  "message": "Evaluation already published for this proposal"
+}
+```
+
+---
+
+## GET /api/evaluate/[id]/status
+
+Read-only status check for an evaluation in progress. No side effects — does NOT trigger finalization.
+
+### Response
+
+**200 OK**:
+```json
+{
+  "proposalId": "0xabc123...",
+  "status": "in_progress",
+  "completedDimensions": ["technical_feasibility", "impact_potential"],
+  "pendingDimensions": ["cost_efficiency", "team_capability"]
+}
+```
+
+---
+
 ## POST /api/sync
 
-Triggers an incremental cache rebuild from The Graph + IPFS. Operator-authenticated.
+Triggers an incremental cache rebuild from The Graph + IPFS. Operator-authenticated via Auth.js session.
+
+**Auth**: Requires authenticated session (`await auth()` — returns 401 if no session)
 
 ### Response
 
@@ -258,6 +358,13 @@ Triggers an incremental cache rebuild from The Graph + IPFS. Operator-authentica
   "eventsProcessed": 47,
   "ipfsFetched": 12,
   "duration": "3.2s"
+}
+```
+
+**401 Unauthorized**:
+```json
+{
+  "error": "Unauthorized"
 }
 ```
 
@@ -273,7 +380,10 @@ Receives dispute notifications from on-chain events. Internal use.
 ```
 Content-Type: application/json
 X-API-Key: <internal-api-key>
+X-Signature-256: sha256=<hex-encoded HMAC of request body>
 ```
+
+**Auth**: API key validated against per-platform `apiKeyHash` in `platform_integrations` table. HMAC signature verified against per-platform `webhookSecret`. Returns 401 if either check fails.
 
 **Body**:
 ```json

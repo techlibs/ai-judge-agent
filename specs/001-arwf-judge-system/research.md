@@ -36,6 +36,8 @@
 - **web3.storage**: Free via Filecoin but less reliable gateway performance and SDK churn.
 - **Self-hosted IPFS node**: Maximum control but operational burden for a Vercel-deployed app.
 
+**Known limitation**: Single-provider limitation accepted for v1. Interface-based design (`IpfsProvider` interface with `upload` and `fetch` methods) allows adding web3.storage or self-hosted node in v2 without changing calling code.
+
 **Packages**: `pinata` (Pinata SDK)
 
 ## R-001b: On-Chain Query Layer

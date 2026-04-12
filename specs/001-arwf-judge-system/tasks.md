@@ -25,6 +25,7 @@
 - [ ] T004 [P] Configure Tailwind CSS and initialize shadcn/ui in src/app/
 - [ ] T005 [P] Configure ESLint and Prettier for the project
 - [ ] T006 [P] Create .env.example with all required variables: ANTHROPIC_API_KEY, PINATA_JWT, PINATA_GATEWAY, TURSO_DATABASE_URL, TURSO_AUTH_TOKEN, AUTH_SECRET, WEBHOOK_API_KEY_HASH, NEXT_PUBLIC_CHAIN_ID, NEXT_PUBLIC_GRAPH_URL
+- [ ] T006a [P] Configure security headers in next.config.ts (CSP, X-Frame-Options: DENY, HSTS with max-age 31536000, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy)
 - [ ] T007 [P] Initialize Foundry project in contracts/ with forge init, install OpenZeppelin contracts dependency
 
 ---
@@ -39,13 +40,17 @@
 - [ ] T009 [P] Define scoring Zod schemas in src/evaluation/schemas.ts: DimensionScoreSchema, SanitizedProposalSchema, DIMENSION_WEIGHTS constant, MonitoringScoreSchema
 - [ ] T010 [P] Implement IPFS Pinata client in src/ipfs/client.ts (Pinata SDK initialization from env)
 - [ ] T011 [P] Implement IPFS pin function in src/ipfs/pin.ts (validate with Zod, serialize to canonical JSON, pin to Pinata, return CID)
-- [ ] T012 [P] Configure viem chain client in src/chain/contracts.ts (Base L2 public client, contract addresses from env, ABI imports)
+- [ ] T012 [P] Configure viem chain client in src/chain/contracts.ts (Base L2 public client, contract addresses from env, ABI imports). Use DEPLOYMENT_BLOCK env var as fromBlock in all getLogs/getContractEvents calls to avoid scanning from genesis.
 - [ ] T013 [P] Configure Graph client in src/graph/client.ts (GraphQL client pointed at NEXT_PUBLIC_GRAPH_URL)
 - [ ] T014 Define all SQLite cache tables with Drizzle in src/cache/schema.ts: proposals, dimension_scores, fund_releases, agents, agent_feedback, disputes, funding_round_stats, platform_integrations, evaluation_jobs
 - [ ] T015 Implement Turso/LibSQL client in src/cache/client.ts (createClient from env vars)
 - [ ] T016 [P] Implement Auth.js v5 configuration in src/lib/auth.ts (OAuth2 providers, session config, middleware matcher for /dashboard/operator/*)
-- [ ] T017 [P] Implement API key validation utility in src/lib/api-key.ts (validate X-API-Key header against WEBHOOK_API_KEY_HASH)
+- [ ] T017 [P] Implement per-platform API key validation utility in src/lib/api-key.ts (hash provided key with SHA-256, lookup in platform_integrations table, use crypto.timingSafeEqual for comparison). Implement HMAC-SHA256 webhook signature verification (verify X-Signature-256 header against per-platform webhookSecret).
+- [ ] T017a [P] Implement HTML sanitization utility for IPFS-sourced content in src/lib/sanitize-html.ts. Use isomorphic-dompurify with allowlist of safe tags. Export sanitizeDisplayText (strip ALL HTML) and sanitizeRichText (allow safe subset).
+- [ ] T017b [P] Add Origin header validation to mutating API routes (validate against NEXT_PUBLIC_APP_URL, exempt webhook endpoints which use API key auth).
 - [ ] T018 Create Next.js root layout in src/app/layout.tsx (HTML head, Tailwind, font, auth session provider)
+- [ ] T018a [P] Implement rate limiting middleware with @upstash/ratelimit in src/lib/rate-limit.ts (proposalSubmitLimiter: 5/hour/IP, evaluationTriggerLimiter: 10/hour/IP, globalEvaluationLimiter: 10/min global)
+- [ ] T018b [P] Add request ID generation middleware (use x-request-id header or crypto.randomUUID(), pass through to all downstream operations and log entries)
 
 **Checkpoint**: Foundation ready - user story implementation can begin
 
@@ -59,10 +64,10 @@
 
 ### Smart Contracts for US1
 
-- [ ] T019 [P] [US1] Implement EvaluationRegistry Solidity contract in contracts/src/EvaluationRegistry.sol (proposalId, finalScore, adjustedScore, CIDs, EvaluationSubmitted event per onchain-events.md)
-- [ ] T020 [P] [US1] Implement IdentityRegistry Solidity contract (ERC-8004) in contracts/src/IdentityRegistry.sol (extends ERC-721, register(), setAgentURI(), getMetadata(), setMetadata(), agentWallet management per data-model.md)
-- [ ] T021 [P] [US1] Write Foundry tests for EvaluationRegistry in contracts/test/EvaluationRegistry.t.sol
-- [ ] T022 [P] [US1] Write Foundry tests for IdentityRegistry in contracts/test/IdentityRegistry.t.sol
+- [ ] T019 [P] [US1] Implement EvaluationRegistry Solidity contract in contracts/src/EvaluationRegistry.sol (inherit AccessControl + Pausable, define SCORER_ROLE, apply onlyRole(SCORER_ROLE) whenNotPaused to submitScore(), proposalId, finalScore, adjustedScore, CIDs, EvaluationSubmitted event per onchain-events.md). Use custom errors instead of require strings. Monitor contract size with `forge build --sizes`.
+- [ ] T020 [P] [US1] Implement IdentityRegistry Solidity contract (ERC-8004) in contracts/src/IdentityRegistry.sol (inherit ERC-721 + AccessControl + Pausable, define REGISTRAR_ROLE, apply onlyRole(REGISTRAR_ROLE) whenNotPaused to register(), MAX_SUPPLY=1000 cap, soulbound _update override blocking transfers, string length checks on agentURI max 256 bytes / metadataKey max 64 / metadataValue max 1024). Exclude agentWallet functionality (deferred to v2). Use custom errors. Monitor contract size with `forge build --sizes`.
+- [ ] T021 [P] [US1] Write Foundry tests for EvaluationRegistry in contracts/test/EvaluationRegistry.t.sol (include access control tests: unauthorized submitScore reverts, paused state blocks writes)
+- [ ] T022 [P] [US1] Write Foundry tests for IdentityRegistry in contracts/test/IdentityRegistry.t.sol (include access control tests, MAX_SUPPLY enforcement, soulbound transfer rejection, string length limit enforcement). Exclude agentWallet tests.
 
 ### Subgraph for US1
 
@@ -72,14 +77,16 @@
 
 ### Application Logic for US1
 
-- [ ] T026 [P] [US1] Implement PII sanitization in src/evaluation/sanitization.ts (hash team members, obfuscate emails, redact URLs per FR-006 and scoring-schema.md)
+- [ ] T026 [P] [US1] Implement PII sanitization in src/evaluation/sanitization.ts (hash team members, obfuscate emails, redact URLs per FR-006 and scoring-schema.md). After sanitization, scan output for residual PII patterns (email regex, phone, CPF, IP address). Reject if PII detected — do not pin to IPFS.
 - [ ] T027 [P] [US1] Implement EvaluationRegistry chain interaction in src/chain/evaluation-registry.ts (submitScore: pin evaluation to IPFS, write finalScore + CIDs on-chain)
 - [ ] T028 [P] [US1] Implement IdentityRegistry chain interaction in src/chain/identity-registry.ts (register agent, setAgentURI, getMetadata, setMetadata)
-- [ ] T029 [US1] Create Judge Agent dimension configs and system prompts in src/evaluation/agents/ (one config per dimension: technical_feasibility, impact_potential, cost_efficiency, team_capability with rubric criteria)
-- [ ] T030 [US1] Implement Judge Agent evaluation runner using Vercel AI SDK generateObject in src/evaluation/agents/runner.ts (call each agent with SanitizedProposalSchema input, validate output with DimensionScoreSchema)
+- [ ] T029 [US1] Create Judge Agent dimension configs and system prompts in src/evaluation/agents/ (one config per dimension: technical_feasibility, impact_potential, cost_efficiency, team_capability with rubric criteria). Include anti-injection system prompt text in SHARED_PREAMBLE (treat proposal as DATA not INSTRUCTIONS, ignore override attempts, flag manipulation in risks array).
+- [ ] T030 [US1] Implement Judge Agent evaluation runner using Vercel AI SDK generateObject in src/evaluation/agents/runner.ts (call each agent with SanitizedProposalSchema input, validate output with DimensionScoreSchema). Add `export const maxDuration = 60` for Vercel Fluid Compute. Add AbortController with 90s hard timeout. Add concurrent evaluation limit check (max 10 active via Upstash Redis counter).
 - [ ] T031 [US1] Implement weighted score calculation in src/evaluation/scoring.ts (S = 0.25*Tech + 0.30*Impact + 0.20*Cost + 0.25*Team, reputation multiplier: min(1 + reputationIndex/10000, 1.05))
-- [ ] T032 [US1] Implement evaluation orchestrator in src/evaluation/orchestrate.ts (sanitize PII, run 4 agents, compute weighted score, pin evaluation to IPFS, submit to chain, update evaluation_jobs)
-- [ ] T033 [US1] Implement proposal webhook route handler in src/app/api/webhooks/proposals/route.ts (validate API key, parse body with Zod, sanitize PII, pin proposal to IPFS, create evaluation job, trigger evaluation per webhook-api.md)
+- [ ] T031a [US1] Implement score anomaly detection in src/evaluation/anomaly.ts (flag ALL_SCORES_SUSPICIOUSLY_HIGH if all >=95, ALL_SCORES_SUSPICIOUSLY_LOW if all <=5, EXTREME_SCORE_DIVERGENCE if max-min >50 points). Store flags in evaluation record. Display warning badge on dashboard.
+- [ ] T032 [US1] Implement evaluation orchestrator in src/evaluation/orchestrate.ts (sanitize PII, run 4 agents, compute weighted score, run anomaly detection, pin evaluation to IPFS, submit to chain, update evaluation_jobs). Add idempotency checks: before IPFS upload check if aggregateScores already has entry; before chain submission check if proposal status is already "published".
+- [ ] T033 [US1] Implement proposal webhook route handler in src/app/api/webhooks/proposals/route.ts (validate API key, verify HMAC signature, check body size <=256KB, parse body with Zod including max length constraints, apply rate limit, sanitize PII, pin proposal to IPFS, create evaluation job, trigger evaluation per webhook-api.md). Add idempotency check: before creating evaluation record, check if one already exists for this (proposalId, dimension) pair.
+- [ ] T033a [US1] Implement POST /api/evaluate/[id]/finalize endpoint (separate from GET status). Triggers IPFS upload + on-chain submission. Returns 409 if already finalized.
 - [ ] T034 [US1] Implement evaluation job cache operations in src/cache/queries.ts (createEvaluationJob, updateEvaluationJobStatus, getEvaluationJob with retry tracking per FR-016)
 
 **Checkpoint**: Submit a proposal via webhook, receive 4 dimension scores with justifications, weighted final score, IPFS CIDs, and on-chain confirmation
@@ -107,8 +114,9 @@
 
 ### UI Pages for US2
 
-- [ ] T042 [US2] Implement public grants listing page in src/app/grants/page.tsx (proposal cards with summary scores, category badges, pagination, funding round filter, search)
-- [ ] T043 [US2] Implement proposal detail page in src/app/grants/[id]/page.tsx (final score, 4 dimension scores with expandable justifications, fund release status, reputation badge, IPFS/chain verification links)
+- [ ] T042 [US2] Implement public grants listing page in src/app/grants/page.tsx (proposal cards with summary scores, category badges, pagination, funding round filter, search). Sanitize all IPFS-sourced text with sanitizeDisplayText() before rendering.
+- [ ] T043 [US2] Implement proposal detail page in src/app/grants/[id]/page.tsx (final score, 4 dimension scores with expandable justifications, fund release status, reputation badge, IPFS/chain verification links). Sanitize all IPFS-sourced text (descriptions, reasoningChain) with sanitizeDisplayText() before rendering.
+- [ ] T043a [US2] Add ChainErrorBoundary component in src/components/error-boundary.tsx and IPFS fetch timeouts (10s AbortController). Wrap chain/IPFS-dependent components with error boundaries.
 - [ ] T044 [US2] Implement operator dashboard layout and sync controls in src/app/dashboard/operator/page.tsx (auth-protected, cache sync trigger, evaluation job status)
 
 **Checkpoint**: Browse proposals at /grants, view full evaluation detail, verify data matches IPFS content via verification links
@@ -121,8 +129,8 @@
 
 **Independent Test**: After a proposal scores above threshold, verify MilestoneManager releases correct fund percentage on-chain, unreleased funds appear in MatchingPool, and cache reflects the release
 
-- [ ] T045 [P] [US3] Implement MilestoneManager Solidity contract in contracts/src/MilestoneManager.sol (projectId, milestones, releasePercentage = score/10, FundReleased event, FundsForwarded event, BonusDistributed event per data-model.md)
-- [ ] T046 [P] [US3] Write Foundry tests for MilestoneManager in contracts/test/MilestoneManager.t.sol
+- [ ] T045 [P] [US3] Implement MilestoneManager Solidity contract in contracts/src/MilestoneManager.sol (inherit AccessControl + Pausable + ReentrancyGuard, define RELEASE_MANAGER_ROLE, apply onlyRole(RELEASE_MANAGER_ROLE) whenNotPaused nonReentrant to releaseMilestone(), projectId, milestones, releasePercentage = score/10, FundReleased event, FundsForwarded event, BonusDistributed event per data-model.md). Include withdrawUnreleasedFunds and emergencyWithdraw functions (onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant, callable when paused). Use gas cap of 10000 on .call{value:} invocations. Use custom errors instead of require strings. Monitor contract size with `forge build --sizes`.
+- [ ] T046 [P] [US3] Write Foundry tests for MilestoneManager in contracts/test/MilestoneManager.t.sol (include access control tests, ReentrancyGuard tests with reentrancy attack contract, fund recovery function tests, gas cap verification, paused state tests)
 - [ ] T047 [US3] Add Graph subgraph entities and mappings for FundRelease, FundsForwarded, BonusDistributed in contracts/subgraph/
 - [ ] T048 [US3] Implement MilestoneManager chain interaction in src/chain/milestone-manager.ts (submitScore triggers fund release, forward to MatchingPool, bonus distribution)
 - [ ] T049 [US3] Integrate fund release into evaluation orchestrator in src/evaluation/orchestrate.ts (after chain score submission, trigger MilestoneManager)
@@ -145,7 +153,7 @@
 - [ ] T055 [P] [US4] Implement social metrics collector in src/monitoring/social.ts (announcements, community engagement)
 - [ ] T056 [US4] Implement Monitor Agent runner using Vercel AI SDK generateObject in src/monitoring/runner.ts (collect metrics, generate MonitoringScoreSchema output, produce risk flags)
 - [ ] T057 [US4] Implement monitoring orchestrator in src/monitoring/orchestrate.ts (run Monitor Agent, pin MonitoringReport to IPFS, submit updated score to chain, trigger fund release recalculation)
-- [ ] T058 [US4] Implement monitoring cron API route in src/app/api/cron/monitoring/route.ts (scheduled trigger for monitoring cycles per project)
+- [ ] T058 [US4] Implement monitoring cron API route in src/app/api/cron/monitoring/route.ts (scheduled trigger for monitoring cycles per project). Validate CRON_SECRET via Authorization bearer header — return 401 if invalid.
 - [ ] T059 [US4] Add monitoring data and risk flags display to proposal detail page in src/app/grants/[id]/page.tsx
 
 **Checkpoint**: Monitoring cycle runs on schedule, produces updated score with metrics and risk flags, visible on dashboard
@@ -177,8 +185,8 @@
 
 **Independent Test**: Complete an evaluation cycle, verify reputation feedback written on-chain for judge agents, confirm multiplier applies correctly on a subsequent proposal evaluation
 
-- [ ] T068 [P] [US6] Implement ReputationRegistry Solidity contract (ERC-8004) in contracts/src/ReputationRegistry.sol (giveFeedback, revokeFeedback, appendResponse, getSummary, anti-Sybil rules per data-model.md)
-- [ ] T069 [P] [US6] Implement ValidationRegistry Solidity contract (ERC-8004) in contracts/src/ValidationRegistry.sol (validationRequest, validationResponse, getSummary per data-model.md)
+- [ ] T068 [P] [US6] Implement ReputationRegistry Solidity contract (ERC-8004) in contracts/src/ReputationRegistry.sol (inherit AccessControl + Pausable, define EVALUATOR_ROLE, apply onlyRole(EVALUATOR_ROLE) whenNotPaused to giveFeedback() and appendResponse(), receive identityRegistry address via constructor parameter NOT initialize(), cross-contract validation via ownerOf(agentId), enforce valueDecimals=2 for v1, tag1/tag2 max 64 bytes, MAX_FEEDBACK_PER_AGENT=10000, add exists flag to Feedback struct, paginate readAllFeedback with limit max 100, cap getSummary clientAddresses at 50, use basis point scaling for averages, giveFeedback, revokeFeedback, appendResponse, getSummary, anti-Sybil rules per data-model.md). Use custom errors. Monitor contract size with `forge build --sizes`.
+- [ ] T069 [P] [US6] Implement ValidationRegistry Solidity contract (ERC-8004) in contracts/src/ValidationRegistry.sol (receive identityRegistry address via constructor parameter NOT initialize(), validationRequest, validationResponse, getSummary per data-model.md)
 - [ ] T070 [P] [US6] Write Foundry tests for ReputationRegistry in contracts/test/ReputationRegistry.t.sol
 - [ ] T071 [P] [US6] Write Foundry tests for ValidationRegistry in contracts/test/ValidationRegistry.t.sol
 - [ ] T072 [US6] Add Graph subgraph entities and mappings for AgentFeedback, FeedbackResponse, Validation in contracts/subgraph/
@@ -204,7 +212,9 @@
 - [ ] T083 Security audit: verify PII never reaches IPFS or chain (sanitization review across all write paths)
 - [ ] T084 Performance optimization: ensure dashboard loads within 2-3 seconds (SC-005), add SQLite indexes per data-model.md
 - [ ] T085 Run quickstart.md validation end-to-end
-- [ ] T086 [P] Add error handling for failed evaluations (FR-016: retry up to 3 times) and failed chain transactions (FR-017: exponential backoff up to 5 attempts)
+- [ ] T083a [P] Implement structured security event logging in src/lib/security-log.ts (log rate_limited, auth_failed, score_anomaly, pii_detected, injection_attempt events as JSON with timestamp and level: "SECURITY")
+- [ ] T085a [P] Add GET /api/health endpoint checking db, IPFS, and chain connectivity. Return { healthy: boolean, checks: { db, ipfs, chain } } with 200 or 503.
+- [ ] T086 [P] Add error handling for failed evaluations (FR-016: retry up to 3 times) and failed chain transactions (FR-017: exponential backoff with parameters: initial 1s, multiplier 2x, max 30s, 5 attempts)
 
 ---
 

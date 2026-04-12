@@ -39,6 +39,10 @@ cp .env.example .env.local
 #   WEBHOOK_API_KEY_HASH=<bcrypt-hash-of-your-api-key>
 #   NEXT_PUBLIC_CHAIN_ID=8453
 #   NEXT_PUBLIC_GRAPH_URL=<subgraph-query-url>
+#   UPSTASH_REDIS_REST_URL=<upstash-redis-url>
+#   UPSTASH_REDIS_REST_TOKEN=<upstash-redis-token>
+#   DEPLOYMENT_BLOCK=<block number when contracts were deployed>
+#   CRON_SECRET=<random-secret-for-vercel-cron>
 
 # Initialize SQLite cache schema
 bun run cache:migrate

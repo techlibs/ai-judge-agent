@@ -4,6 +4,19 @@
 **Type**: Solidity events emitted by smart contracts on Base L2
 **Indexed by**: The Graph subgraph
 
+## Access Control Events (All Contracts)
+
+All contracts inheriting OpenZeppelin `AccessControl` emit these events:
+
+```solidity
+event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+```
+
+**Used by cache/subgraph to**: Track role assignments for audit purposes.
+
+---
+
 ## EvaluationRegistry Events
 
 ### EvaluationSubmitted
@@ -20,6 +33,8 @@ event EvaluationSubmitted(
     string evaluationContentCid // IPFS CID of evaluation justifications
 );
 ```
+
+**Note**: `proposalId` and `fundingRoundId` are `indexed` for efficient subgraph filtering.
 
 **Subgraph entity**: `Evaluation`
 **Used by cache to**: Create/update `proposals` and `dimension_scores` rows
@@ -41,6 +56,30 @@ event FundReleased(
 
 **Subgraph entity**: `FundRelease`
 **Used by cache to**: Create `fund_releases` row, update proposal `status` to "funded"
+
+### UnreleasedFundsWithdrawn
+
+Emitted when admin withdraws unreleased funds from a completed milestone.
+
+```solidity
+event UnreleasedFundsWithdrawn(
+    bytes32 indexed projectId,
+    uint8 milestoneIndex,
+    uint256 amount,
+    address indexed recipient
+);
+```
+
+### EmergencyWithdrawal
+
+Emitted when admin performs emergency withdrawal of full contract balance.
+
+```solidity
+event EmergencyWithdrawal(
+    address indexed recipient,
+    uint256 amount
+);
+```
 
 ### FundsForwarded
 
@@ -283,7 +322,6 @@ type Agent @entity {
   id: Bytes!                    # agentId (uint256 as bytes)
   owner: Bytes!
   agentURI: String!
-  agentWallet: Bytes            # nullable, cleared on transfer
   metadata: [AgentMetadata!]! @derivedFrom(field: "agent")
   feedback: [AgentFeedback!]! @derivedFrom(field: "agent")
   validations: [Validation!]! @derivedFrom(field: "agent")

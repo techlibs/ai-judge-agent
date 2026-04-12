@@ -10,7 +10,7 @@ An AI Judge system that evaluates grant proposals across four weighted dimension
 ## Technical Context
 
 **Language/Version**: TypeScript (strict mode) on Bun >= 1.3
-**Primary Dependencies**: Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem
+**Primary Dependencies**: Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem, `@upstash/ratelimit`, `@upstash/redis`, `isomorphic-dompurify`
 **Storage (3-layer)**:
   - **Source of truth**: On-chain (Base L2) for scores/state + IPFS (Pinata) for content
   - **Query layer**: The Graph subgraph for indexed chain data
@@ -136,7 +136,10 @@ src/
 ├── reputation/                   # Reputation calculation (US6)
 └── lib/                          # Shared utilities
     ├── auth.ts                   # Auth.js v5 config
-    └── api-key.ts                # Webhook API key validation
+    ├── api-key.ts                # Per-platform API key validation (lookup by hash in platform_integrations table, constant-time comparison)
+    ├── rate-limit.ts             # @upstash/ratelimit configuration for cost-generating endpoints
+    ├── sanitize-html.ts          # isomorphic-dompurify for IPFS-sourced content (sanitizeDisplayText, sanitizeRichText)
+    └── security-log.ts           # Structured security event logging
 
 contracts/                        # Solidity smart contracts (Base L2)
 ├── src/
@@ -160,6 +163,34 @@ tests/
 ```
 
 **Structure Decision**: Single Next.js application with domain-organized source directories. Solidity contracts in a separate `contracts/` directory at repo root with their own toolchain (Foundry). The Graph subgraph lives alongside contracts since it maps directly to their events.
+
+## Security Configuration
+
+### Security Headers (next.config.ts)
+
+All responses must include:
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `X-DNS-Prefetch-Control: on`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- `Content-Security-Policy`: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://gateway.pinata.cloud https://*.ipfs.io; connect-src 'self' https://gateway.pinata.cloud https://sepolia.base.org https://*.upstash.io; frame-ancestors 'none'
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+
+### IPFS Content Validation
+
+`src/ipfs/` `fetchJson` function must accept a Zod schema parameter and validate content on fetch (not cast with `as Type`).
+
+## Contract Migration Strategy
+
+Contracts are intentionally non-upgradeable for v1 to avoid proxy complexity. If a critical bug is found:
+1. Pause the affected contract via `pause()`
+2. Deploy a new version
+3. Migrate state by replaying events from The Graph
+4. Update contract addresses in environment variables
+5. Rebuild read cache from new contract
+
+This is acceptable for testnet. For mainnet, evaluate UUPS proxy pattern.
 
 ## Complexity Tracking
 

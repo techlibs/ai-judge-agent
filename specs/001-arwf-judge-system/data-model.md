@@ -28,37 +28,128 @@ Smart contract state. Permanent, verifiable, public. Cannot be rebuilt — it IS
 
 Stores final scores and IPFS content hashes for each proposal evaluation.
 
+**Inherits**: `AccessControl`, `Pausable`
+
+**Access Control**:
+- Role: `bytes32 public constant SCORER_ROLE = keccak256("SCORER_ROLE");`
+- `submitScore()` restricted to `onlyRole(SCORER_ROLE) whenNotPaused`
+- Constructor grants `DEFAULT_ADMIN_ROLE` and `SCORER_ROLE` to deployer
+- `pause()` / `unpause()` restricted to `DEFAULT_ADMIN_ROLE`
+
+**Named Constants**:
+- `uint16 public constant SCORE_PRECISION = 100;` — Scores stored as 0-1000 (divide by 100 for 0-10.00)
+- `uint16 public constant REPUTATION_BASE = 10000;` — 10000 = 1.0x multiplier
+- `uint16 public constant REPUTATION_MAX = 10500;` — Max 1.05x multiplier
+
+**Struct packing (gas-optimized)**:
+```solidity
+struct Evaluation {
+    bytes32 proposalId;          // slot 0
+    bytes32 fundingRoundId;      // slot 1
+    uint16 finalScore;           // slot 2 (packed)
+    uint16 reputationMultiplier; // slot 2 (packed)
+    uint16 adjustedScore;        // slot 2 (packed)
+    uint48 timestamp;            // slot 2 (packed) -- uint48 good until year 8 million
+    // string fields are always separate slots
+}
+```
+
 | Field | Solidity Type | Provenance | Description |
 |-------|--------------|------------|-------------|
 | proposalId | bytes32 | SOURCED | Unique proposal identifier (hash of platform + externalId) |
 | fundingRoundId | bytes32 | SOURCED | Parent funding round |
-| finalScore | uint16 | SOURCED | Weighted score (0-1000, divide by 100 for 0-10.00) |
-| reputationMultiplier | uint16 | SOURCED | Multiplier (10000 = 1.0, max 10500 = 1.05) |
-| adjustedScore | uint16 | DERIVED | finalScore * reputationMultiplier / 10000 |
+| finalScore | uint16 | SOURCED | Weighted score (0-1000, divide by SCORE_PRECISION for 0-10.00) |
+| reputationMultiplier | uint16 | SOURCED | Multiplier (REPUTATION_BASE = 1.0, max REPUTATION_MAX = 1.05) |
+| adjustedScore | uint16 | DERIVED | finalScore * reputationMultiplier / REPUTATION_BASE |
 | proposalContentCid | string | SOURCED | IPFS CID of full proposal content |
 | evaluationContentCid | string | SOURCED | IPFS CID of evaluation justifications (all 4 dimensions) |
-| timestamp | uint256 | SOURCED | Block timestamp of score submission |
+| timestamp | uint48 | SOURCED | Block timestamp of score submission |
 
-**Events emitted**: `EvaluationSubmitted(proposalId, finalScore, adjustedScore, proposalContentCid, evaluationContentCid)`
+**Events emitted**: `EvaluationSubmitted(bytes32 indexed proposalId, bytes32 indexed fundingRoundId, uint16 finalScore, uint16 adjustedScore, string proposalContentCid, string evaluationContentCid)`
 
 ### MilestoneManager Contract
 
 Manages fund releases based on scores.
+
+**Inherits**: `AccessControl`, `Pausable`, `ReentrancyGuard`
+
+**Access Control**:
+- Role: `bytes32 public constant RELEASE_MANAGER_ROLE = keccak256("RELEASE_MANAGER_ROLE");`
+- `releaseMilestone()` restricted to `onlyRole(RELEASE_MANAGER_ROLE) whenNotPaused nonReentrant`
+- `withdrawUnreleasedFunds()` restricted to `onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant` (callable when paused)
+- `emergencyWithdraw()` restricted to `onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant` (callable when paused)
+- Constructor grants `DEFAULT_ADMIN_ROLE` and `RELEASE_MANAGER_ROLE` to deployer
+- `pause()` / `unpause()` restricted to `DEFAULT_ADMIN_ROLE`
+
+**Named Constants**:
+- `uint16 public constant FUND_RELEASE_DIVISOR = 10;` — releasePercentage = score / FUND_RELEASE_DIVISOR
+
+**Struct packing (gas-optimized)**:
+```solidity
+struct Milestone {
+    uint16 score;                // slot 0 (packed)
+    uint16 releasePercentage;    // slot 0 (packed)
+    bool released;               // slot 0 (packed)
+    uint256 amount;              // slot 1
+    uint256 totalAmount;         // slot 2
+}
+```
+
+**ETH Transfer Gas Cap**: All `.call{value: amount}` invocations use `gas: 10000` as defense-in-depth alongside `nonReentrant`.
 
 | Field | Solidity Type | Provenance | Description |
 |-------|--------------|------------|-------------|
 | projectId | bytes32 | SOURCED | Project identifier |
 | milestoneIndex | uint8 | SOURCED | Milestone sequence number |
 | score | uint16 | MIRRORED | Score from EvaluationRegistry |
-| releasePercentage | uint16 | DERIVED | score / 10 (e.g., score 785 → 78.5%) |
+| releasePercentage | uint16 | DERIVED | score / FUND_RELEASE_DIVISOR (e.g., score 785 → 78.5%) |
 | released | bool | SOURCED | Whether funds have been released |
 | amount | uint256 | SOURCED | Amount released in wei |
+| totalAmount | uint256 | SOURCED | Total milestone amount in wei |
+| releasedAmount | uint256 | SOURCED | Amount actually released in wei |
 
-**Events emitted**: `FundReleased(projectId, milestoneIndex, amount, releasePercentage)`
+**Fund Recovery Functions**:
+- `withdrawUnreleasedFunds(bytes32 projectId, uint8 milestoneIndex)` ��� Admin can withdraw unreleased funds after milestone is released
+- `emergencyWithdraw(address payable recipient)` — Admin can withdraw full contract balance in emergency
+
+**Events emitted**:
+- `FundReleased(bytes32 indexed projectId, uint8 milestoneIndex, uint256 amount, uint16 releasePercentage)`
+- `UnreleasedFundsWithdrawn(bytes32 indexed projectId, uint8 milestoneIndex, uint256 amount, address indexed recipient)`
+- `EmergencyWithdrawal(address indexed recipient, uint256 amount)`
 
 ### IdentityRegistry Contract (ERC-8004 compliant)
 
 Registers AI Judge Agents and Monitor Agents as ERC-8004 identities. Extends ERC-721 with URIStorage. Each agent is an NFT with an `agentURI` pointing to a registration JSON on IPFS.
+
+**Inherits**: `ERC721`, `AccessControl`, `Pausable`
+
+**Access Control**:
+- Role: `bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");`
+- `register()` (all overloads) restricted to `onlyRole(REGISTRAR_ROLE) whenNotPaused`
+- `setAgentURI()` restricted to owner/approved + `whenNotPaused`
+- `setMetadata()` restricted to owner/approved + `whenNotPaused`
+- Constructor grants `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE` to deployer
+- `pause()` / `unpause()` restricted to `DEFAULT_ADMIN_ROLE`
+
+**Supply Cap**:
+- `uint256 public constant MAX_SUPPLY = 1000;`
+- `register()` must check `require(_tokenCount < MAX_SUPPLY, "Max supply reached");`
+
+**Soulbound (non-transferable)**:
+```solidity
+function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
+    address from = _ownerOf(tokenId);
+    if (from != address(0) && to != address(0)) {
+        revert("Soulbound: transfer disabled");
+    }
+    return super._update(to, tokenId, auth);
+}
+```
+
+**String length constraints**:
+- `agentURI`: `require(bytes(agentURI).length <= 256, "URI too long");` in `register()` and `setAgentURI()`
+- `metadataKey` in `setMetadata()`: `require(bytes(metadataKey).length <= 64, "key too long");`
+- `metadataValue` in `setMetadata()`: `require(metadataValue.length <= 1024, "value too long");`
 
 **Registered agents**: 4 Judge Agents (one per dimension) + 1 Monitor Agent = 5 agent identities.
 
@@ -66,8 +157,7 @@ Registers AI Judge Agents and Monitor Agents as ERC-8004 identities. Extends ERC
 |-------|--------------|------------|-------------|
 | agentId | uint256 | SOURCED | ERC-721 tokenId, auto-incrementing |
 | owner | address | SOURCED | Address that owns/operates this agent |
-| agentURI | string | SOURCED | IPFS CID of agent registration JSON (name, description, services, trust) |
-| agentWallet | address | SOURCED | Payment address, set via EIP-712 signed message. Cleared on transfer. |
+| agentURI | string | SOURCED | IPFS CID of agent registration JSON (name, description, services, trust). Max 256 bytes. |
 | metadata | mapping(string => bytes) | SOURCED | Key-value on-chain metadata (e.g., `scoringDimension`, `promptVersion`) |
 
 **ERC-8004 interface** (all required):
@@ -77,9 +167,8 @@ Registers AI Judge Agents and Monitor Agents as ERC-8004 identities. Extends ERC
 - `setAgentURI(uint256 agentId, string newURI)`
 - `getMetadata(uint256 agentId, string metadataKey) → bytes`
 - `setMetadata(uint256 agentId, string metadataKey, bytes metadataValue)`
-- `setAgentWallet(uint256 agentId, address newWallet, uint256 deadline, bytes signature)` — EIP-712/ERC-1271 verified
-- `getAgentWallet(uint256 agentId) → address`
-- `unsetAgentWallet(uint256 agentId)`
+
+**Note**: Agent wallet management (`setAgentWallet`, `getAgentWallet`, `unsetAgentWallet`) deferred to v2 pending full EIP-712 implementation.
 
 **Events emitted** (ERC-8004 required):
 - `Registered(uint256 indexed agentId, string agentURI, address indexed owner)`
@@ -87,12 +176,55 @@ Registers AI Judge Agents and Monitor Agents as ERC-8004 identities. Extends ERC
 - `MetadataSet(uint256 indexed agentId, string indexed indexedMetadataKey, string metadataKey, bytes metadataValue)`
 
 **Constraints**:
-- `agentWallet` is a reserved key — cannot be set via `setMetadata()` or `register()` metadata array
-- On ERC-721 transfer, `agentWallet` is automatically cleared (reset to zero address)
+- Tokens are soulbound (non-transferable between non-zero addresses)
+- Supply capped at MAX_SUPPLY (1000 for v1)
 
 ### ReputationRegistry Contract (ERC-8004 compliant)
 
 Structured agent-to-agent and community-to-agent feedback. Replaces the previous simple `reputationIndex` with the full ERC-8004 feedback system. Linked to IdentityRegistry.
+
+**Inherits**: `AccessControl`, `Pausable`
+
+**Access Control**:
+- Role: `bytes32 public constant EVALUATOR_ROLE = keccak256("EVALUATOR_ROLE");`
+- `giveFeedback()` restricted to `onlyRole(EVALUATOR_ROLE) whenNotPaused`
+- `appendResponse()` restricted to `onlyRole(EVALUATOR_ROLE) whenNotPaused`
+- `revokeFeedback()` restricted to original feedback submitter OR `DEFAULT_ADMIN_ROLE`
+- Constructor receives `address identityRegistry_` as parameter and grants `DEFAULT_ADMIN_ROLE` and `EVALUATOR_ROLE` to deployer
+- `pause()` / `unpause()` restricted to `DEFAULT_ADMIN_ROLE`
+
+**Constructor** (replaces `initialize()`):
+```solidity
+constructor(address identityRegistry_) {
+    require(identityRegistry_ != address(0), "Zero address");
+    identityRegistry = IIdentityRegistry(identityRegistry_);
+}
+```
+
+**Cross-contract validation**:
+- `giveFeedback()` must verify agent exists: `try identityRegistry.ownerOf(agentId) returns (address) { ... } catch { revert("Agent does not exist"); }`
+
+**String length constraints**:
+- `tag1` in `giveFeedback()`: `require(bytes(tag1).length <= 64, "tag1 too long");`
+- `tag2` in `giveFeedback()`: `require(bytes(tag2).length <= 64, "tag2 too long");`
+
+**Feedback limits**:
+- `uint64 public constant MAX_FEEDBACK_PER_AGENT = 10000;`
+- `giveFeedback()` must check: `require(feedbackCount[agentId] < MAX_FEEDBACK_PER_AGENT, "Feedback limit reached");`
+
+**v1 constraint**: `require(valueDecimals == 2, "Only valueDecimals=2 supported in v1");`
+
+**Feedback struct**:
+```solidity
+struct Feedback {
+    bool exists;      // Explicit existence flag for safe revocation checks
+    int128 value;
+    uint8 valueDecimals;
+    string tag1;
+    string tag2;
+    bool isRevoked;
+}
+```
 
 **Usage**: After each evaluation, community members and platform operators rate judge quality. Tags identify the scoring dimension and funding round.
 
@@ -102,25 +234,30 @@ Structured agent-to-agent and community-to-agent feedback. Replaces the previous
 | clientAddress | address | SOURCED | Who gave the feedback (MUST NOT be agent owner) |
 | feedbackIndex | uint64 | SOURCED | 1-indexed counter per (agentId, clientAddress) pair |
 | value | int128 | SOURCED | Feedback value (positive = good, negative = bad) |
-| valueDecimals | uint8 | SOURCED | Decimal places for value (0-18) |
-| tag1 | string | SOURCED | Scoring dimension (e.g., "technical_feasibility") |
-| tag2 | string | SOURCED | Funding round identifier |
+| valueDecimals | uint8 | SOURCED | Decimal places for value (v1: must be 2) |
+| tag1 | string | SOURCED | Scoring dimension (e.g., "technical_feasibility"). Max 64 bytes. |
+| tag2 | string | SOURCED | Funding round identifier. Max 64 bytes. |
 | isRevoked | bool | SOURCED | Whether this feedback was revoked |
+| exists | bool | SOURCED | Explicit existence flag |
 
-**On-chain stored**: `value`, `valueDecimals`, `tag1`, `tag2`, `isRevoked`
+**On-chain stored**: `exists`, `value`, `valueDecimals`, `tag1`, `tag2`, `isRevoked`
 **Event-only** (not stored): `endpoint`, `feedbackURI`, `feedbackHash`
 
 **ERC-8004 interface** (all required):
-- `initialize(address identityRegistry_)`
 - `getIdentityRegistry() → address`
 - `giveFeedback(uint256 agentId, int128 value, uint8 valueDecimals, string tag1, string tag2, string endpoint, string feedbackURI, bytes32 feedbackHash)`
 - `revokeFeedback(uint256 agentId, uint64 feedbackIndex)`
 - `appendResponse(uint256 agentId, address clientAddress, uint64 feedbackIndex, string responseURI, bytes32 responseHash)`
 - `getSummary(uint256 agentId, address[] clientAddresses, string tag1, string tag2) → (uint64 count, int128 summaryValue, uint8 summaryValueDecimals)`
 - `readFeedback(uint256 agentId, address clientAddress, uint64 feedbackIndex) → (int128 value, uint8 valueDecimals, string tag1, string tag2, bool isRevoked)`
-- `readAllFeedback(uint256 agentId, address[] clientAddresses, string tag1, string tag2, bool includeRevoked) → (...)`
+- `readAllFeedback(uint256 agentId, address[] clientAddresses, string tag1, string tag2, bool includeRevoked, uint64 offset, uint64 limit) → (...)`
 - `getClients(uint256 agentId) → address[]`
 - `getLastIndex(uint256 agentId, address clientAddress) → uint64`
+
+**Pagination and bounds**:
+- `readAllFeedback()`: `limit` max 100. `require(limit <= 100, "Limit too high");`
+- `getSummary()`: `require(clientAddresses.length <= 50, "Too many client addresses");`
+- `summaryValue` returned by `getSummary()` is scaled by 10^summaryValueDecimals (basis point scaling) to avoid integer truncation.
 
 **Events emitted** (ERC-8004 required):
 - `NewFeedback(uint256 indexed agentId, address indexed clientAddress, uint64 feedbackIndex, int128 value, uint8 valueDecimals, string indexed indexedTag1, string tag1, string tag2, string endpoint, string feedbackURI, bytes32 feedbackHash)`
@@ -130,11 +267,20 @@ Structured agent-to-agent and community-to-agent feedback. Replaces the previous
 **Constraints**:
 - Feedback submitter MUST NOT be the agent owner or an approved operator for agentId
 - `clientAddresses` MUST be non-empty in `getSummary()` (anti-Sybil)
-- `valueDecimals` MUST be 0-18
+- `valueDecimals` MUST be 2 (v1 enforcement)
+- Max feedback per agent: 10000
 
 ### ValidationRegistry Contract (ERC-8004 compliant)
 
 Capability validation for Judge Agents. Verifies agent qualifications (e.g., "is this judge qualified to score technical feasibility?"). Validators are trusted third parties or other agents.
+
+**Constructor** (replaces `initialize()`):
+```solidity
+constructor(address identityRegistry_) {
+    require(identityRegistry_ != address(0), "Zero address");
+    identityRegistry = IIdentityRegistry(identityRegistry_);
+}
+```
 
 | Field | Solidity Type | Provenance | Description |
 |-------|--------------|------------|-------------|
@@ -147,7 +293,6 @@ Capability validation for Judge Agents. Verifies agent qualifications (e.g., "is
 | lastUpdate | uint256 | SOURCED | Block timestamp of last response |
 
 **ERC-8004 interface** (all required):
-- `initialize(address identityRegistry_)`
 - `getIdentityRegistry() → address`
 - `validationRequest(address validatorAddress, uint256 agentId, string requestURI, bytes32 requestHash)` — MUST be called by agent owner/operator
 - `validationResponse(bytes32 requestHash, uint8 response, string responseURI, bytes32 responseHash, string tag)` — MUST be called by validatorAddress
@@ -370,7 +515,6 @@ Denormalized views materialized from The Graph + IPFS for fast dashboard queries
 | agentId | integer PK | MIRRORED | on-chain `agentId` from IdentityRegistry |
 | owner | text | MIRRORED | on-chain `owner` from Registered event |
 | agentURI | text | MIRRORED | on-chain `agentURI` |
-| agentWallet | text | MIRRORED | on-chain via `getAgentWallet()` |
 | name | text | MIRRORED | IPFS agent registration JSON `.name` |
 | description | text | MIRRORED | IPFS agent registration JSON `.description` |
 | scoringDimension | text | MIRRORED | on-chain metadata key `scoringDimension` |
@@ -434,7 +578,8 @@ These tables store operational state that has no on-chain equivalent. They survi
 | id | text PK | SOURCED | Generated UUID |
 | name | text | SOURCED | Platform name |
 | webhookUrl | text | SOURCED | Callback URL |
-| apiKeyHash | text | SOURCED | Hashed API key |
+| apiKeyHash | text | SOURCED | Hashed API key (per-platform, SHA-256) |
+| webhookSecret | text | SOURCED | Per-platform HMAC secret for webhook signature verification |
 | status | text | SOURCED | active, suspended, revoked |
 | createdAt | text | SOURCED | ISO 8601 |
 

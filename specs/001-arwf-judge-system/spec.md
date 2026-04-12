@@ -113,8 +113,8 @@ After each evaluation and monitoring cycle, the system writes reputation feedbac
 
 - What happens when a Judge Agent fails mid-evaluation (partial scores)?
   The system MUST retry the failed agent up to 3 times. If all retries fail, the evaluation is marked as incomplete and an operator is notified. Partial scores are not published.
-- What happens when a proposal contains adversarial or manipulative content?
-  LLM inputs MUST be sanitized. The system applies content filters and anomaly detection. Flagged proposals are queued for manual review before scores are published.
+- What happens when a proposal contains adversarial or manipulative content (prompt injection)?
+  The system uses a 3-layer defense: (1) Anti-injection instructions hardened into all Judge Agent system prompts (treat proposal text as DATA, not INSTRUCTIONS); (2) Score anomaly detection after all 4 judges complete — flags all-high (>=95), all-low (<=5), or extreme divergence (>50 point range); (3) Input preprocessing that strips common injection patterns (lines starting with SYSTEM:, INSTRUCTION:, IGNORE, OVERRIDE). Anomaly flags are stored in the evaluation record and displayed with a warning badge. Flagged proposals are queued for manual review before scores are published.
 - What happens when the on-chain transaction to submit a score fails?
   The system MUST retry with exponential backoff (up to 5 attempts). Failed transactions are logged and an alert is raised. Scores remain in off-chain storage until confirmed on-chain.
 - What happens when a dispute is initiated after the time window closes?
@@ -182,3 +182,4 @@ After each evaluation and monitoring cycle, the system writes reputation feedbac
 - Monitor Agent scheduling is configurable per project type: daily for software projects, weekly for research projects.
 - Standard OAuth2 authentication is used for platform operator access; the public dashboard is accessible without authentication.
 - Mobile support is out of scope for v1; the dashboard targets desktop and tablet browsers.
+- Score front-running is accepted on testnet. Commit-reveal pattern required for mainnet deployment (v2).
