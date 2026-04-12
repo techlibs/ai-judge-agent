@@ -23,6 +23,13 @@ Each branch represents a parallel exploration of the same product using differen
 - **full-vision-roadmap** — GSD's milestone-driven approach: 4-phase roadmap (foundation → AI pipeline → on-chain reputation → visualization), with per-phase research, UI design contracts, execution plans, and cross-AI peer reviews.
 - **superpower** — Superpowers' brainstorming-first approach: creative exploration of the problem space producing a design spec, then 4 structured implementation plans (smart contracts, app foundation, judge pipeline, UI pages).
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Audit Skills Toolkit](docs/audit-skills-toolkit.md) | Curated Claude Code skills for auditing across all layers: Solidity contracts, Next.js web app, TypeScript quality, dependency supply chain, and secrets management |
+| [Agent Team Audit Launch Guide](docs/agent-team-audit-launch.md) | Run all audit skills across 3 worktrees in parallel using Claude Code Agent Teams |
+
 ## Tech Stack
 
 - **Runtime**: Bun + TypeScript (strict mode)
