@@ -1644,3 +1644,142 @@ git commit -m "feat(contracts): add deployment script for Base Sepolia"
 | 8 | Deployment script + full test run | Deploy |
 
 **~400 lines of Solidity, ~350 lines of tests, 8 tasks.**
+
+---
+
+## Security Requirements (from SECURITY-ADDENDUM.md)
+
+### F-001: Access Control
+
+All contracts must use OpenZeppelin `AccessControl` instead of `Ownable`:
+
+- **IdentityRegistry:** Inherit `AccessControl` alongside ERC-721. Define `bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");`. Apply `onlyRole(REGISTRAR_ROLE)` to all 3 `register()` overloads. Constructor grants `DEFAULT_ADMIN_ROLE` and `REGISTRAR_ROLE` to deployer.
+- **ReputationRegistry:** Inherit `AccessControl`. Define `bytes32 public constant EVALUATOR_ROLE = keccak256("EVALUATOR_ROLE");`. Apply `onlyRole(EVALUATOR_ROLE)` to `giveFeedback()` and `appendResponse()`. Constructor grants `DEFAULT_ADMIN_ROLE` and `EVALUATOR_ROLE` to deployer.
+- **MilestoneManager:** Inherit `AccessControl` (replace `Ownable`). Define `bytes32 public constant RELEASE_MANAGER_ROLE = keccak256("RELEASE_MANAGER_ROLE");`. Apply `onlyRole(RELEASE_MANAGER_ROLE)` to `releaseMilestone()`. Constructor grants `DEFAULT_ADMIN_ROLE` and `RELEASE_MANAGER_ROLE` to deployer.
+- **Deploy.s.sol:** After deploying all contracts, grant cross-contract roles (`EVALUATOR_ROLE`, `SCORER_ROLE`, `REGISTRAR_ROLE`, `RELEASE_MANAGER_ROLE`) to the server wallet.
+
+### F-003: Input Size Limits (Solidity)
+
+Add `require(bytes(...).length <= N)` checks on all string parameters:
+- `agentURI`: `require(bytes(agentURI).length <= 256, "URI too long");` in `register()` and `setAgentURI()`
+- `tag1`, `tag2` in `giveFeedback()`: `require(bytes(tag1).length <= 64, "tag1 too long");` and same for `tag2`
+- `metadataKey` in `setMetadata()`: `require(bytes(metadataKey).length <= 64, "key too long");`
+- `metadataValue` in `setMetadata()`: `require(metadataValue.length <= 1024, "value too long");`
+
+### F-004: Constructor vs Initialize (ReputationRegistry)
+
+Replace `initialize(address identityRegistry_)` with a constructor parameter:
+```solidity
+constructor(address identityRegistry_) {
+    require(identityRegistry_ != address(0), "Zero address");
+    identityRegistry = IIdentityRegistry(identityRegistry_);
+}
+```
+Update Deploy.s.sol to deploy IdentityRegistry first and pass its address to ReputationRegistry constructor.
+
+### F-005: Remove setAgentWallet (v1)
+
+Remove from IdentityRegistry:
+- `setAgentWallet(uint256 agentId, address newWallet, uint256 deadline, bytes signature)`
+- `getAgentWallet(uint256 agentId)`
+- `unsetAgentWallet(uint256 agentId)`
+- `_agentWallets` storage mapping
+- The "agentWallet is cleared on transfer" hook
+
+Agent wallet management deferred to v2 pending full EIP-712 implementation.
+
+### F-006: Fund Recovery (MilestoneManager)
+
+Add `withdrawUnreleasedFunds(bytes32 projectId, uint8 milestoneIndex)` restricted to `DEFAULT_ADMIN_ROLE` and `emergencyWithdraw(address payable recipient)` restricted to `DEFAULT_ADMIN_ROLE`. Add corresponding events: `UnreleasedFundsWithdrawn` and `EmergencyWithdrawal`.
+
+### F-007: Reentrancy Guard (MilestoneManager)
+
+Import and inherit `ReentrancyGuard`. Apply `nonReentrant` to all ETH-transferring functions: `releaseMilestone`, `withdrawUnreleasedFunds`, `emergencyWithdraw`.
+
+### F-017: Pausable
+
+Add OpenZeppelin `Pausable` to all contracts. Apply `whenNotPaused` to:
+- IdentityRegistry: `register()` (all overloads), `setAgentURI()`, `setMetadata()`
+- ReputationRegistry: `giveFeedback()`, `appendResponse()`
+- MilestoneManager: `releaseMilestone()` (NOT `withdrawUnreleasedFunds` or `emergencyWithdraw`)
+
+Each contract gets `pause()` and `unpause()` restricted to `DEFAULT_ADMIN_ROLE`.
+
+### F-018: MAX_SUPPLY (IdentityRegistry)
+
+Add `uint256 public constant MAX_SUPPLY = 1000;` and check `require(_tokenCount < MAX_SUPPLY, "Max supply reached");` in `register()`.
+
+### F-019: Pagination and Bounds (ReputationRegistry)
+
+- `readAllFeedback()`: Add `uint64 offset` and `uint64 limit` parameters. `require(limit <= 100, "Limit too high");`
+- `getSummary()`: Add `require(clientAddresses.length <= 50, "Too many client addresses");`
+- Add `uint64 public constant MAX_FEEDBACK_PER_AGENT = 10000;` and check in `giveFeedback()`.
+
+### F-022: Integer Division (ReputationRegistry)
+
+Use basis points (multiply by 10000) for average calculations in `getSummary()`. Set `summaryValueDecimals = 4`.
+
+### F-023: Enforce valueDecimals = 2
+
+Add `require(valueDecimals == 2, "Only valueDecimals=2 supported in v1");` in `giveFeedback()`.
+
+### F-024: Explicit Existence Flag
+
+Add `bool exists;` field to Feedback struct. Set `exists = true` when creating feedback. Use `require(fb.exists, "Feedback does not exist");` in `revokeFeedback()`.
+
+### F-027: Gas Cap on ETH Transfer
+
+Add `gas: 10000` to `.call{value: amount}` invocations as defense-in-depth alongside `nonReentrant`.
+
+### F-028: Cross-Contract Validation
+
+In `giveFeedback()`, verify agent exists: `try identityRegistry.ownerOf(agentId) returns (address owner) { require(owner != address(0)); } catch { revert("Agent does not exist"); }`
+
+### F-029: Soulbound Enforcement
+
+Override `_update` to block transfers between non-zero addresses (already present — verify it uses custom error `SoulboundToken`).
+
+### F-034: Front-Running Note
+
+V2 requirement: commit-reveal for score publication to prevent MEV front-running. Accepted risk on testnet.
+
+### F-036: Gas Optimization — Tight Variable Packing
+
+Pack struct fields by size for optimal storage slot efficiency. EvaluationRegistry and MilestoneManager structs should be ordered smallest-to-largest.
+
+### F-037: Named Constants
+
+Extract magic numbers to named constants:
+```solidity
+uint16 public constant SCORE_PRECISION = 100;
+uint16 public constant REPUTATION_BASE = 10000;
+uint16 public constant REPUTATION_MAX = 10500;
+uint16 public constant FUND_RELEASE_DIVISOR = 10;
+```
+
+### F-038: Event Indexing
+
+Ensure events have appropriate `indexed` annotations (max 3 per event). Prioritize fields used in subgraph filters:
+- `MilestoneReleased`: `identityId` (indexed)
+- `UnreleasedFundsWithdrawn`: `projectId` (indexed)
+
+### F-039: Contract Migration Strategy
+
+Contracts are intentionally non-upgradeable for v1 to avoid proxy complexity. If a critical bug is found:
+1. Pause the affected contract via `pause()`
+2. Deploy a new version
+3. Migrate state by replaying events from The Graph
+4. Update contract addresses in environment variables
+5. Rebuild read cache from new contract
+
+For mainnet, evaluate UUPS proxy pattern.
+
+### F-043: Custom Errors for Size Optimization
+
+Use custom errors instead of require strings to reduce bytecode:
+```solidity
+error Unauthorized();
+error MaxSupplyReached();
+error URITooLong();
+```
+Monitor contract sizes with `forge build --sizes`. If any exceeds 20KB, split into library + main contract.

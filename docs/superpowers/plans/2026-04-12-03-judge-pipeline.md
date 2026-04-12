@@ -136,8 +136,38 @@ import { getDb } from "@/lib/db/client";
 import { proposals } from "@/lib/db/schema";
 import { ProposalInputSchema } from "@/types";
 import { uploadJson, ipfsUri } from "@/lib/ipfs/client";
+import { proposalSubmitLimiter } from "@/lib/rate-limit";
+import { logSecurityEvent } from "@/lib/security-log";
+
+// F-003: Body size limit
+const MAX_BODY_SIZE = 256 * 1024; // 256 KB
 
 export async function POST(request: Request) {
+  // F-003: Reject oversized payloads
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_BODY_SIZE) {
+    return NextResponse.json({ error: "PAYLOAD_TOO_LARGE" }, { status: 413 });
+  }
+
+  // F-002: Rate limiting
+  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
+  const { success, reset } = await proposalSubmitLimiter.limit(ip);
+  if (!success) {
+    const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+    logSecurityEvent({ type: "rate_limited", ip, endpoint: "/api/proposals", limit: "5/h" });
+    return NextResponse.json(
+      { error: "RATE_LIMITED", retryAfter },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    );
+  }
+
+  // F-020: Origin header validation (CSRF protection)
+  const origin = request.headers.get("origin");
+  const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  if (!origin || origin !== allowedOrigin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const body = await request.json();
   const parsed = ProposalInputSchema.safeParse(body);
 
@@ -151,6 +181,20 @@ export async function POST(request: Request) {
   const proposal = parsed.data;
   const id = crypto.randomUUID();
   const now = new Date();
+
+  // F-025: PII scan before IPFS upload
+  const PII_PATTERNS = [
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/i,  // Email
+    /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,                        // US phone
+    /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/,                        // BR CPF
+    /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/,              // IP address
+  ];
+  const textToScan = [proposal.title, proposal.description, proposal.problemStatement, proposal.proposedSolution].join(" ");
+  const piiFound = PII_PATTERNS.filter(p => p.test(textToScan)).map(p => p.source);
+  if (piiFound.length > 0) {
+    logSecurityEvent({ type: "pii_detected", proposalId: id, patterns: piiFound });
+    return NextResponse.json({ error: "PII_DETECTED", message: "Remove personal information before submitting" }, { status: 422 });
+  }
 
   // Upload proposal to IPFS
   const ipfsResult = await uploadJson(
@@ -207,8 +251,12 @@ import { getJudgePrompt, buildProposalContext } from "@/lib/judges/prompts";
 import { getDb } from "@/lib/db/client";
 import { proposals, evaluations } from "@/lib/db/schema";
 import { uploadJson } from "@/lib/ipfs/client";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
+import { evaluationTriggerLimiter } from "@/lib/rate-limit";
+
+// F-012: Set max duration for Vercel Fluid Compute
+export const maxDuration = 60;
 
 export async function GET(
   request: Request,
@@ -222,6 +270,13 @@ export async function GET(
   }
   const dim = dimension as JudgeDimension;
 
+  // F-002: Rate limiting on streaming endpoint
+  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
+  const { success } = await evaluationTriggerLimiter.limit(ip);
+  if (!success) {
+    return new Response("Too Many Requests", { status: 429 });
+  }
+
   // Fetch proposal
   const db = getDb();
   const proposal = await db.query.proposals.findFirst({
@@ -230,6 +285,17 @@ export async function GET(
 
   if (!proposal) {
     return new Response("Proposal not found", { status: 404 });
+  }
+
+  // F-011: Idempotency check — if evaluation already exists, don't create another
+  const existingEval = await db.query.evaluations.findFirst({
+    where: and(eq(evaluations.proposalId, id), eq(evaluations.dimension, dim)),
+  });
+  if (existingEval?.status === "complete") {
+    return new Response(JSON.stringify(existingEval), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+  if (existingEval?.status === "streaming") {
+    return new Response("Evaluation already in progress", { status: 409 });
   }
 
   // Create evaluation record
@@ -244,13 +310,19 @@ export async function GET(
     startedAt: new Date(),
   });
 
+  // F-012: AbortController with 90s hard timeout
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90_000);
+
   // Stream judge evaluation (AI SDK v6: streamText + Output.object)
   const result = streamText({
     model: openai("gpt-4o"),
     output: Output.object({ schema: JudgeEvaluationSchema }),
     system: getJudgePrompt(dim),
     prompt: buildProposalContext(proposal),
+    abortSignal: controller.signal,
     onFinish: async ({ output }) => {
+      clearTimeout(timeout);
       if (!output) {
         await db
           .update(evaluations)
@@ -357,12 +429,42 @@ export async function checkAndFinalizeEvaluation(proposalId: string): Promise<{
     };
   }
 
+  // F-011: Idempotency — check if aggregate already exists
+  const existingAggregate = await db.query.aggregateScores.findFirst({
+    where: eq(aggregateScores.proposalId, proposalId),
+  });
+  if (existingAggregate) {
+    return { complete: true, aggregateScore: existingAggregate.scoreBps };
+  }
+
   // Compute aggregate S0
   const scores: Record<string, number> = {};
   for (const evaluation of completeEvals) {
     if (evaluation.score !== null) {
       scores[evaluation.dimension] = evaluation.score;
     }
+  }
+
+  // F-010: Score anomaly detection
+  const ANOMALY_THRESHOLDS = {
+    ALL_MAX: 9500,
+    ALL_MIN: 500,
+    MAX_DIVERGENCE: 5000,
+  };
+  const scoreValues = Object.values(scores);
+  const anomalyFlags: string[] = [];
+  if (scoreValues.every(s => s >= ANOMALY_THRESHOLDS.ALL_MAX)) {
+    anomalyFlags.push("ALL_SCORES_SUSPICIOUSLY_HIGH");
+  }
+  if (scoreValues.every(s => s <= ANOMALY_THRESHOLDS.ALL_MIN)) {
+    anomalyFlags.push("ALL_SCORES_SUSPICIOUSLY_LOW");
+  }
+  const scoreRange = Math.max(...scoreValues) - Math.min(...scoreValues);
+  if (scoreRange > ANOMALY_THRESHOLDS.MAX_DIVERGENCE) {
+    anomalyFlags.push("EXTREME_SCORE_DIVERGENCE");
+  }
+  if (anomalyFlags.length > 0) {
+    logSecurityEvent({ type: "score_anomaly", proposalId, flags: anomalyFlags });
   }
 
   const aggregateBps = computeAggregateScore(
@@ -443,12 +545,34 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { proposals } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { evaluationTriggerLimiter, globalEvaluationLimiter } from "@/lib/rate-limit";
+import { logSecurityEvent } from "@/lib/security-log";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // F-002: Rate limiting (per-IP and global)
+  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
+  const { success: ipSuccess, reset } = await evaluationTriggerLimiter.limit(ip);
+  if (!ipSuccess) {
+    const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+    logSecurityEvent({ type: "rate_limited", ip, endpoint: `/api/evaluate/${id}`, limit: "10/h" });
+    return NextResponse.json({ error: "RATE_LIMITED", retryAfter }, { status: 429, headers: { "Retry-After": String(retryAfter) } });
+  }
+  const { success: globalSuccess } = await globalEvaluationLimiter.limit("global");
+  if (!globalSuccess) {
+    return NextResponse.json({ error: "TOO_MANY_EVALUATIONS", message: "System is at capacity. Try again later." }, { status: 503 });
+  }
+
+  // F-020: Origin header validation
+  const origin = request.headers.get("origin");
+  const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  if (!origin || origin !== allowedOrigin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const db = getDb();
   const proposal = await db.query.proposals.findFirst({
@@ -542,25 +666,8 @@ export async function GET(
     ])
   );
 
-  // Check if all complete and trigger finalization
-  const completeCount = evals.filter((e) => e.status === "complete").length;
-  if (completeCount === 4 && proposal.status === "evaluating") {
-    try {
-      const result = await checkAndFinalizeEvaluation(id);
-      if (result.complete) {
-        return NextResponse.json({
-          status: "published",
-          dimensions,
-          aggregateScore: result.aggregateScore,
-        });
-      }
-    } catch {
-      return NextResponse.json({
-        status: "failed",
-        dimensions,
-      });
-    }
-  }
+  // F-011: GET must be read-only — no write side effects.
+  // Finalization is triggered via POST /api/evaluate/[id]/finalize
 
   const aggregate = await db.query.aggregateScores.findFirst({
     where: eq(aggregateScores.proposalId, id),
@@ -582,6 +689,41 @@ cd /Users/libardo/carlos/projects/ipe-city/agent-reviewer
 git add src/app/api/evaluate/
 git commit -m "feat: add evaluation status polling endpoint"
 ```
+
+---
+
+### Task 4a: Evaluation Finalization Endpoint (F-011)
+
+**Files:**
+- Create: `src/app/api/evaluate/[id]/finalize/route.ts`
+
+- [ ] **Step 1: Create POST finalize endpoint**
+
+Create `src/app/api/evaluate/[id]/finalize/route.ts`:
+
+```typescript
+import { NextResponse } from "next/server";
+import { checkAndFinalizeEvaluation } from "@/lib/evaluation/orchestrator";
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  try {
+    const result = await checkAndFinalizeEvaluation(id);
+    if (result.complete) {
+      return NextResponse.json({ status: "published", aggregateScore: result.aggregateScore });
+    }
+    return NextResponse.json({ status: "not_ready" }, { status: 202 });
+  } catch {
+    return NextResponse.json({ status: "failed" }, { status: 500 });
+  }
+}
+```
+
+- [ ] **Step 2: Commit**
 
 ---
 
@@ -780,3 +922,10 @@ git commit -m "feat: add judge retry endpoint for failed evaluations"
 | 6 | Judge retry endpoint | Task 2 |
 
 **After this plan:** The full evaluation pipeline works end-to-end. Plan 4 (UI) connects the browser to these endpoints.
+
+---
+
+## Security Notes
+
+- **F-042 (Retry Logic):** Wrap chain transaction calls in `withRetry` with exponential backoff: initial 1s, multiplier 2x, max 30s, 5 attempts.
+- **F-015 (Monitoring Cron):** When monitoring cron is added, protect with `CRON_SECRET` via Authorization bearer header validation.
