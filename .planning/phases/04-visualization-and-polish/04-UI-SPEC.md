@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: true
 preset: to-be-confirmed-by-phase-1
 created: 2026-04-12
+revised: 2026-04-12
 ---
 
 # Phase 4 — UI Design Contract
@@ -53,20 +54,21 @@ Exceptions:
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
+| Label | 14px | 400 (regular) | 1.4 |
 | Body | 16px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Display | 28px | 600 (semibold) | 1.2 |
+
+**Font sizes: 4 (14px, 16px, 20px, 28px). Font weights: 2 (400, 600).**
 
 ### Phase 4 Specific Typography
 
 | Element | Size | Weight | Notes |
 |---------|------|--------|-------|
-| Chart axis labels (desktop) | 14px | 400 | Full dimension names: "Technical", "Impact", "Cost", "Team" |
-| Chart axis labels (mobile) | 12px | 400 | Abbreviated if needed: "Tech", "Impact", "Cost", "Team" |
-| Aggregate score display | 36px | 700 (bold) | Large numeral showing weighted score (0-100) |
+| Chart axis labels (all viewports) | 14px | 400 | Use abbreviated labels on mobile: "Tech", "Impact", "Cost", "Team". Full labels on desktop: "Technical", "Impact", "Cost", "Team" |
+| Aggregate score display | 28px | 600 (semibold) | Large numeral showing weighted score (0-100). Use `var(--chart-1)` accent color for visual prominence. |
 | Score value in tooltip | 16px | 600 | Score number inside chart tooltip |
-| Dimension weight label | 12px | 400 | e.g. "25%" shown alongside dimension name |
+| Dimension weight label | 14px | 400 | e.g. "25%" shown alongside dimension name |
 
 ---
 
@@ -245,6 +247,7 @@ Desktop (>= 768px):
 | Touch targets | Minimum 44x44px for all tappable elements (buttons, links, nav items) |
 | Color contrast | All text meets WCAG 2.1 AA (4.5:1 for body, 3:1 for large text). Ensured by shadcn defaults. |
 | Motion | Respect `prefers-reduced-motion`. Disable chart entry animations when user prefers reduced motion. |
+| Hamburger menu icon | `aria-label="Toggle navigation"` on the mobile nav toggle button (Lucide `Menu` icon, 24px). Icon-only interactive element must have accessible label. |
 
 ---
 
