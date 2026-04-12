@@ -4,6 +4,8 @@
 **Domain:** AI/LLM structured output, durable workflows, real-time subscriptions, prompt engineering
 **Confidence:** HIGH
 
+> **ARCHITECTURE NOTE:** This document was researched under Convex assumptions (durable workflows, subscriptions, Convex schema). The actual implementation uses **on-chain + IPFS + SSE** per CLAUDE.md constraints. All Convex-specific patterns (e.g., `@convex-dev/workflow`, Convex subscriptions, `convex-helpers`) are inapplicable. The plans (02-01, 02-02, 02-03) implement the correct architecture using Next.js API routes with SSE for real-time progress, Pinata for IPFS pinning, and viem for chain interactions.
+
 ## Summary
 
 Phase 2 builds the core AI evaluation pipeline: 4 independent Judge Agents evaluate grant proposals across Technical Feasibility (25%), Impact Potential (30%), Cost Efficiency (20%), and Team Capability (25%). Each agent produces structured output (score 0-100, justification, recommendation, key findings) via OpenAI's structured output with Zod schemas. The evaluation is orchestrated as a durable Convex workflow with parallel agent execution, real-time progress via Convex subscriptions, and a complete audit trail.
@@ -506,22 +508,22 @@ Evaluate the following proposal:`;
 | A4 | GPT-4o is the right model for all 4 dimensions | Standard Stack | Could use gpt-4o-mini for cost savings on simpler dimensions |
 | A5 | Max 3 key findings is sufficient per dimension | Requirements | Users may want more detail; 3 keeps output focused |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Prompt engineering iteration strategy**
+1. **Prompt engineering iteration strategy** — RESOLVED
    - What we know: Rubric bands are defined (0-20, 21-40, etc.) per EVAL-05
    - What's unclear: How many iterations of prompt tuning are needed to get calibrated scores
-   - Recommendation: Start with a single well-structured prompt per dimension, test with 2-3 sample proposals of varying quality, adjust rubric wording based on score distribution
+   - Resolution: Start with a single well-structured prompt per dimension with detailed 5-band rubric wording. Tune iteratively post-launch. Plans implement comprehensive rubrics in `buildSystemPrompt` per dimension.
 
-2. **EVAL-08 implementation scope**
+2. **EVAL-08 implementation scope** — RESOLVED
    - What we know: Need before/after comparison of naive vs structured prompt
    - What's unclear: Is this a live demo feature (user can toggle) or a static comparison page?
-   - Recommendation: Implement as a static comparison section on the evaluation results page showing pre-computed examples. Running both prompts on every submission doubles API cost for no user value.
+   - Resolution: Static comparison section with pre-computed examples. A `NAIVE_PROMPT` constant and `PromptComparison` component show side-by-side output. No live toggle — doubles API cost for no user value.
 
-3. **Error handling for individual agent failures**
-   - What we know: @convex-dev/workflow supports step-level retry
+3. **Error handling for individual agent failures** — RESOLVED
+   - What we know: Orchestrator runs 4 agents in parallel via Promise.allSettled
    - What's unclear: What if an agent consistently fails (content policy, API errors)?
-   - Recommendation: Configure retry with backoff (3 attempts). If all retries fail, mark that dimension as "failed" and compute aggregate from available dimensions with a warning.
+   - Resolution: Use `Promise.allSettled` to isolate failures. Failed dimensions get `status: 'failed'` in the evaluation result. Aggregate score computed from successful dimensions only, with a warning flag. No retry — keeps initial implementation simple.
 
 ## Environment Availability
 
