@@ -8,26 +8,20 @@ The system evaluates grant proposals using AI-powered Judge Agents that score ac
 
 This repo uses a **clean main** approach. Each development methodology gets its own long-lived branch, worked on in isolated git worktrees:
 
-| Branch | Framework | Purpose |
-|--------|-----------|---------|
-| `main` | — | Clean default branch (README only) |
-| `001-arwf-judge-system` | [Spec Kit](https://github.com/gallium-ai/speckit) | Specification-driven development: spec.md, plan.md, data-model.md, contracts/, tasks.md |
-| `full-vision-roadmap` | [GSD](https://github.com/gallium-ai/gsd) + Superpowers | Phase-based roadmap with research, UI specs, and execution plans |
+| Branch | Framework | Purpose | Files | Status |
+|--------|-----------|---------|-------|--------|
+| `main` | — | Clean default branch (README only) | — | Stable |
+| `speckit` | [Spec Kit](https://github.com/gallium-ai/speckit) | Specification-driven development: spec.md, plan.md, data-model.md, contracts/, tasks.md | 78 files (+11.9k lines) | Planning complete |
+| `full-vision-roadmap` | [GSD](https://github.com/gallium-ai/gsd) | Full 4-phase roadmap with research, UI specs, phase plans, and on-chain + IPFS architecture | 43 files (+10.9k lines) | Planning complete |
+| `superpower` | [GSD](https://github.com/gallium-ai/gsd) + [Superpowers](https://github.com/gallium-ai/superpowers) | Superpowers-driven workflow: brainstorming specs, writing-plans, and GSD planning artifacts | 38 files (+13.2k lines) | Planning complete |
 
 Each branch represents a parallel exploration of the same product using different AI-assisted development frameworks. The goal is to compare how each approach handles the same problem space — from requirements gathering through implementation planning.
 
-### Working with branches
+### What each branch explores
 
-```bash
-# Each branch is checked out in its own worktree
-git worktree list
-
-# Spec Kit branch (specification-first)
-cd .claude/worktrees/test-github-spec
-
-# GSD branch (milestone-driven)
-# (checked out in the main worktree)
-```
+- **speckit** — Spec Kit's specification-first approach: formal spec, research, data model, contracts, quickstart guide, and task breakdown. Single-commit, structured artifact tree.
+- **full-vision-roadmap** — GSD's milestone-driven approach: 4-phase roadmap (foundation → AI pipeline → on-chain reputation → visualization), with per-phase research, UI design contracts, and execution plans. 21 commits of incremental planning.
+- **superpower** — Superpowers + GSD hybrid: brainstorming-first design spec, then implementation plans generated via the writing-plans skill, plus GSD planning artifacts for project/requirements/roadmap.
 
 ## Tech Stack
 
