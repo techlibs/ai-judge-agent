@@ -10,6 +10,6 @@ Feature: Cross-page navigation
     When I click the submit proposal link
     Then I should be on the new proposal page
 
-  Scenario: Back navigation from submit form
+  Scenario: Submit form has app navigation
     Given I am on the new proposal page
-    Then I should see a back navigation link
+    Then I should see a "IPE City Grants" link

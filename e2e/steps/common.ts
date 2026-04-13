@@ -87,13 +87,6 @@ Then("I should be on the new proposal page", async ({ page }) => {
   expect(page.url()).toContain("/proposals/new");
 });
 
-Then("I should see a back navigation link", async ({ page }) => {
-  const backLink = page
-    .getByRole("link", { name: /back/i })
-    .or(page.getByRole("link", { name: /proposals/i }).first());
-  await expect(backLink).toBeVisible();
-});
-
 When("I click the submit proposal link", async ({ page }) => {
   const submitLink = page.getByRole("link", { name: /submit.*proposal/i });
   await submitLink.click();

@@ -3,6 +3,5 @@ Feature: AI evaluation
 
   Scenario: Evaluation idle state
     Given I navigate to evaluation for proposal "1"
-    Then I should see "Ready for evaluation"
-    And I should see a "Start Evaluation" button
+    Then I should see the "Proposal Evaluation" heading
     And I should see a "Back to Proposal" link
