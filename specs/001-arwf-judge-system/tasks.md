@@ -147,14 +147,14 @@
 
 **Independent Test**: Trigger a monitoring cycle for a funded project, verify updated score with GitHub/on-chain/social metrics and risk flags are produced and visible on dashboard
 
-- [ ] T052 [P] [US4] Create Monitor Agent config and system prompt in src/monitoring/agent-config.ts (metrics collection strategy, risk flag criteria)
-- [ ] T053 [P] [US4] Implement GitHub metrics collector in src/monitoring/github.ts (commit frequency, issue velocity, releases via GitHub API)
-- [ ] T054 [P] [US4] Implement on-chain metrics collector in src/monitoring/onchain.ts (transaction count, fund utilization via viem)
-- [ ] T055 [P] [US4] Implement social metrics collector in src/monitoring/social.ts (announcements, community engagement)
-- [ ] T056 [US4] Implement Monitor Agent runner using Mastra `agent.generate({ structuredOutput })` (which uses `generateObject` internally) in src/monitoring/runner.ts (collect metrics, generate MonitoringScoreSchema output, produce risk flags)
-- [ ] T057 [US4] Implement monitoring orchestrator in src/monitoring/orchestrate.ts (run Monitor Agent, pin MonitoringReport to IPFS, submit updated score to chain, trigger fund release recalculation)
-- [ ] T058 [US4] Implement monitoring cron API route in src/app/api/cron/monitoring/route.ts (scheduled trigger for monitoring cycles per project). Validate CRON_SECRET via Authorization bearer header — return 401 if invalid.
-- [ ] T059 [US4] Add monitoring data and risk flags display to proposal detail page in src/app/grants/[id]/page.tsx
+- [X] T052 [P] [US4] Create Monitor Agent config and system prompt in src/monitoring/agent-config.ts (metrics collection strategy, risk flag criteria)
+- [X] T053 [P] [US4] Implement GitHub metrics collector in src/monitoring/github.ts (commit frequency, issue velocity, releases via GitHub API)
+- [X] T054 [P] [US4] Implement on-chain metrics collector in src/monitoring/onchain.ts (transaction count, fund utilization via viem)
+- [X] T055 [P] [US4] Implement social metrics collector in src/monitoring/social.ts (announcements, community engagement)
+- [X] T056 [US4] Implement Monitor Agent runner using Mastra `agent.generate({ structuredOutput })` (which uses `generateObject` internally) in src/monitoring/runner.ts (collect metrics, generate MonitoringScoreSchema output, produce risk flags)
+- [X] T057 [US4] Implement monitoring orchestrator in src/monitoring/orchestrate.ts (run Monitor Agent, pin MonitoringReport to IPFS, submit updated score to chain, trigger fund release recalculation)
+- [X] T058 [US4] Implement monitoring cron API route in src/app/api/cron/monitoring/route.ts (scheduled trigger for monitoring cycles per project). Validate CRON_SECRET via Authorization bearer header — return 401 if invalid.
+- [X] T059 [US4] Add monitoring data and risk flags display to proposal detail page in src/app/grants/[id]/page.tsx
 
 **Checkpoint**: Monitoring cycle runs on schedule, produces updated score with metrics and risk flags, visible on dashboard
 
