@@ -1,5 +1,5 @@
 import { generateObject, generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import {
   evaluationOutputSchema,
   type EvaluationDimension,
@@ -15,7 +15,7 @@ export async function evaluateDimension(
   const systemPrompt = buildSystemPrompt(dimension);
 
   const result = await generateObject({
-    model: anthropic(MODEL_CONFIG.model),
+    model: openai(MODEL_CONFIG.model),
     system: systemPrompt,
     prompt: proposalText,
     schema: evaluationOutputSchema,
@@ -48,7 +48,7 @@ export async function evaluateNaive(
   proposalText: string,
 ): Promise<string> {
   const result = await generateText({
-    model: anthropic(MODEL_CONFIG.model),
+    model: openai(MODEL_CONFIG.model),
     prompt: `${NAIVE_PROMPT}\n\n${proposalText}`,
     temperature: MODEL_CONFIG.temperature,
     maxOutputTokens: MODEL_CONFIG.maxTokens,

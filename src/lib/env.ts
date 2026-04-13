@@ -1,8 +1,7 @@
 import { z } from "zod";
 
 const serverEnvSchema = z.object({
-  PINATA_API_KEY: z.string().min(1).optional(),
-  PINATA_SECRET_KEY: z.string().min(1).optional(),
+  PINATA_JWT: z.string().min(1).optional(),
   PINATA_GATEWAY_URL: z.string().url().optional(),
   RPC_URL: z.string().url().min(1),
   DEPLOYER_PRIVATE_KEY: z.string().min(1),

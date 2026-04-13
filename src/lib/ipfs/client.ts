@@ -12,16 +12,15 @@ function isValidCID(cid: string): boolean {
 
 export async function pinJSON(data: unknown): Promise<string> {
   const env = getServerEnv();
-  if (!env.PINATA_API_KEY || !env.PINATA_SECRET_KEY) {
-    throw new Error("Pinata credentials not configured");
+  if (!env.PINATA_JWT) {
+    throw new Error("Pinata JWT not configured");
   }
 
   const response = await fetch(PINATA_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      pinata_api_key: env.PINATA_API_KEY,
-      pinata_secret_api_key: env.PINATA_SECRET_KEY,
+      Authorization: `Bearer ${env.PINATA_JWT}`,
     },
     body: JSON.stringify({ pinataContent: data }),
   });

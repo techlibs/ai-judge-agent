@@ -16,9 +16,9 @@ export async function pinEvaluationToIPFS(
   evaluation: ProposalEvaluation,
 ): Promise<string> {
   const env = getServerEnv();
-  if (!env.PINATA_API_KEY || !env.PINATA_SECRET_KEY) {
+  if (!env.PINATA_JWT) {
     console.warn(
-      "Pinata credentials not configured — skipping IPFS pinning",
+      "Pinata JWT not configured — skipping IPFS pinning",
     );
     return "ipfs-disabled";
   }
@@ -27,8 +27,7 @@ export async function pinEvaluationToIPFS(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      pinata_api_key: env.PINATA_API_KEY,
-      pinata_secret_api_key: env.PINATA_SECRET_KEY,
+      Authorization: `Bearer ${env.PINATA_JWT}`,
     },
     body: JSON.stringify({
       pinataContent: evaluation,

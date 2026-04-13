@@ -28,7 +28,7 @@ export const IPE_CITY_VALUES = `IPE City core values that should inform your eva
 3. Pro-human progress: Favor proposals that measurably improve human capability and quality of life`;
 
 export const MODEL_CONFIG = {
-  model: "claude-sonnet-4-20250514" as const,
+  model: "gpt-4o" as const,
   temperature: 0.3,
   maxTokens: 1500,
 } as const;
