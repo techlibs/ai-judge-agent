@@ -26,6 +26,6 @@ SCORING REFERENCE:
 - 0-2: Project appears stalled or abandoned`;
 
 const MONITOR_PROMPT_VERSION = "v1.0.0";
-const MONITOR_MODEL_ID = "claude-sonnet-4-6";
+const MONITOR_MODEL_ID = "gpt-4o";
 
 export { MONITOR_SYSTEM_PROMPT, MONITOR_PROMPT_VERSION, MONITOR_MODEL_ID };

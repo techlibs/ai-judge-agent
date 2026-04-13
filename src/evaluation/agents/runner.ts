@@ -1,5 +1,5 @@
 import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import { DimensionScoreSchema, type SanitizedProposal, type DimensionScore, type ScoringDimension, SCORING_DIMENSIONS } from "../schemas";
 import { DIMENSION_CONFIGS, MODEL_ID, PROMPT_VERSION } from "./prompts";
 
@@ -36,7 +36,7 @@ async function evaluateDimension(
 
   try {
     const result = await generateObject({
-      model: anthropic(MODEL_ID),
+      model: openai(MODEL_ID),
       schema: DimensionScoreSchema,
       system: config.systemPrompt,
       prompt: `Evaluate the following grant proposal on the "${config.dimension}" dimension.

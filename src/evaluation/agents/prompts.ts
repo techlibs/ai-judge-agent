@@ -170,6 +170,6 @@ export const DIMENSION_CONFIGS: Record<ScoringDimension, DimensionConfig> = {
 };
 
 export const PROMPT_VERSION = "v1.0.0";
-export const MODEL_ID = "claude-sonnet-4-6";
+export const MODEL_ID = "gpt-4o";
 
 export type { DimensionConfig };
