@@ -103,49 +103,49 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PROP-01 | Pending | Pending |
-| PROP-02 | Pending | Pending |
-| PROP-03 | Pending | Pending |
-| PROP-04 | Pending | Pending |
-| PROP-05 | Pending | Pending |
-| SCOR-01 | Pending | Pending |
-| SCOR-02 | Pending | Pending |
-| SCOR-03 | Pending | Pending |
-| SCOR-04 | Pending | Pending |
-| SCOR-05 | Pending | Pending |
-| SCOR-06 | Pending | Pending |
-| SCOR-07 | Pending | Pending |
-| SECU-01 | Pending | Pending |
-| SECU-02 | Pending | Pending |
-| SECU-03 | Pending | Pending |
-| SECU-04 | Pending | Pending |
-| FRAD-01 | Pending | Pending |
-| FRAD-02 | Pending | Pending |
-| FRAD-03 | Pending | Pending |
-| FRAD-04 | Pending | Pending |
-| IMPT-01 | Pending | Pending |
-| IMPT-02 | Pending | Pending |
-| IMPT-03 | Pending | Pending |
-| ZKML-01 | Pending | Pending |
-| ZKML-02 | Pending | Pending |
-| ZKML-03 | Pending | Pending |
-| ZKML-04 | Pending | Pending |
-| ZKML-05 | Pending | Pending |
-| CHAIN-01 | Pending | Pending |
-| CHAIN-02 | Pending | Pending |
-| CHAIN-03 | Pending | Pending |
-| CHAIN-04 | Pending | Pending |
-| TEST-01 | Pending | Pending |
-| TEST-02 | Pending | Pending |
-| TEST-03 | Pending | Pending |
-| TEST-04 | Pending | Pending |
-| TEST-05 | Pending | Pending |
+| PROP-01 | Phase 2 | Pending |
+| PROP-02 | Phase 2 | Pending |
+| PROP-03 | Phase 2 | Pending |
+| PROP-04 | Phase 2 | Pending |
+| PROP-05 | Phase 2 | Pending |
+| SCOR-01 | Phase 4 | Pending |
+| SCOR-02 | Phase 4 | Pending |
+| SCOR-03 | Phase 4 | Pending |
+| SCOR-04 | Phase 4 | Pending |
+| SCOR-05 | Phase 4 | Pending |
+| SCOR-06 | Phase 4 | Pending |
+| SCOR-07 | Phase 4 | Pending |
+| SECU-01 | Phase 3 | Pending |
+| SECU-02 | Phase 3 | Pending |
+| SECU-03 | Phase 3 | Pending |
+| SECU-04 | Phase 3 | Pending |
+| FRAD-01 | Phase 3 | Pending |
+| FRAD-02 | Phase 3 | Pending |
+| FRAD-03 | Phase 3 | Pending |
+| FRAD-04 | Phase 3 | Pending |
+| IMPT-01 | Phase 3 | Pending |
+| IMPT-02 | Phase 3 | Pending |
+| IMPT-03 | Phase 3 | Pending |
+| ZKML-01 | Phase 5 | Pending |
+| ZKML-02 | Phase 5 | Pending |
+| ZKML-03 | Phase 5 | Pending |
+| ZKML-04 | Phase 5 | Pending |
+| ZKML-05 | Phase 5 | Pending |
+| CHAIN-01 | Phase 6 | Pending |
+| CHAIN-02 | Phase 6 | Pending |
+| CHAIN-03 | Phase 6 | Pending |
+| CHAIN-04 | Phase 6 | Pending |
+| TEST-01 | Phase 7 | Pending |
+| TEST-02 | Phase 7 | Pending |
+| TEST-03 | Phase 7 | Pending |
+| TEST-04 | Phase 7 | Pending |
+| TEST-05 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37 ⚠️
+- Mapped to phases: 37
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-13*
-*Last updated: 2026-04-13 after initial definition*
+*Last updated: 2026-04-13 after roadmap creation*
