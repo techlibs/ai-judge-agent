@@ -1,0 +1,47 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: EvaluationRegistry
+    network: base-sepolia
+    source:
+      abi: EvaluationRegistry
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Evaluation
+      abis:
+        - name: EvaluationRegistry
+          file: ../out/EvaluationRegistry.sol/EvaluationRegistry.json
+      eventHandlers:
+        - event: EvaluationSubmitted(indexed bytes32,indexed bytes32,uint16,uint16,string,string)
+          handler: handleEvaluationSubmitted
+      file: ./src/mappings.ts
+  - kind: ethereum
+    name: IdentityRegistry
+    network: base-sepolia
+    source:
+      abi: IdentityRegistry
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Agent
+        - AgentMetadata
+      abis:
+        - name: IdentityRegistry
+          file: ../out/IdentityRegistry.sol/IdentityRegistry.json
+      eventHandlers:
+        - event: Registered(indexed uint256,string,indexed address)
+          handler: handleRegistered
+        - event: URIUpdated(indexed uint256,string,indexed address)
+          handler: handleURIUpdated
+        - event: MetadataSet(indexed uint256,indexed string,string,bytes)
+          handler: handleMetadataSet
+      file: ./src/mappings.ts

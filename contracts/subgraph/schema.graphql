@@ -1,0 +1,97 @@
+type Evaluation @entity {
+  id: Bytes!
+  fundingRoundId: Bytes!
+  finalScore: Int!
+  adjustedScore: Int!
+  proposalContentCid: String!
+  evaluationContentCid: String!
+  timestamp: BigInt!
+  fundRelease: FundRelease
+  disputes: [Dispute!]! @derivedFrom(field: "proposal")
+}
+
+type FundRelease @entity {
+  id: Bytes!
+  projectId: Bytes!
+  milestoneIndex: Int!
+  amount: BigInt!
+  releasePercentage: Int!
+  evaluation: Evaluation!
+  timestamp: BigInt!
+}
+
+type Agent @entity {
+  id: Bytes!
+  owner: Bytes!
+  agentURI: String!
+  metadata: [AgentMetadata!]! @derivedFrom(field: "agent")
+  feedback: [AgentFeedback!]! @derivedFrom(field: "agent")
+  validations: [Validation!]! @derivedFrom(field: "agent")
+  registeredAt: BigInt!
+}
+
+type AgentMetadata @entity {
+  id: Bytes!
+  agent: Agent!
+  metadataKey: String!
+  metadataValue: Bytes!
+  updatedAt: BigInt!
+}
+
+type AgentFeedback @entity {
+  id: Bytes!
+  agent: Agent!
+  clientAddress: Bytes!
+  feedbackIndex: BigInt!
+  value: BigInt!
+  valueDecimals: Int!
+  tag1: String!
+  tag2: String!
+  feedbackURI: String!
+  feedbackHash: Bytes!
+  isRevoked: Boolean!
+  responses: [FeedbackResponse!]! @derivedFrom(field: "feedback")
+  timestamp: BigInt!
+}
+
+type FeedbackResponse @entity {
+  id: Bytes!
+  feedback: AgentFeedback!
+  responder: Bytes!
+  responseURI: String!
+  responseHash: Bytes!
+  timestamp: BigInt!
+}
+
+type Validation @entity {
+  id: Bytes!
+  agent: Agent!
+  validatorAddress: Bytes!
+  requestURI: String!
+  response: Int
+  responseURI: String
+  responseHash: Bytes
+  tag: String
+  lastUpdate: BigInt!
+}
+
+type Dispute @entity {
+  id: Bytes!
+  proposal: Evaluation!
+  initiator: Bytes!
+  stakeAmount: BigInt!
+  evidenceCid: String!
+  status: Int!
+  newScore: Int
+  deadline: BigInt!
+  votes: [DisputeVote!]! @derivedFrom(field: "dispute")
+}
+
+type DisputeVote @entity {
+  id: Bytes!
+  dispute: Dispute!
+  validator: Bytes!
+  stakeAmount: BigInt!
+  voteUphold: Boolean!
+  timestamp: BigInt!
+}
