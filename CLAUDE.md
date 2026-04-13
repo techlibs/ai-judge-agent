@@ -344,6 +344,29 @@ Conventions not yet established. Will populate as patterns emerge during develop
 Architecture not yet mapped. Follow existing patterns found in the codebase.
 <!-- GSD:architecture-end -->
 
+## Preferred Framework: Spec Kit (speckit worktree)
+
+The **speckit worktree** is the most advanced implementation and should be the default for new work. Use Spec Kit commands (`/speckit-*`) to maintain consistency with existing patterns, planning artifacts, and task tracking.
+
+**When to use Spec Kit:**
+- Adding features to the speckit worktree (default — most cases)
+- Planning new phases or tasks
+- Generating specs, plans, or task breakdowns
+- Any work that touches multiple files or needs tracking
+
+**When it's fine to skip the framework:**
+- Quick env var changes or config tweaks (just edit the file)
+- One-line bug fixes where the fix is obvious
+- Reading/exploring code to answer a question
+- Deploying contracts or running scripts (operational tasks)
+- Updating documentation like CLAUDE.md or lessons.md
+
+**When to use GSD instead:**
+- Working in the `full-vision-roadmap` worktree (that's the GSD worktree)
+- The user explicitly asks for `/gsd-*` commands
+
+This is a guideline, not a gate — don't block simple work behind framework ceremony.
+
 ## Persisted Worktrees — DO NOT DELETE
 
 The `.worktrees/` directory contains **persisted git worktrees** from an SDD (Spec-Driven Development) framework comparison experiment. Each worktree holds an independent implementation of the agent-reviewer built with a different framework. They represent hours of AI-driven execution and are the primary artifact for the comparison analysis.
