@@ -42,5 +42,13 @@ bun.lockb
 # Vercel
 .vercel
 
+# SQLite local dev
+local.db
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
 # Note: .planning/ is NOT ignored — GSD artifacts are version-controlled
 # Note: .self-improvement/ is NOT ignored — lessons persist across sessions
