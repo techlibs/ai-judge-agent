@@ -77,4 +77,17 @@ describe("POST /api/evaluate/[id]/finalize", () => {
     expect(result.status).toBe(500);
     expect(data.status).toBe("failed");
   });
+
+  // The route catches all errors with a generic catch block and returns 500.
+  // It does not distinguish between "not found" and other errors — a non-existent
+  // proposal that causes the orchestrator to throw results in 500, not 404.
+  it("returns 500 for non-existent proposal (route does not distinguish 404)", async () => {
+    mockOrchestratorShouldThrow = true;
+
+    const result = await callPost("nonexistent-id");
+    const data = await result.json();
+
+    expect(result.status).toBe(500);
+    expect(data.status).toBe("failed");
+  });
 });

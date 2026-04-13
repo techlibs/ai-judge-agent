@@ -168,7 +168,61 @@ describe("publishEvaluationOnChainDetailed", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 6. Feedback tx reverts
+  // 6. Verifies keccak256 content hashing
+  // -------------------------------------------------------------------------
+  it("verifies keccak256 content hashing", async () => {
+    await publishEvaluationOnChainDetailed(SAMPLE_PARAMS);
+
+    // Feedback calls are indices 1-4 (0 is register, 5 is aggregate)
+    for (let i = 1; i <= 4; i++) {
+      const callArgs = writeContractMock.mock.calls[i][0] as Record<string, unknown>;
+      const args = callArgs.args as Array<unknown>;
+      // contentHash is the last arg (index 7) — should be a bytes32 hex string (66 chars: 0x + 64 hex)
+      const contentHash = args[7] as string;
+      expect(contentHash).toMatch(/^0x[0-9a-f]{64}$/);
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // 7. Verifies 60s timeout on waitForTransactionReceipt
+  // -------------------------------------------------------------------------
+  it("verifies 60s timeout on waitForTransactionReceipt", async () => {
+    await publishEvaluationOnChainDetailed(SAMPLE_PARAMS);
+
+    expect(waitForReceiptMock.mock.calls[0][0]).toHaveProperty("timeout", 60000);
+  });
+
+  // -------------------------------------------------------------------------
+  // 8. Each feedback tx sends correct dimension
+  // -------------------------------------------------------------------------
+  it("each feedback tx sends correct dimension", async () => {
+    await publishEvaluationOnChainDetailed(SAMPLE_PARAMS);
+
+    const dimensions = ["tech", "impact", "cost", "team"];
+    // writeContract calls: 0=register, 1-4=feedback, 5=aggregate
+    for (let i = 0; i < dimensions.length; i++) {
+      const callArgs = writeContractMock.mock.calls[i + 1][0] as Record<string, unknown>;
+      const args = callArgs.args as Array<unknown>;
+      // dimension is at index 3 in giveFeedback args
+      expect(args[3]).toBe(dimensions[i]);
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // 9. Aggregate milestone sends correct metadata
+  // -------------------------------------------------------------------------
+  it("aggregate milestone sends correct metadata", async () => {
+    await publishEvaluationOnChainDetailed(SAMPLE_PARAMS);
+
+    // Last writeContract call (index 5) is the aggregate
+    const lastCall = writeContractMock.mock.calls[5][0] as Record<string, unknown>;
+    const args = lastCall.args as Array<unknown>;
+    expect(args).toContain("aggregate");
+    expect(args).toContain("milestone-v1");
+  });
+
+  // -------------------------------------------------------------------------
+  // 10. Feedback tx reverts
   // -------------------------------------------------------------------------
   it("throws when a feedback transaction reverts", async () => {
     let receiptCallCount = 0;

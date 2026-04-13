@@ -205,4 +205,14 @@ describe("POST /api/evaluate/[id]", () => {
     expect(data.streams.cost).toBe("/api/evaluate/prop-001/cost");
     expect(data.streams.team).toBe("/api/evaluate/prop-001/team");
   });
+
+  it("rejects already published proposal", async () => {
+    store.proposals.push(createProposalFixture({ id: "prop-001", status: "published" }));
+
+    const result = await callPost("prop-001");
+    const data = await result.json();
+
+    expect(result.status).toBe(409);
+    expect(data.error).toBe("Proposal already being evaluated");
+  });
 });

@@ -484,7 +484,62 @@ describe("checkAndFinalizeEvaluation", () => {
   });
 
   // -----------------------------------------------------------------------
-  // 14. IPFS aggregate data has correct schema
+  // 14. Sequential duplicate call — second returns early (idempotency)
+  // -----------------------------------------------------------------------
+  it("concurrent calls — only first publishes (idempotency)", async () => {
+    seedCompleteEvaluations(PROPOSAL_ID);
+
+    // First call publishes normally
+    const result1 = await checkAndFinalizeEvaluation(PROPOSAL_ID);
+    expect(result1.complete).toBe(true);
+    expect(chainCalls).toHaveLength(1);
+
+    // Second call hits the idempotency guard (aggregate already exists)
+    const result2 = await checkAndFinalizeEvaluation(PROPOSAL_ID);
+    expect(result2.complete).toBe(true);
+    // Chain should NOT have been called again
+    expect(chainCalls).toHaveLength(1);
+  });
+
+  // -----------------------------------------------------------------------
+  // 15. Rejects evaluations with non-complete status
+  // -----------------------------------------------------------------------
+  it("rejects evaluations with non-complete status", async () => {
+    for (const dim of JUDGE_DIMENSIONS.slice(0, 3)) {
+      store.evaluations.push(
+        createEvaluationFixture(dim, {
+          proposalId: PROPOSAL_ID,
+          status: "complete",
+        })
+      );
+    }
+    store.evaluations.push(
+      createEvaluationFixture("team", {
+        proposalId: PROPOSAL_ID,
+        status: "failed",
+      })
+    );
+
+    const result = await checkAndFinalizeEvaluation(PROPOSAL_ID);
+
+    expect(result.complete).toBe(false);
+  });
+
+  // -----------------------------------------------------------------------
+  // 16. Proposal status transitions through publishing to published
+  // -----------------------------------------------------------------------
+  it("proposal status transitions through publishing to published", async () => {
+    seedCompleteEvaluations(PROPOSAL_ID);
+
+    await checkAndFinalizeEvaluation(PROPOSAL_ID);
+
+    // After successful finalization, the proposal should be "published"
+    const proposal = store.proposals.find((p) => p.id === PROPOSAL_ID);
+    expect(proposal?.status).toBe("published");
+  });
+
+  // -----------------------------------------------------------------------
+  // 17. IPFS aggregate data has correct schema
   // -----------------------------------------------------------------------
   it("uploads aggregate data with correct schema to IPFS", async () => {
     seedCompleteEvaluations(PROPOSAL_ID);
