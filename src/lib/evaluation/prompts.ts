@@ -61,9 +61,3 @@ Evaluate the following proposal:`;
 
 export const NAIVE_PROMPT =
   "Evaluate this grant proposal and give it a score from 0 to 100. Provide a justification and key findings.";
-
-export const ANOMALY_THRESHOLDS = {
-  ALL_MAX: 9500,
-  ALL_MIN: 500,
-  MAX_DIVERGENCE: 5000,
-} as const;

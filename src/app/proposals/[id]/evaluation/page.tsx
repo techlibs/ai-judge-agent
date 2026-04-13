@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,13 +15,6 @@ import { ScoreSummaryCard } from "@/components/evaluation/score-summary-card";
 import type { DimensionScore } from "@/components/evaluation/score-radar-chart";
 import { DIMENSIONS } from "@/lib/evaluation/constants";
 
-const SAMPLE_PROPOSAL_TEXT = `This is a sample proposal for testing the evaluation pipeline.
-The project aims to build a decentralized identity verification system using zero-knowledge proofs.
-Technical approach: We will use circom for ZK circuits, Solidity smart contracts on Base, and a Next.js frontend.
-The team consists of 3 engineers with 5+ years of blockchain experience.
-Budget: $50,000 over 6 months.
-Impact: Enable privacy-preserving identity verification for 100,000+ users.`;
-
 export default function EvaluationPage() {
   const params = useParams();
   const rawId = params.id;
@@ -30,6 +24,40 @@ export default function EvaluationPage() {
       : Array.isArray(rawId) && rawId.length > 0
         ? rawId[0]
         : undefined;
+
+  const [proposalText, setProposalText] = useState<string | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(true);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setProposalLoading(true);
+    fetch(`/api/proposals/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch proposal");
+        return res.json();
+      })
+      .then((data: unknown) => {
+        if (
+          data &&
+          typeof data === "object" &&
+          "content" in data &&
+          typeof (data as Record<string, unknown>).content === "object"
+        ) {
+          const content = (data as Record<string, unknown>).content;
+          if (content && typeof content === "object" && "description" in content) {
+            const desc = (content as Record<string, unknown>).description;
+            setProposalText(typeof desc === "string" ? desc : JSON.stringify(content));
+          } else {
+            setProposalText(JSON.stringify(content));
+          }
+        } else {
+          setProposalError("Proposal content not available");
+        }
+      })
+      .catch(() => setProposalError("Failed to load proposal"))
+      .finally(() => setProposalLoading(false));
+  }, [id]);
 
   const {
     startEvaluation,
@@ -41,6 +69,12 @@ export default function EvaluationPage() {
     error,
     isLoading,
   } = useEvaluation();
+
+  const handleStartEvaluation = useCallback(() => {
+    if (id && proposalText) {
+      startEvaluation(id, proposalText);
+    }
+  }, [id, proposalText, startEvaluation]);
 
   if (!id) {
     return (
@@ -73,11 +107,20 @@ export default function EvaluationPage() {
             proposal across Technical Feasibility, Impact, Cost
             Efficiency, and Team Capability.
           </p>
-          <Button
-            onClick={() => startEvaluation(id, SAMPLE_PROPOSAL_TEXT)}
-          >
-            Start Evaluation
-          </Button>
+          {proposalLoading && (
+            <Skeleton className="h-10 w-40" />
+          )}
+          {proposalError && (
+            <p className="text-sm text-destructive">{proposalError}</p>
+          )}
+          {!proposalLoading && !proposalError && (
+            <Button
+              onClick={handleStartEvaluation}
+              disabled={!proposalText}
+            >
+              Start Evaluation
+            </Button>
+          )}
         </div>
       )}
 
@@ -213,7 +256,8 @@ export default function EvaluationPage() {
               "The evaluation could not be completed. This may be due to a temporary issue with the AI service. Try again in a few moments."}
           </p>
           <Button
-            onClick={() => startEvaluation(id, SAMPLE_PROPOSAL_TEXT)}
+            onClick={handleStartEvaluation}
+            disabled={!proposalText}
           >
             Retry Evaluation
           </Button>
