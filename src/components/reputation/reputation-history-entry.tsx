@@ -11,6 +11,8 @@ const SECONDS_PER_DAY = 86400;
 const MS_PER_SECOND = 1000;
 
 function formatRelativeTime(timestampSeconds: number): string {
+  if (timestampSeconds === 0) return "Unknown";
+
   const now = Date.now();
   const diffSeconds = Math.floor(
     (now - timestampSeconds * MS_PER_SECOND) / MS_PER_SECOND,
@@ -27,6 +29,14 @@ function formatRelativeTime(timestampSeconds: number): string {
   }
   const days = Math.floor(diffSeconds / SECONDS_PER_DAY);
   return `${days}d ago`;
+}
+
+function deriveOnChainStatus(
+  txHash: string | null,
+): "confirmed" | "pending" {
+  // TODO: derive "failed" status once we have transaction receipt checking
+  if (!txHash) return "pending";
+  return "confirmed";
 }
 
 interface ReputationHistoryEntryProps {
@@ -60,7 +70,7 @@ export function ReputationHistoryEntryRow({
         <span className="font-mono text-sm">#{entry.blockNumber}</span>
       </TableCell>
       <TableCell>
-        <OnChainStatusBadge status="confirmed" />
+        <OnChainStatusBadge status={deriveOnChainStatus(entry.txHash)} />
       </TableCell>
     </TableRow>
   );
@@ -83,7 +93,7 @@ export function ReputationHistoryEntryCard({
         >
           {entry.value.toFixed(0)}/100
         </span>
-        <OnChainStatusBadge status="confirmed" />
+        <OnChainStatusBadge status={deriveOnChainStatus(entry.txHash)} />
       </div>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
