@@ -1,0 +1,60 @@
+Localhost Readiness Analysis — Superpowers Worktree
+====================================================
+Date: 2026-04-13
+
+1. Package.json Scripts
+   - dev: next dev
+   - build: next build
+   - start: next start
+   - lint: eslint
+   - test:e2e: bunx playwright test
+   - test:api: bunx playwright test --project=api
+   - test:bdd: bunx bddgen && bunx playwright test --project=bdd
+   - test:all: bunx bddgen && bunx playwright test
+
+2. Environment Files
+   - .env.example: EXISTS (702 bytes)
+   - .env.local: EXISTS (1420 bytes) — has secrets configured
+   - .env.production: EXISTS (27 bytes)
+
+3. node_modules: EXISTS — dependencies installed, ready to run
+
+4. App Router Structure (src/app/)
+   Pages:
+   - / (page.tsx) — root homepage
+   - /grants (page.tsx) — grants listing
+   - /grants/submit (page.tsx) — proposal submission form
+   - /grants/[id] (page.tsx) — individual grant detail
+   - /grants/[id]/evaluate (page.tsx) — evaluation trigger/view
+   - /grants/[id]/verify (page.tsx) — verification page
+   - /grants/[id]/chat (page.tsx) — chat interface for grant
+
+   API Routes:
+   - /api/chat (route.ts) — chat endpoint
+   - /api/colosseum/health (route.ts) — health check
+   - /api/evaluate/[id] (route.ts) — evaluation endpoint
+   - /api/evaluate/[id]/[dimension] (route.ts) — per-dimension evaluation
+   - /api/evaluate/[id]/[dimension]/retry (route.ts) — retry failed dimension
+   - /api/evaluate/[id]/finalize (route.ts) — finalize evaluation
+   - /api/evaluate/[id]/status (route.ts) — evaluation status polling
+   - /api/proposals (route.ts) — proposals CRUD
+   - /api/test-seed/seed-evaluation (route.ts) — test data seeding
+
+5. Key Dependencies
+   - Next.js 16.2.3
+   - React 19.2.4
+   - @mastra/core 1.24.1, @mastra/evals 1.2.1
+   - ai (Vercel AI SDK) 6.0.158
+   - @ai-sdk/anthropic 3.0.69, @ai-sdk/openai 3.0.52
+   - viem 2.47.14 (Ethereum client)
+   - drizzle-orm 0.45.2 + @libsql/client 0.17.2 (SQLite/Turso)
+   - pinata 2.5.5 (IPFS)
+   - zod 4.3.6
+   - shadcn 4.2.0, lucide-react 1.8.0
+
+6. Localhost Readiness: READY
+   - All dependencies installed
+   - .env.local present with secrets
+   - Can run with: cd .worktrees/superpower && bun run dev
+   - 7 pages + 9 API routes implemented
+   - Most feature-complete worktree (chat, evaluate, verify, retry)

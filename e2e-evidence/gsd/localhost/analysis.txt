@@ -1,0 +1,64 @@
+GSD Worktree Localhost Analysis
+================================
+Date: 2026-04-13
+Worktree: .worktrees/full-vision-roadmap/
+
+1. Package Manager & Scripts
+   - Runtime: Bun
+   - package.json name: agent-reviewer-bootstrap
+   - Available scripts:
+     - dev: next dev
+     - build: next build
+     - start: next start
+     - lint: eslint
+     - typecheck: tsc --noEmit
+     - test: bun test
+     - test:e2e: bunx playwright test
+     - test:bdd:generate: bunx bddgen --config playwright.bdd.config.ts
+     - test:bdd: bun run test:bdd:generate && bunx playwright test --config playwright.bdd.config.ts
+
+2. Environment Files
+   - .env.local: EXISTS (1443 bytes) - configured with secrets
+   - .env.example: EXISTS (586 bytes) - template for new devs
+   - .env.production: EXISTS (191 bytes) - production overrides
+
+3. Dependencies (node_modules)
+   - node_modules/: EXISTS - ready to run
+
+4. App Router Structure (src/app/)
+   - page.tsx (root - redirects to /proposals based on prod behavior)
+   - proposals/page.tsx (listing page)
+   - proposals/new/page.tsx (submission form)
+   - proposals/[id]/page.tsx (detail view)
+   - proposals/[id]/evaluation/page.tsx (AI evaluation trigger/results)
+   - proposals/[id]/reputation/page.tsx (on-chain reputation history)
+   - proposals/[id]/chat/page.tsx (chat interface)
+
+5. API Routes (src/app/api/)
+   - api/chat/route.ts
+   - api/colosseum/health/route.ts
+   - api/evaluate/route.ts
+   - api/proposals/route.ts (GET list)
+   - api/proposals/[tokenId]/route.ts (GET single)
+   - api/proposals/submit/route.ts (POST create)
+   - api/reputation/[tokenId]/route.ts (GET reputation)
+   - api/research/[proposalId]/route.ts
+
+6. Key Dependencies
+   - next: 16.2.3
+   - react: 19.2.4
+   - ai (Vercel AI SDK): ^6.0.158
+   - @ai-sdk/anthropic: ^3.0.69
+   - @ai-sdk/openai: ^3.0.52
+   - viem: ^2.47.14
+   - zod: ^4.3.6
+   - recharts: 3.8.0
+   - shadcn: ^4.2.0
+
+7. Localhost Readiness Assessment
+   STATUS: READY TO RUN
+   - All dependencies installed
+   - Environment configured
+   - Can start with: cd .worktrees/full-vision-roadmap && bun run dev
+   - Requires: OPENAI_API_KEY or ANTHROPIC_API_KEY for AI evaluation features
+   - Requires: RPC URL for on-chain features (Base Sepolia configured)

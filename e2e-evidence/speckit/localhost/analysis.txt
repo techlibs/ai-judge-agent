@@ -1,0 +1,107 @@
+Spec Kit Worktree Localhost Analysis
+=====================================
+Date: 2026-04-13
+Worktree path: .worktrees/speckit/
+
+1. PACKAGE.JSON SCRIPTS
+   - dev: next dev --turbopack
+   - build: next build
+   - start: next start
+   - lint: next lint
+   - lint:fix: next lint --fix
+   - typecheck: tsc --noEmit
+   - test: vitest run
+   - test:watch: vitest
+   - test:e2e: playwright test
+   - test:e2e:ui: playwright test --ui
+
+2. ENVIRONMENT FILES
+   - .env.example: EXISTS
+   - .env.local: EXISTS (has secrets, not readable)
+   - .env.production: EXISTS
+   - .env.test: EXISTS
+
+3. NODE_MODULES
+   - EXISTS: Yes (can run without bun install)
+
+4. APP ROUTER STRUCTURE (src/app/)
+   Pages (6 total):
+   - / (page.tsx) - Homepage
+   - /grants (page.tsx) - Proposals list
+   - /grants/submit (page.tsx) - Proposal submission form
+   - /grants/[id] (page.tsx) - Proposal detail view
+   - /grants/[id]/chat (page.tsx) - Chat interface for proposal
+   - /dashboard/operator (page.tsx) - Operator dashboard
+
+   API Routes (12 total):
+   - /api/health - Health check endpoint
+   - /api/proposals - Proposals CRUD
+   - /api/proposals/[id] - Single proposal detail
+   - /api/evaluate/[id]/finalize - Evaluation finalization
+   - /api/sync - Cache sync trigger
+   - /api/rounds/[id]/stats - Round statistics
+   - /api/cron/monitoring - Cron monitoring
+   - /api/webhooks/disputes - Dispute webhooks
+   - /api/webhooks/proposals - Proposal webhooks
+   - /api/chat - Chat API (AI interaction)
+   - /api/colosseum/health - Colosseum health check
+   - /api/research/[proposalId] - Research endpoint per proposal
+
+5. TEST FILES
+   Unit Tests (vitest, 4 files):
+   - src/evaluation/__tests__/scoring.test.ts
+   - src/evaluation/__tests__/schemas.test.ts
+   - src/reputation/__tests__/multiplier.test.ts
+   - src/app/grants/submit/__tests__/schema.test.ts
+
+   E2E Tests (playwright, 20+ files):
+   Page tests:
+   - e2e/navigation.spec.ts
+   - e2e/grants-list.spec.ts
+   - e2e/operator-dashboard.spec.ts
+   - e2e/proposal-detail.spec.ts
+   - e2e/screenshots.spec.ts
+   - e2e/pages/proposal-detail-pending.spec.ts
+   - e2e/pages/proposal-detail-evaluated.spec.ts
+   - e2e/pages/grants-list-populated.spec.ts
+
+   API tests:
+   - e2e/api/health.spec.ts
+   - e2e/api/proposals-list.spec.ts
+   - e2e/api/proposal-detail.spec.ts
+   - e2e/api/evaluate-finalize.spec.ts
+   - e2e/api/cron-monitoring.spec.ts
+   - e2e/api/rounds-stats.spec.ts
+   - e2e/api/security-headers.spec.ts
+   - e2e/api/sync.spec.ts
+   - e2e/api/webhooks-disputes.spec.ts
+   - e2e/api/webhooks-proposals.spec.ts
+
+   Integration tests:
+   - e2e/integration/evaluation-pipeline.spec.ts
+   - e2e/integration/ipfs-pinning.spec.ts
+   - e2e/integration/onchain-reads.spec.ts
+   - e2e/integration/security-audit.spec.ts
+
+   E2E support files:
+   - e2e/global-setup.ts
+   - e2e/fixtures/ (test fixtures)
+   - e2e/features/ (feature tests)
+
+6. ADDITIONAL DEPENDENCIES (notable)
+   - @ai-sdk/anthropic, @ai-sdk/openai, ai - AI SDK
+   - @ai-sdk/react - Client-side AI hooks
+   - drizzle-orm + @libsql/client - SQLite ORM + Turso
+   - next-auth - Authentication (beta)
+   - pinata - IPFS pinning
+   - viem - Ethereum client
+   - @upstash/ratelimit + @upstash/redis - Rate limiting
+   - isomorphic-dompurify - XSS protection
+   - graphql + graphql-request - The Graph client
+
+7. LOCALHOST READINESS: HIGH
+   - node_modules present
+   - Multiple env files configured
+   - All scripts defined
+   - Comprehensive test suite
+   - Would need valid API keys in .env.local to fully run

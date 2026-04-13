@@ -1,0 +1,3 @@
+- link "Submit Proposal" [ref=e1]
+- link "View Proposals" [ref=e2]
+- link "Operator Dashboard" [ref=e3]

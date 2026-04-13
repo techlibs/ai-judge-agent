@@ -19,3 +19,13 @@ This pattern is framework-agnostic (works on speckit, gsd, superpower branches).
 - **Playwright**: deterministic regression suite, CI gates, golden path. Free, fast, reproducible.
 - **agent-browser**: exploratory testing, dogfooding, smoke tests. AI-adaptive but non-deterministic, costs tokens per run.
 - They're complementary, not competing. Use both.
+
+## BDD Testing Pattern (Proven in speckit + superpower)
+
+- **playwright-bdd** for Gherkin → Playwright test generation. No Cucumber.js needed.
+- **API tests**: Use Playwright's `request` fixture (not supertest). Speckit proved this works — zero extra deps.
+- **DB fixtures**: Seed via drizzle-orm directly in step definitions. `freshStart()` pattern: clean + seed per scenario.
+- **Global setup**: `e2e/global-setup.ts` creates schema + cleans stale data. Essential for CI.
+- **Project split**: Separate Playwright projects for `api` (headless) and `bdd` (Chromium). Different test dirs.
+- **shadcn/ui gotcha**: `CardTitle` = `<div>` not heading. `<Label>` without `htmlFor` breaks `getByLabel`. Use CSS selectors.
+- **Score format**: This app uses `.toFixed(1)` everywhere. Feature files must match.
