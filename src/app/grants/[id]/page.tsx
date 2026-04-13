@@ -138,6 +138,11 @@ export default async function ProposalDetailPage({
             <Button variant="outline">Verify On-Chain</Button>
           </Link>
         )}
+        {evals.length > 0 && (
+          <Link href={`/grants/${id}/chat`}>
+            <Button variant="outline" size="lg">Chat with Assistant</Button>
+          </Link>
+        )}
       </div>
     </div>
   );
