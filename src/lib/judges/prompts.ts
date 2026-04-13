@@ -120,7 +120,7 @@ ${proposal.proposedSolution}
 ${proposal.teamMembers.map((m) => `- ${m.name}: ${m.role}`).join("\n")}
 
 ## Budget
-Amount requested: $${proposal.budgetAmount.toLocaleString()} USDC
+Amount requested: $${new Intl.NumberFormat("en-US").format(proposal.budgetAmount)} USDC
 
 Breakdown:
 ${proposal.budgetBreakdown}

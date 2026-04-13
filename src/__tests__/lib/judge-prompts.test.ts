@@ -1,6 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { getJudgePrompt, buildProposalContext } from "@/lib/judges/prompts";
 import { JUDGE_DIMENSIONS } from "@/lib/constants";
+import { createProposalFixture } from "../helpers/mocks";
 
 describe("getJudgePrompt", () => {
   it("contains anti-injection guard (F-010)", () => {
@@ -55,5 +56,11 @@ describe("buildProposalContext", () => {
     expect(ctx).toContain("4-weeks");
     expect(ctx).toContain("https://github.com/test");
     expect(ctx).toContain("No (first time)");
+  });
+
+  it("formats budget with US locale", () => {
+    const context = buildProposalContext(createProposalFixture({ budgetAmount: 1000000 }));
+    expect(context).toContain("$1,000,000 USDC");
+    expect(context).not.toContain("$1.000.000");
   });
 });
