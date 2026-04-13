@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "bunx playwright test"
+    "test:e2e": "bunx playwright test",
+    "test:api": "bunx playwright test --project=api",
+    "test:bdd": "bunx bddgen && bunx playwright test --project=bdd",
+    "test:bdd:generate": "bunx bddgen",
+    "test:all": "bunx bddgen && bunx playwright test"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
@@ -34,6 +38,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -41,8 +46,8 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "playwright-bdd": "^8.5.0",
     "tailwindcss": "^4",
-    "@playwright/test": "^1.52.0",
     "typescript": "^5"
   },
   "ignoreScripts": [

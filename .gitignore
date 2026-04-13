@@ -29,6 +29,9 @@ npm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+.features-gen/
+playwright-report/
+test-results/
 
 # IDE
 .vscode/
