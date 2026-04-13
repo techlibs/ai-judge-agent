@@ -25,11 +25,10 @@ function getAgentStatus(
   completedDimensions: Map<EvaluationDimension, EvaluationOutput>,
   failedDimensions: Set<EvaluationDimension>,
   isEvaluating: boolean,
-  isFirstPending: boolean,
 ): AgentStatus {
   if (completedDimensions.has(dimension)) return "complete";
   if (failedDimensions.has(dimension)) return "failed";
-  if (isEvaluating && isFirstPending) return "running";
+  if (isEvaluating) return "running";
   return "pending";
 }
 
@@ -52,10 +51,6 @@ export function EvaluationProgress({
   failedDimensions,
   isEvaluating,
 }: EvaluationProgressProps) {
-  const completedCount =
-    completedDimensions.size + failedDimensions.size;
-  let foundFirstPending = false;
-
   return (
     <Card aria-live="polite">
       <CardHeader>
@@ -67,18 +62,11 @@ export function EvaluationProgress({
       </CardHeader>
       <CardContent className="space-y-1">
         {DIMENSIONS.map((dim) => {
-          const isComplete = completedDimensions.has(dim.key);
-          const isFailed = failedDimensions.has(dim.key);
-          const isFirstPending =
-            !isComplete && !isFailed && !foundFirstPending;
-          if (isFirstPending) foundFirstPending = true;
-
           const agentStatus = getAgentStatus(
             dim.key,
             completedDimensions,
             failedDimensions,
             isEvaluating,
-            isFirstPending,
           );
 
           const score = completedDimensions.get(dim.key)?.score;
