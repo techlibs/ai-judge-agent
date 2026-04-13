@@ -10,37 +10,8 @@ import {
 import type { ProposalContent } from "@/lib/ipfs/types";
 
 const MAX_BODY_SIZE = 50 * 1024;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = 5;
-
-// TODO: Replace with Redis-backed rate limiting for multi-instance deployments
-const rateLimitStore = new Map<string, number[]>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitStore.get(ip) ?? [];
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  rateLimitStore.set(ip, recent);
-
-  if (recent.length >= RATE_LIMIT_MAX_REQUESTS) {
-    return true;
-  }
-
-  recent.push(now);
-  rateLimitStore.set(ip, recent);
-  return false;
-}
 
 export async function POST(request: Request) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const ip = forwardedFor?.split(",")[0]?.trim() ?? "unknown";
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Too many submissions. Try again later." },
-      { status: 429 }
-    );
-  }
-
   const body: unknown = await request.json();
   const bodySize = new TextEncoder().encode(JSON.stringify(body)).byteLength;
   if (bodySize > MAX_BODY_SIZE) {

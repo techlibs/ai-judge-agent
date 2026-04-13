@@ -22,12 +22,6 @@ const HEARTBEAT_INTERVAL_MS = 15_000;
 const STREAM_TIMEOUT_MS = 90_000;
 
 export async function POST(request: Request): Promise<Response> {
-  const apiKey = request.headers.get("x-api-key");
-  const expectedKey = process.env.API_KEY;
-  if (!expectedKey || apiKey !== expectedKey) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();

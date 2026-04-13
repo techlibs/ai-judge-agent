@@ -12,7 +12,6 @@ import { DimensionCard } from "@/components/evaluation/dimension-card";
 import { AggregateScore } from "@/components/evaluation/aggregate-score";
 import { PromptComparison } from "@/components/evaluation/prompt-comparison";
 import { ScoreSummaryCard } from "@/components/evaluation/score-summary-card";
-import type { DimensionScore } from "@/components/evaluation/score-radar-chart";
 import { DIMENSIONS } from "@/lib/evaluation/constants";
 
 export default function EvaluationPage() {
@@ -66,8 +65,8 @@ export default function EvaluationPage() {
     failedDimensions,
     aggregate,
     evaluation,
+    naiveOutput,
     error,
-    isLoading,
   } = useEvaluation();
 
   const handleStartEvaluation = useCallback(() => {
@@ -241,7 +240,22 @@ export default function EvaluationPage() {
           </div>
 
           <div className="mt-8">
-            <PromptComparison />
+            <PromptComparison
+              naiveOutput={naiveOutput ?? undefined}
+              structuredOutput={
+                evaluation.dimensions.length > 0
+                  ? evaluation.dimensions
+                      .map((dimEval) => {
+                        const dimConfig = DIMENSIONS.find(
+                          (d) => d.key === dimEval.dimension,
+                        );
+                        const label = dimConfig?.label ?? dimEval.dimension;
+                        return `${label}: ${dimEval.output.score}/100 (${dimEval.output.recommendation})\n${dimEval.output.justification}\n\nKey Findings:\n${dimEval.output.keyFindings.map((f, i) => `${i + 1}. ${f}`).join("\n")}`;
+                      })
+                      .join("\n\n---\n\n")
+                  : undefined
+              }
+            />
           </div>
         </>
       )}

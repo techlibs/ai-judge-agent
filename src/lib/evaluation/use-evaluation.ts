@@ -36,6 +36,10 @@ const progressEventSchema = z.discriminatedUnion("type", [
     completedDimensions: z.number(),
   }),
   z.object({
+    type: z.literal("naive_complete"),
+    naiveOutput: z.string(),
+  }),
+  z.object({
     type: z.literal("stored"),
     ipfsCid: z.string(),
     txHash: z.string(),
@@ -65,6 +69,7 @@ interface UseEvaluationReturn {
     completedDimensions: number;
   } | null;
   evaluation: ProposalEvaluation | null;
+  naiveOutput: string | null;
   ipfsCid: string | null;
   txHash: string | null;
   error: string | null;
@@ -86,6 +91,7 @@ export function useEvaluation(): UseEvaluationReturn {
   const [evaluation, setEvaluation] = useState<ProposalEvaluation | null>(
     null,
   );
+  const [naiveOutput, setNaiveOutput] = useState<string | null>(null);
   const [ipfsCid, setIpfsCid] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -108,21 +114,14 @@ export function useEvaluation(): UseEvaluationReturn {
       setFailedDimensions(new Set());
       setAggregate(null);
       setEvaluation(null);
+      setNaiveOutput(null);
       setIpfsCid(null);
       setTxHash(null);
       setError(null);
 
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
-      if (apiKey) {
-        headers["x-api-key"] = apiKey;
-      }
-
       const response = await fetch("/api/evaluate", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ proposalId, proposalText }),
         signal: controller.signal,
       });
@@ -205,6 +204,10 @@ export function useEvaluation(): UseEvaluationReturn {
               });
               break;
 
+            case "naive_complete":
+              setNaiveOutput(event.naiveOutput);
+              break;
+
             case "stored":
               setIpfsCid(event.ipfsCid);
               setTxHash(event.txHash);
@@ -233,6 +236,7 @@ export function useEvaluation(): UseEvaluationReturn {
     failedDimensions,
     aggregate,
     evaluation,
+    naiveOutput,
     ipfsCid,
     txHash,
     error,

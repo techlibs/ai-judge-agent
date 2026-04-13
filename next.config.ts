@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
+const cspScriptSrc = isDev
+  ? "'self' 'unsafe-inline' 'unsafe-eval'"
+  : "'self' 'unsafe-inline'";
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -11,8 +17,7 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value:
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://gateway.pinata.cloud https://*.ipfs.io; connect-src 'self' https://gateway.pinata.cloud https://sepolia.base.org https://*.upstash.io; frame-ancestors 'none'",
+    value: `default-src 'self'; script-src ${cspScriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://gateway.pinata.cloud https://*.ipfs.io; connect-src 'self' https://gateway.pinata.cloud https://sepolia.base.org https://*.upstash.io; frame-ancestors 'none'`,
   },
   {
     key: "Strict-Transport-Security",
