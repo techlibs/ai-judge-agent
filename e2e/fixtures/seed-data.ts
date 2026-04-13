@@ -1,6 +1,7 @@
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { sql } from "drizzle-orm";
+import { keccak256, toHex } from "viem";
 
 // ---------------------------------------------------------------------------
 // Exported test constants
@@ -13,6 +14,11 @@ export const PENDING_PROPOSAL_ID = "prop-pending-1";
 export const FUNDED_PROPOSAL_ID = "prop-funded-1";
 export const DISPUTED_PROPOSAL_ID = "prop-disputed-1";
 export const FINALIZED_PROPOSAL_ID = "prop-funded-1";
+export const CORRUPT_JSON_PROPOSAL_ID = "prop-corrupt-json";
+
+// Duplicate detection: pre-computed keccak256 hash for "test-platform:dup-test-ext"
+export const DUP_TEST_EXTERNAL_ID = "dup-test-ext";
+export const DUP_TEST_PROPOSAL_ID = keccak256(toHex("test-platform:dup-test-ext"));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -408,6 +414,62 @@ export async function seedTestData(dbUrl: string): Promise<void> {
         id, proposal_id, status, retry_count, error
       ) VALUES (
         'prop-pending-2', 'prop-pending-2', 'failed', 3, 'IPFS pin failed'
+      )
+    `);
+
+    // 8. Corrupt JSON proposal for M-04 testing
+    await db.run(sql`
+      INSERT OR IGNORE INTO proposals (
+        id, external_id, platform_source, funding_round_id, title, description,
+        budget_amount, budget_currency, technical_description, team_profile_hash,
+        team_size, category, status, submitted_at, chain_timestamp,
+        proposal_content_cid, evaluation_content_cid,
+        final_score, adjusted_score, reputation_multiplier, evaluated_at
+      ) VALUES (
+        'prop-corrupt-json', 'ext-corrupt-json', 'test-platform', 'round-1',
+        'Corrupt JSON Test Proposal',
+        'Proposal with corrupt dimension score data for M-04 testing',
+        10000, 'USD',
+        'Technical implementation details for corrupt JSON test',
+        '0xhashcorrupt', 3, 'infrastructure', 'evaluated',
+        '2026-04-01T10:00:00Z', 1712100000,
+        'bafybeigcorrupt', 'bafybeihcorrupt',
+        75, 75.38, 1.005, '2026-04-01T12:00:00Z'
+      )
+    `);
+
+    // Dimension scores for corrupt JSON proposal — one has invalid rubricApplied
+    const corruptDimensions = [
+      { name: "technical_feasibility", weight: 0.25, score: 80, rubric: "not-valid-json{{" },
+      { name: "impact_potential", weight: 0.30, score: 70, rubric: '{"criteria": "test"}' },
+      { name: "cost_efficiency", weight: 0.20, score: 75, rubric: '{"criteria": "test"}' },
+      { name: "team_capability", weight: 0.25, score: 80, rubric: '{"criteria": "test"}' },
+    ];
+
+    for (const dim of corruptDimensions) {
+      await db.run(sql`
+        INSERT OR IGNORE INTO dimension_scores (
+          id, proposal_id, dimension, weight, score,
+          reasoning_chain, input_data_considered, rubric_applied,
+          model_id, prompt_version
+        ) VALUES (
+          ${`prop-corrupt-json-${dim.name}`}, 'prop-corrupt-json', ${dim.name}, ${dim.weight}, ${dim.score},
+          'Test reasoning',
+          '{"test": true}',
+          ${dim.rubric},
+          'claude-sonnet-4-6', 'v1.0'
+        )
+      `);
+    }
+
+    // 9. Duplicate detection seed: evaluation job with keccak256 proposalId
+    const dupProposalId = keccak256(toHex("test-platform:dup-test-ext"));
+    await db.run(sql`
+      INSERT OR IGNORE INTO evaluation_jobs (
+        id, proposal_id, status, retry_count, started_at, completed_at
+      ) VALUES (
+        ${`dup-job-${dupProposalId.slice(0, 10)}`}, ${dupProposalId}, 'complete', 0,
+        '2026-04-01T11:00:00Z', '2026-04-01T11:05:00Z'
       )
     `);
   } finally {
