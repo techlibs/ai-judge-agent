@@ -13,6 +13,10 @@ contract ReentrancyAttacker {
         target = MilestoneManager(payable(target_));
     }
 
+    function setAttacking(bool value) external {
+        attacking = value;
+    }
+
     receive() external payable {
         if (attacking) {
             attacking = false;
@@ -165,7 +169,7 @@ contract MilestoneManagerTest is Test {
 
         // The gas cap of 10000 prevents the attacker's receive() from doing anything meaningful
         // Even without nonReentrant, the gas cap blocks reentrancy
-        attacker.attacking = true;
+        attacker.setAttacking(true);
         manager.emergencyWithdraw(payable(address(attacker)));
 
         // Contract should be drained
