@@ -92,6 +92,7 @@ You need a wallet with Base Sepolia ETH to deploy contracts. **Never use a walle
    - Or use `cast wallet new` (Foundry CLI) to generate a keypair:
      ```bash
      cast wallet new
+     
      # Address: 0xYourAddress
      # Private key: 0xYourPrivateKey
      ```
