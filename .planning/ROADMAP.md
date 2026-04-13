@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — ERC-8004 smart contracts (IdentityRegistry + ReputationRegistry) with Foundry
+- [x] 01-01-PLAN.md — ERC-8004 smart contracts (IdentityRegistry + ReputationRegistry) with Foundry
 - [ ] 01-02-PLAN.md — Next.js bootstrap, shadcn/ui, shared types/schemas, app shell
 - [ ] 01-03-PLAN.md — Proposal submission flow (IPFS pin + on-chain register + form UI)
 - [ ] 01-04-PLAN.md — Proposal browsing flow (on-chain read + IPFS fetch + list/detail pages)
