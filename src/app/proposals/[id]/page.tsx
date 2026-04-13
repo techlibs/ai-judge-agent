@@ -174,6 +174,11 @@ export default function ProposalDetailPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <StatusBadge status={proposal.status} />
           <span className="text-sm text-muted-foreground">{submittedDate}</span>
+          <Link href={`/proposals/${id}/chat`}>
+            <Button variant="outline" size="sm">
+              Chat with Judge
+            </Button>
+          </Link>
         </div>
       </div>
 
