@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JudgeCard } from "@/components/judge-card";
 import { ScoreGauge } from "@/components/score-gauge";
+import { ScoreRadar } from "@/components/score-radar";
 import { getDb } from "@/lib/db/client";
 import { proposals, evaluations, aggregateScores } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -40,9 +41,9 @@ export default async function ProposalDetailPage({
     <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
       {/* Header */}
       <div>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">{proposal.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">{proposal.title}</h1>
             <div className="flex gap-2">
               <Badge variant="outline" className="capitalize">{proposal.category}</Badge>
               <Badge className="capitalize">{proposal.status}</Badge>
@@ -78,11 +79,25 @@ export default async function ProposalDetailPage({
         </CardContent>
       </Card>
 
+      {/* Score Radar Chart */}
+      {evals.length > 0 && (
+        <div className="flex flex-col items-center">
+          <h2 className="text-xl font-bold mb-4">Dimensional Breakdown</h2>
+          <ScoreRadar
+            scores={Object.fromEntries(
+              evals
+                .filter((e) => e.status === "complete" && e.score !== null)
+                .map((e) => [e.dimension, e.score])
+            )}
+          />
+        </div>
+      )}
+
       {/* Judge Results */}
       {evals.length > 0 && (
         <div>
           <h2 className="text-xl font-bold mb-4">Judge Evaluations</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {JUDGE_DIMENSIONS.map((dim) => {
               const evaluation = evalMap.get(dim);
               return (

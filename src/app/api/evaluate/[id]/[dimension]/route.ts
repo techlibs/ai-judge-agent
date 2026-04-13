@@ -9,7 +9,55 @@ import { eq, and } from "drizzle-orm";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
 import { evaluationTriggerLimiter } from "@/lib/rate-limit";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
+
+const MAX_JUDGE_RETRIES = 2;
+const JUDGE_RETRY_DELAY_MS = 2000;
+const JUDGE_TIMEOUT_MS = 90_000;
+
+async function runJudgeWithRetry(
+  dim: JudgeDimension,
+  proposalContext: string
+): Promise<{ output: ReturnType<typeof JudgeEvaluationSchema.parse>; attempts: number }> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= MAX_JUDGE_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), JUDGE_TIMEOUT_MS);
+
+    try {
+      const judgeAgent = new Agent({
+        id: `judge-${dim}`,
+        name: `Judge ${dim}`,
+        model: anthropic("claude-sonnet-4-20250514"),
+        instructions: getJudgePrompt(dim),
+      });
+
+      const result = await judgeAgent.generate(proposalContext, {
+        structuredOutput: { schema: JudgeEvaluationSchema },
+        abortSignal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      const output = result.object;
+      if (!output) {
+        throw new Error("Evaluation produced no structured output");
+      }
+
+      return { output, attempts: attempt + 1 };
+    } catch (error) {
+      clearTimeout(timeout);
+      lastError = error;
+
+      if (attempt < MAX_JUDGE_RETRIES) {
+        const delay = JUDGE_RETRY_DELAY_MS * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError;
+}
 
 export async function GET(
   request: Request,
@@ -58,44 +106,42 @@ export async function GET(
     startedAt: new Date(),
   });
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90_000);
-
-  const judgeAgent = new Agent({
-    id: `judge-${dim}`,
-    name: `Judge ${dim}`,
-    model: anthropic("claude-sonnet-4-20250514"),
-    instructions: getJudgePrompt(dim),
-  });
+  const proposalContext = buildProposalContext(proposal);
+  const promptText = getJudgePrompt(dim);
 
   try {
-    const result = await judgeAgent.generate(buildProposalContext(proposal), {
-      structuredOutput: { schema: JudgeEvaluationSchema },
-      abortSignal: controller.signal,
-    });
-    clearTimeout(timeout);
-    const output = result.object;
+    const { output, attempts } = await runJudgeWithRetry(dim, proposalContext);
 
-    if (!output) {
-      await db
-        .update(evaluations)
-        .set({ status: "failed" })
-        .where(eq(evaluations.id, evalId));
-      return new Response("Evaluation produced no output", { status: 500 });
-    }
-
-    const ipfsResult = await uploadJson(
-      {
-        type: "https://ipe.city/schemas/judge-evaluation-v1",
-        proposalCID: proposal.ipfsCid,
-        dimension: dim,
-        ...output,
+    // Build IPFS payload including prompt transparency metadata (EVAL-08)
+    const evaluatedAt = new Date().toISOString();
+    const ipfsPayload = {
+      type: "https://ipe.city/schemas/judge-evaluation-v1",
+      proposalCID: proposal.ipfsCid,
+      dimension: dim,
+      ...output,
+      model: "claude-sonnet-4-20250514",
+      promptVersion: `judge-${dim}-v1`,
+      evaluatedAt,
+      promptTransparency: {
+        systemPrompt: promptText,
+        userMessage: proposalContext,
         model: "claude-sonnet-4-20250514",
-        promptVersion: `judge-${dim}-v1`,
-        evaluatedAt: new Date().toISOString(),
+        structuredOutputSchema: "JudgeEvaluationSchema",
+        temperature: "default",
+        retryAttempts: attempts,
+        maxRetries: MAX_JUDGE_RETRIES + 1,
+        timeoutMs: JUDGE_TIMEOUT_MS,
+        evaluatedAt,
+        methodology: "Single-dimension independent judge evaluation using Mastra Agent with Zod-validated structured output. Score is basis points (0-10000). Evaluation is independent per dimension with no cross-judge contamination.",
+        limitations: [
+          "LLM evaluations may vary between runs despite structured output constraints",
+          "Score calibration depends on prompt anchoring, not ground truth",
+          "Proposal text is the sole input — no external data verification",
+        ],
       },
-      `eval-${dim}-${id}.json`
-    );
+    };
+
+    const ipfsResult = await uploadJson(ipfsPayload, `eval-${dim}-${id}.json`);
 
     await db
       .update(evaluations)
@@ -121,11 +167,10 @@ export async function GET(
       headers: { "Content-Type": "application/json" },
     });
   } catch {
-    clearTimeout(timeout);
     await db
       .update(evaluations)
       .set({ status: "failed" })
       .where(eq(evaluations.id, evalId));
-    return new Response("Evaluation failed", { status: 500 });
+    return new Response("Evaluation failed after retries", { status: 500 });
   }
 }

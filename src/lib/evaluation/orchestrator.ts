@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
 import { computeAggregateScore } from "@/lib/judges/weights";
 import { uploadJson } from "@/lib/ipfs/client";
-import { publishEvaluationOnChain } from "@/lib/evaluation/publish-chain";
+import { publishEvaluationOnChainDetailed } from "@/lib/evaluation/publish-chain";
 import { logSecurityEvent } from "@/lib/security-log";
 
 const ANOMALY_THRESHOLDS = {
@@ -102,7 +102,7 @@ export async function checkAndFinalizeEvaluation(proposalId: string): Promise<{
       where: eq(proposals.id, proposalId),
     });
 
-    const txHash = await publishEvaluationOnChain({
+    const publishResult = await publishEvaluationOnChainDetailed({
       proposalId,
       proposalIpfsCid: proposal?.ipfsCid ?? "",
       evaluations: completeEvals.map((e) => ({
@@ -113,9 +113,24 @@ export async function checkAndFinalizeEvaluation(proposalId: string): Promise<{
       aggregateIpfsCid: ipfsResult.cid,
     });
 
+    // Store per-dimension feedback tx hashes on each evaluation record
+    for (const evaluation of completeEvals) {
+      const feedbackTxHash = publishResult.feedbackTxHashes[evaluation.dimension];
+      if (feedbackTxHash) {
+        await db
+          .update(evaluations)
+          .set({ feedbackTxHash })
+          .where(eq(evaluations.id, evaluation.id));
+      }
+    }
+
     await db
       .update(proposals)
-      .set({ status: "published", chainTxHash: txHash })
+      .set({
+        status: "published",
+        chainTxHash: publishResult.aggregateFeedbackTxHash,
+        chainTokenId: Number(publishResult.agentId),
+      })
       .where(eq(proposals.id, proposalId));
 
     return { complete: true, aggregateScore: aggregateBps };

@@ -31,7 +31,7 @@ export default async function GrantsPage() {
         <p className="text-lg text-muted-foreground mb-8">
           AI-Evaluated, On-Chain Verified
         </p>
-        <div className="flex justify-center gap-8 mb-8">
+        <div className="flex flex-wrap justify-center gap-6 sm:gap-8 mb-8">
           <div>
             <p className="text-3xl font-bold">{totalProposals}</p>
             <p className="text-sm text-muted-foreground">Proposals</p>

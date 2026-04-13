@@ -49,7 +49,7 @@ export default async function VerifyPage({
               href={`https://sepolia.basescan.org/tx/${proposal.chainTxHash}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-mono text-primary hover:underline truncate max-w-64"
+              className="text-sm font-mono text-primary hover:underline truncate max-w-40 sm:max-w-64"
             >
               {proposal.chainTxHash}
             </a>
