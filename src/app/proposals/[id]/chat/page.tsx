@@ -78,13 +78,30 @@ export default function ProposalChatPage() {
     loadData();
   }, [id]);
 
+  const proposalContextRef = useRef(proposalContext);
+  proposalContextRef.current = proposalContext;
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { proposalContext },
+        body: new Proxy({} as Record<string, string>, {
+          get(_target, prop) {
+            if (prop === "proposalContext") return proposalContextRef.current;
+            return undefined;
+          },
+          ownKeys() {
+            return ["proposalContext"];
+          },
+          getOwnPropertyDescriptor(_target, prop) {
+            if (prop === "proposalContext") {
+              return { configurable: true, enumerable: true, value: proposalContextRef.current };
+            }
+            return undefined;
+          },
+        }),
       }),
-    [proposalContext],
+    [],
   );
 
   const {
