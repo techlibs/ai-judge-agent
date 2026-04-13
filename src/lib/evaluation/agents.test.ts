@@ -174,3 +174,65 @@ describe("NAIVE_PROMPT", () => {
     expect(NAIVE_PROMPT.length).toBeGreaterThan(0);
   });
 });
+
+// --- Edge case tests ---
+
+describe("evaluationOutputSchema edge cases", () => {
+  const validOutput: EvaluationOutput = {
+    score: 75,
+    justification: "Well-structured proposal with clear technical approach.",
+    recommendation: "approve",
+    keyFindings: ["Strong architecture", "Realistic timeline"],
+  };
+
+  test("rejects empty string justification", () => {
+    const result = evaluationOutputSchema.safeParse({
+      ...validOutput,
+      justification: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  test("accepts score at exact lower boundary (0)", () => {
+    const result = evaluationOutputSchema.safeParse({
+      ...validOutput,
+      score: 0,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("accepts score at exact upper boundary (100)", () => {
+    const result = evaluationOutputSchema.safeParse({
+      ...validOutput,
+      score: 100,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("all recommendation enum values are valid", () => {
+    const allRecommendations = [
+      "strong_approve",
+      "approve",
+      "needs_revision",
+      "reject",
+    ] as const;
+    for (const recommendation of allRecommendations) {
+      const result = evaluationOutputSchema.safeParse({
+        ...validOutput,
+        recommendation,
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  test("rejects recommendation values outside the enum", () => {
+    const invalidValues = ["maybe", "pending", "skip", "", "APPROVE"];
+    for (const recommendation of invalidValues) {
+      const result = evaluationOutputSchema.safeParse({
+        ...validOutput,
+        recommendation,
+      });
+      expect(result.success).toBe(false);
+    }
+  });
+});

@@ -1,54 +1,98 @@
-// TODO: Replace source-string-matching tests with @testing-library/react render tests
-// once @testing-library/react is added as a dev dependency.
+/// <reference lib="dom" />
 import { describe, test, expect } from "bun:test";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { render } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import { ScoreSummaryCard } from "./score-summary-card";
+import type { DimensionScore } from "./score-radar-chart";
 
-const COMPONENT_PATH = join(__dirname, "score-summary-card.tsx");
-const source = readFileSync(COMPONENT_PATH, "utf-8");
+const SAMPLE_SCORES: ReadonlyArray<DimensionScore> = [
+  { dimension: "technical", score: 80 },
+  { dimension: "impact", score: 75 },
+  { dimension: "cost", score: 60 },
+  { dimension: "team", score: 90 },
+];
 
 describe("ScoreSummaryCard", () => {
-  test("has 'use client' directive", () => {
-    expect(source.startsWith('"use client"')).toBe(true);
+  test("shows loading state with Evaluating... text", () => {
+    const { getByText } = render(<ScoreSummaryCard loading={true} />);
+    expect(getByText("Evaluating...")).toBeInTheDocument();
   });
 
-  test("exports ScoreSummaryCard function", () => {
-    expect(source).toContain("export function ScoreSummaryCard");
+  test("shows Evaluation Breakdown title in loading state", () => {
+    const { getByText } = render(<ScoreSummaryCard loading={true} />);
+    expect(getByText("Evaluation Breakdown")).toBeInTheDocument();
   });
 
-  test("shows loading state with Skeleton", () => {
-    expect(source).toContain("Skeleton");
-    expect(source).toContain("Evaluating...");
+  test("shows empty state when no scores provided", () => {
+    const { getByText } = render(<ScoreSummaryCard />);
+    expect(getByText("No evaluation yet")).toBeInTheDocument();
   });
 
-  test("shows empty state with FileBarChart icon", () => {
-    expect(source).toContain("FileBarChart");
-    expect(source).toContain("No evaluation yet");
+  test("shows empty state when scores array is empty", () => {
+    const { getByText } = render(<ScoreSummaryCard scores={[]} />);
+    expect(getByText("No evaluation yet")).toBeInTheDocument();
   });
 
-  test("renders Evaluation Breakdown title", () => {
-    expect(source).toContain("Evaluation Breakdown");
+  test("renders Evaluation Breakdown title when scores are provided", () => {
+    const { getByText } = render(
+      <ScoreSummaryCard scores={SAMPLE_SCORES} aggregateScore={76} />,
+    );
+    expect(getByText("Evaluation Breakdown")).toBeInTheDocument();
   });
 
   test("renders aggregate score in /100 format", () => {
-    expect(source).toContain("/100");
+    const { getByText } = render(
+      <ScoreSummaryCard scores={SAMPLE_SCORES} aggregateScore={76} />,
+    );
+    expect(getByText("76/100")).toBeInTheDocument();
   });
 
   test("renders Overall Score label", () => {
-    expect(source).toContain("Overall Score");
+    const { getByText } = render(
+      <ScoreSummaryCard scores={SAMPLE_SCORES} aggregateScore={76} />,
+    );
+    expect(getByText("Overall Score")).toBeInTheDocument();
   });
 
-  test("shows all-zero scores message", () => {
-    expect(source).toContain("All dimensions scored 0");
+  test("shows N/A when aggregateScore is undefined but scores provided", () => {
+    const { getByText } = render(<ScoreSummaryCard scores={SAMPLE_SCORES} />);
+    expect(getByText("N/A")).toBeInTheDocument();
   });
 
-  test("does not contain the string 'any'", () => {
-    expect(source).not.toMatch(/\bany\b/);
+  test("rounds aggregateScore before display", () => {
+    const { getByText } = render(
+      <ScoreSummaryCard scores={SAMPLE_SCORES} aggregateScore={76.7} />,
+    );
+    expect(getByText("77/100")).toBeInTheDocument();
   });
 
-  test("derives dimension weight labels from DIMENSIONS constant", () => {
-    expect(source).toContain("DIMENSIONS");
-    expect(source).toContain("dim.label");
-    expect(source).toContain("dim.weight");
+  test("shows all-zero scores message when all dimensions are 0", () => {
+    const zeroScores: ReadonlyArray<DimensionScore> = [
+      { dimension: "technical", score: 0 },
+      { dimension: "impact", score: 0 },
+      { dimension: "cost", score: 0 },
+      { dimension: "team", score: 0 },
+    ];
+    const { getByText } = render(
+      <ScoreSummaryCard scores={zeroScores} aggregateScore={0} />,
+    );
+    expect(getByText("All dimensions scored 0")).toBeInTheDocument();
+  });
+
+  test("does not show all-zero message when scores are non-zero", () => {
+    const { queryByText } = render(
+      <ScoreSummaryCard scores={SAMPLE_SCORES} aggregateScore={76} />,
+    );
+    expect(queryByText("All dimensions scored 0")).not.toBeInTheDocument();
+  });
+
+  test("renders dimension weight labels derived from DIMENSIONS constant", () => {
+    const { getByText } = render(
+      <ScoreSummaryCard scores={SAMPLE_SCORES} aggregateScore={76} />,
+    );
+    expect(getByText("Technical Feasibility (25%)")).toBeInTheDocument();
+    expect(getByText("Impact Potential (30%)")).toBeInTheDocument();
+    expect(getByText("Cost Efficiency (20%)")).toBeInTheDocument();
+    expect(getByText("Team Capability (25%)")).toBeInTheDocument();
   });
 });
