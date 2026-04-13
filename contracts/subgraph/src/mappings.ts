@@ -17,7 +17,20 @@ import {
   DisputeVoteCast as DisputeVoteCastEvent,
   DisputeResolved as DisputeResolvedEvent,
 } from "../../generated/DisputeRegistry/DisputeRegistry";
-import { Evaluation, Agent, AgentMetadata, FundRelease, Dispute, DisputeVote } from "../../generated/schema";
+import {
+  NewFeedback as NewFeedbackEvent,
+  FeedbackRevoked as FeedbackRevokedEvent,
+  FeedbackResponseAppended as FeedbackResponseAppendedEvent,
+} from "../../generated/ReputationRegistry/ReputationRegistry";
+import {
+  ValidationRequested as ValidationRequestedEvent,
+  ValidationResponded as ValidationRespondedEvent,
+} from "../../generated/ValidationRegistry/ValidationRegistry";
+import {
+  Evaluation, Agent, AgentMetadata, FundRelease,
+  Dispute, DisputeVote,
+  AgentFeedback, FeedbackResponse, Validation,
+} from "../../generated/schema";
 
 export function handleEvaluationSubmitted(
   event: EvaluationSubmittedEvent
@@ -156,4 +169,102 @@ export function handleDisputeResolved(event: DisputeResolvedEvent): void {
   }
 
   dispute.save();
+}
+
+export function handleNewFeedback(event: NewFeedbackEvent): void {
+  const agentIdBytes = Bytes.fromByteArray(
+    Bytes.fromBigInt(event.params.agentId)
+  );
+  const feedbackId = agentIdBytes.concat(
+    Bytes.fromBigInt(event.params.feedbackIndex)
+  );
+
+  let feedback = new AgentFeedback(feedbackId);
+  feedback.agent = agentIdBytes;
+  feedback.clientAddress = event.params.clientAddress;
+  feedback.feedbackIndex = event.params.feedbackIndex;
+  feedback.value = event.params.value;
+  feedback.valueDecimals = 2;
+  feedback.tag1 = event.params.tag1;
+  feedback.tag2 = event.params.tag2;
+  feedback.feedbackURI = event.params.feedbackURI;
+  feedback.feedbackHash = event.params.feedbackHash;
+  feedback.isRevoked = false;
+  feedback.timestamp = event.block.timestamp;
+
+  feedback.save();
+}
+
+export function handleFeedbackRevoked(event: FeedbackRevokedEvent): void {
+  const agentIdBytes = Bytes.fromByteArray(
+    Bytes.fromBigInt(event.params.agentId)
+  );
+  const feedbackId = agentIdBytes.concat(
+    Bytes.fromBigInt(event.params.feedbackIndex)
+  );
+
+  let feedback = AgentFeedback.load(feedbackId);
+  if (feedback == null) {
+    return;
+  }
+
+  feedback.isRevoked = true;
+  feedback.save();
+}
+
+export function handleFeedbackResponseAppended(
+  event: FeedbackResponseAppendedEvent
+): void {
+  const agentIdBytes = Bytes.fromByteArray(
+    Bytes.fromBigInt(event.params.agentId)
+  );
+  const feedbackId = agentIdBytes.concat(
+    Bytes.fromBigInt(event.params.feedbackIndex)
+  );
+  const responseId = feedbackId.concat(event.params.responder);
+
+  let response = new FeedbackResponse(responseId);
+  response.feedback = feedbackId;
+  response.responder = event.params.responder;
+  response.responseURI = event.params.responseURI;
+  response.responseHash = event.params.responseHash;
+  response.timestamp = event.block.timestamp;
+
+  response.save();
+}
+
+export function handleValidationRequested(
+  event: ValidationRequestedEvent
+): void {
+  const id = Bytes.fromBigInt(event.params.requestId);
+
+  let validation = new Validation(id);
+  const agentIdBytes = Bytes.fromByteArray(
+    Bytes.fromBigInt(event.params.agentId)
+  );
+  validation.agent = agentIdBytes;
+  validation.validatorAddress = event.params.requester;
+  validation.requestURI = event.params.requestURI;
+  validation.lastUpdate = event.block.timestamp;
+
+  validation.save();
+}
+
+export function handleValidationResponded(
+  event: ValidationRespondedEvent
+): void {
+  const id = Bytes.fromBigInt(event.params.requestId);
+
+  let validation = Validation.load(id);
+  if (validation == null) {
+    return;
+  }
+
+  validation.response = event.params.score;
+  validation.responseURI = event.params.responseURI;
+  validation.responseHash = event.params.responseHash;
+  validation.tag = event.params.tag;
+  validation.lastUpdate = event.block.timestamp;
+
+  validation.save();
 }

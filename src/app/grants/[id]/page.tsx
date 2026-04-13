@@ -86,6 +86,17 @@ export default async function ProposalDetailPage({
                   )}
               </div>
             </div>
+            {proposal.reputationMultiplier !== null &&
+              proposal.reputationMultiplier > 1.0 && (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-purple-50 px-3 py-1">
+                  <span className="text-xs font-medium text-purple-700">
+                    Reputation Bonus Active
+                  </span>
+                  <span className="text-xs text-purple-600">
+                    {((proposal.reputationMultiplier - 1) * 100).toFixed(2)}% boost from on-chain reputation
+                  </span>
+                </div>
+              )}
           </div>
         )}
 

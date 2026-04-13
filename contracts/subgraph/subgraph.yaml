@@ -92,3 +92,48 @@ dataSources:
         - event: DisputeResolved(indexed uint256,uint8,uint16)
           handler: handleDisputeResolved
       file: ./src/mappings.ts
+  - kind: ethereum
+    name: ReputationRegistry
+    network: base-sepolia
+    source:
+      abi: ReputationRegistry
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AgentFeedback
+        - FeedbackResponse
+      abis:
+        - name: ReputationRegistry
+          file: ../out/ReputationRegistry.sol/ReputationRegistry.json
+      eventHandlers:
+        - event: NewFeedback(indexed uint256,indexed address,uint256,uint256,string,string,string,bytes32)
+          handler: handleNewFeedback
+        - event: FeedbackRevoked(indexed uint256,uint256)
+          handler: handleFeedbackRevoked
+        - event: FeedbackResponseAppended(indexed uint256,uint256,indexed address,string,bytes32)
+          handler: handleFeedbackResponseAppended
+      file: ./src/mappings.ts
+  - kind: ethereum
+    name: ValidationRegistry
+    network: base-sepolia
+    source:
+      abi: ValidationRegistry
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Validation
+      abis:
+        - name: ValidationRegistry
+          file: ../out/ValidationRegistry.sol/ValidationRegistry.json
+      eventHandlers:
+        - event: ValidationRequested(indexed uint256,indexed uint256,indexed address,string)
+          handler: handleValidationRequested
+        - event: ValidationResponded(indexed uint256,indexed uint256,indexed address,uint8,string,bytes32,string)
+          handler: handleValidationResponded
+      file: ./src/mappings.ts

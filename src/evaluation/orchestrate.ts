@@ -12,6 +12,7 @@ import {
   scaleScoreToChain,
 } from "@/chain/evaluation-registry";
 import { prepareReleaseMilestone } from "@/chain/milestone-manager";
+import { lookupReputationIndex } from "@/reputation/multiplier";
 import {
   createEvaluationJob,
   updateEvaluationJobStatus,
@@ -111,7 +112,8 @@ export async function orchestrateEvaluation(
 
     const evaluationResult = await runAllDimensions(sanitizedProposal);
 
-    const reputationIndex = 0;
+    // Look up reputation from on-chain ReputationRegistry (agent 0 as default judge)
+    const reputationIndex = await lookupReputationIndex(0n);
     const { finalScore, reputationMultiplier, adjustedScore } =
       computeWeightedScore(evaluationResult.scores, reputationIndex);
 

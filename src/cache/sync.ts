@@ -4,6 +4,7 @@ import {
   dimensionScores,
   fundReleases,
   agents,
+  agentFeedback,
   fundingRoundStats,
   disputes,
 } from "./schema";
@@ -240,6 +241,31 @@ async function syncAgents(): Promise<SyncResult> {
             feedbackSummaryValue,
           },
         });
+
+      // Sync individual feedback entries for this agent
+      for (const fb of agent.feedback) {
+        const feedbackId = `${agent.id}_${fb.id}`;
+        await db
+          .insert(agentFeedback)
+          .values({
+            id: feedbackId,
+            agentId: Number(agent.id),
+            clientAddress: "",
+            feedbackIndex: 0,
+            value: Number(fb.value),
+            tag1: fb.tag1,
+            tag2: fb.tag2,
+            isRevoked: fb.isRevoked ? 1 : 0,
+            timestamp: Number(fb.timestamp),
+          })
+          .onConflictDoUpdate({
+            target: agentFeedback.id,
+            set: {
+              value: Number(fb.value),
+              isRevoked: fb.isRevoked ? 1 : 0,
+            },
+          });
+      }
     }
 
     skip += BATCH_SIZE;
