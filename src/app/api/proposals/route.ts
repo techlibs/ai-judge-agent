@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getPublicClient } from "@/lib/chain/client";
 import {
   IDENTITY_REGISTRY_ABI,
@@ -8,8 +8,22 @@ import {
 import { fetchFromIPFS } from "@/lib/ipfs/client";
 import { proposalContentSchema } from "@/lib/ipfs/schemas";
 
-export async function GET() {
+const DEFAULT_PAGE_LIMIT = 20;
+const MAX_PAGE_LIMIT = 100;
+const MAX_PARALLEL_IPFS_FETCHES = 10;
+
+// Deployment block to avoid scanning from block 0
+const DEPLOYMENT_BLOCK = BigInt(process.env.DEPLOYMENT_BLOCK ?? "0");
+
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = request.nextUrl;
+    const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
+    const limit = Math.min(
+      MAX_PAGE_LIMIT,
+      Math.max(1, Number(searchParams.get("limit") ?? String(DEFAULT_PAGE_LIMIT)))
+    );
+
     const publicClient = getPublicClient();
     const { identityRegistry, reputationRegistry } = getContractAddresses();
 
@@ -24,62 +38,78 @@ export async function GET() {
           { name: "agentURI", type: "string", indexed: false },
         ],
       },
-      fromBlock: 0n,
+      fromBlock: DEPLOYMENT_BLOCK,
       toBlock: "latest",
     });
 
-    const proposals = await Promise.all(
-      logs.map(async (log) => {
-        const tokenId = log.args.tokenId?.toString() ?? "0";
-        const owner = log.args.owner ?? "0x0";
-        const ipfsCID = log.args.agentURI ?? "";
+    const totalCount = logs.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedLogs = logs.reverse().slice(startIndex, startIndex + limit);
 
-        const [feedbackCount, averageScore] =
-          await publicClient.readContract({
-            address: reputationRegistry,
-            abi: REPUTATION_REGISTRY_ABI,
-            functionName: "getSummary",
-            args: [BigInt(tokenId)],
-          });
+    async function enrichLog(log: (typeof logs)[number]) {
+      const tokenId = log.args.tokenId?.toString() ?? "0";
+      const owner = log.args.owner ?? "0x0";
+      const ipfsCID = log.args.agentURI ?? "";
 
-        const count = Number(feedbackCount);
-        const status = count > 0 ? "evaluated" : "submitted";
+      const [feedbackCount, averageScore] =
+        await publicClient.readContract({
+          address: reputationRegistry,
+          abi: REPUTATION_REGISTRY_ABI,
+          functionName: "getSummary",
+          args: [BigInt(tokenId)],
+        });
 
-        let title = "Content unavailable";
-        let description = "";
-        let budget = 0;
-        let submittedAt = "";
-        try {
-          const content = await fetchFromIPFS(
-            ipfsCID,
-            proposalContentSchema
-          );
-          title = content.title;
-          description = content.description;
-          budget = content.budget;
-          submittedAt = content.submittedAt;
-        } catch {
-          // IPFS gateway may be temporarily unavailable
-        }
+      const count = Number(feedbackCount);
+      const status = count > 0 ? "evaluated" : "submitted";
 
-        return {
-          tokenId,
-          owner,
+      let title = "Content unavailable";
+      let description = "";
+      let budget = 0;
+      let submittedAt = "";
+      try {
+        const content = await fetchFromIPFS(
           ipfsCID,
-          status,
-          feedbackCount: count,
-          averageScore: Number(averageScore),
-          title,
-          description,
-          budget,
-          submittedAt,
-        };
-      })
-    );
+          proposalContentSchema
+        );
+        title = content.title;
+        description = content.description;
+        budget = content.budget;
+        submittedAt = content.submittedAt;
+      } catch {
+        // IPFS gateway may be temporarily unavailable
+      }
 
-    proposals.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+      return {
+        tokenId,
+        owner,
+        ipfsCID,
+        status,
+        feedbackCount: count,
+        averageScore: Number(averageScore),
+        title,
+        description,
+        budget,
+        submittedAt,
+      };
+    }
 
-    return NextResponse.json(proposals);
+    // Batch IPFS fetches to avoid overwhelming the gateway
+    const proposals = [];
+    for (let i = 0; i < paginatedLogs.length; i += MAX_PARALLEL_IPFS_FETCHES) {
+      const batch = paginatedLogs.slice(i, i + MAX_PARALLEL_IPFS_FETCHES);
+      const results = await Promise.all(batch.map(enrichLog));
+      proposals.push(...results);
+    }
+
+    return NextResponse.json({
+      proposals,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch proposals" },

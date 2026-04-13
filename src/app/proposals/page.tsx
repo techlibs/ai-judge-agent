@@ -5,7 +5,20 @@ import Link from "next/link";
 import { ProposalCard } from "@/components/proposals/proposal-card";
 import { ProposalListSkeleton } from "@/components/proposals/proposal-list-skeleton";
 import { buttonVariants } from "@/components/ui/button";
+import { z } from "zod";
 import type { ProposalStatus } from "@/lib/constants/proposal";
+
+const proposalsResponseSchema = z.object({
+  proposals: z.array(
+    z.object({
+      tokenId: z.string(),
+      title: z.string(),
+      description: z.string(),
+      status: z.enum(["submitted", "evaluating", "evaluated"]),
+      budget: z.number(),
+    })
+  ),
+});
 
 interface ProposalListItem {
   tokenId: string;
@@ -29,8 +42,9 @@ export default function ProposalsPage() {
           return;
         }
         const data: unknown = await response.json();
-        if (Array.isArray(data)) {
-          setProposals(data);
+        const parsed = proposalsResponseSchema.safeParse(data);
+        if (parsed.success) {
+          setProposals(parsed.data.proposals);
         }
       } catch {
         setError("Failed to load proposals. Try refreshing the page.");
