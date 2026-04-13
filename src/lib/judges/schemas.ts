@@ -8,7 +8,6 @@ export const IpeAlignmentSchema = z.object({
 
 export const JudgeEvaluationSchema = z.object({
   score: z.number().min(0).max(10000),
-  scoreDecimals: z.literal(2),
   confidence: z.enum(["high", "medium", "low"]),
   recommendation: z.enum(["strong_fund", "fund", "conditional", "reject"]),
   justification: z.string().max(2000),

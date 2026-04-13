@@ -4,7 +4,6 @@ import { JudgeEvaluationSchema, IpeAlignmentSchema } from "@/lib/judges/schemas"
 describe("JudgeEvaluationSchema", () => {
   const validEvaluation = {
     score: 7500,
-    scoreDecimals: 2 as const,
     confidence: "high" as const,
     recommendation: "fund" as const,
     justification: "Strong proposal with clear technical approach.",

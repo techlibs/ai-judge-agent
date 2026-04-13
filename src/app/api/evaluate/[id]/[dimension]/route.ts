@@ -119,6 +119,7 @@ export async function GET(
       proposalCID: proposal.ipfsCid,
       dimension: dim,
       ...output,
+      scoreDecimals: 2,
       model: "claude-sonnet-4-20250514",
       promptVersion: `judge-${dim}-v1`,
       evaluatedAt,
@@ -147,7 +148,7 @@ export async function GET(
       .update(evaluations)
       .set({
         score: output.score,
-        scoreDecimals: output.scoreDecimals,
+        scoreDecimals: 2,
         confidence: output.confidence,
         recommendation: output.recommendation,
         justification: output.justification,

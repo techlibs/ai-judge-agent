@@ -48,7 +48,6 @@ export function createEvaluationFixture(
     proposalId: "prop-001",
     dimension,
     score: 7500,
-    scoreDecimals: 2,
     confidence: "high" as const,
     recommendation: "fund" as const,
     justification: `Strong proposal evaluated on ${dimension} dimension.`,
