@@ -22,24 +22,18 @@ export async function uploadJson(
   name: string
 ): Promise<{ cid: string; uri: string }> {
   const pinata = getPinata();
-  const result = await pinata.upload.json(data).addMetadata({ name });
+  const result = await pinata.upload.public.json(data).name(name);
   const gateway = process.env.PINATA_GATEWAY_URL ?? "https://gateway.pinata.cloud";
   return {
-    cid: result.IpfsHash,
-    uri: `${gateway}/ipfs/${result.IpfsHash}`,
+    cid: result.cid,
+    uri: `${gateway}/ipfs/${result.cid}`,
   };
 }
 
 export async function fetchJson<T>(cid: string, schema: z.ZodType<T>): Promise<T> {
   const pinata = getPinata();
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
-  try {
-    const response = await pinata.gateways.get(cid);
-    return schema.parse(response.data);
-  } finally {
-    clearTimeout(timeout);
-  }
+  const response = await pinata.gateways.public.get(cid);
+  return schema.parse(response.data);
 }
 
 export function ipfsUri(cid: string): string {
