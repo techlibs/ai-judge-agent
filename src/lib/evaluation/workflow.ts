@@ -4,12 +4,18 @@ import { eq, and } from "drizzle-orm";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
 import { computeAggregateScore } from "@/lib/judges/weights";
 import { JudgeEvaluationSchema } from "@/lib/judges/schemas";
-import { getJudgePrompt, buildProposalContext } from "@/lib/judges/prompts";
+import { getJudgePrompt, buildProposalContext, buildEnrichedProposalContext } from "@/lib/judges/prompts";
 import { mastra } from "@/lib/mastra";
 import { uploadJson } from "@/lib/ipfs/client";
 import { runQualityScorers } from "@/lib/evaluation/scorers";
 import { detectInjectionPatterns } from "@/lib/judges/agents";
 import { logSecurityEvent } from "@/lib/security-log";
+import { queryColosseum } from "@/lib/colosseum/client";
+import { marketContextSchema, type MarketContext } from "@/lib/colosseum/schemas";
+import { sanitizeColosseumResponse } from "@/lib/judges/external-data-guard";
+import { buildMarketContextSection } from "@/lib/judges/context-weaver";
+import { performRealityCheck } from "@/lib/judges/reality-checker";
+import type { MarketValidation } from "@/lib/judges/schemas";
 
 const MAX_JUDGE_RETRIES = 2;
 const JUDGE_RETRY_DELAY_MS = 2000;
@@ -54,6 +60,51 @@ interface WorkflowResult {
   aggregateScoreBps: number;
   dimensionResults: DimensionResult[];
   anomalyFlags: string[];
+  marketValidation: MarketValidation | null;
+}
+
+async function runResearchPhase(proposal: WorkflowInput["proposal"]): Promise<MarketContext | null> {
+  try {
+    const colosseumData = await queryColosseum(proposal.category, proposal.description);
+    if (!colosseumData) return null;
+
+    // Layer 4: Sanitize external data before it enters agent prompts
+    const { sanitized, totalDetectedPatterns } = sanitizeColosseumResponse(
+      colosseumData as unknown as Record<string, unknown>
+    );
+    if (totalDetectedPatterns.length > 0) {
+      logSecurityEvent({
+        type: "external_data_injection",
+        source: "colosseum",
+        patterns: totalDetectedPatterns,
+      });
+    }
+
+    // Market Intelligence Agent: synthesize raw data into structured context
+    const researchPrompt = `Analyze the following competitive intelligence data for a grant proposal in the "${proposal.category}" domain.
+
+Proposal title: ${proposal.title}
+Proposal description: ${proposal.description.slice(0, 1000)}
+
+Raw research data:
+${JSON.stringify(sanitized, null, 2)}
+
+Synthesize this into a structured market context report with sections for technical landscape, impact assessment, cost benchmarks, and team fit patterns.`;
+
+    const miResult = await mastra.getAgent("market-intelligence").generate(researchPrompt, {
+      structuredOutput: { schema: marketContextSchema },
+    });
+
+    if (!miResult.object) {
+      console.warn("[Research] Market Intelligence agent produced no output");
+      return null;
+    }
+
+    return miResult.object;
+  } catch (error) {
+    console.error("[Research] Research phase failed (non-fatal):", error);
+    return null;
+  }
 }
 
 async function runJudgeWithRetry(
@@ -247,13 +298,22 @@ function detectAnomalies(scores: number[]): string[] {
 export async function runEvaluationWorkflow(input: WorkflowInput): Promise<WorkflowResult> {
   const { proposalId, proposal } = input;
   const db = getDb();
-  const proposalContext = buildProposalContext(proposal);
+  const baseProposalContext = buildProposalContext(proposal);
 
-  // Step 1: Run all 4 judges in parallel
+  // Step 0: Research phase — Colosseum API + Market Intelligence Agent
+  const marketContext = await runResearchPhase(proposal);
+
+  // Step 1: Run all 4 judges in parallel (enriched with market context if available)
   const judgeResults = await Promise.allSettled(
-    JUDGE_DIMENSIONS.map((dim) =>
-      runJudgeStep(dim, proposalId, proposalContext, proposal.ipfsCid)
-    )
+    JUDGE_DIMENSIONS.map((dim) => {
+      const proposalContext = marketContext
+        ? buildEnrichedProposalContext(
+            proposal,
+            buildMarketContextSection(dim, marketContext)
+          )
+        : baseProposalContext;
+      return runJudgeStep(dim, proposalId, proposalContext, proposal.ipfsCid);
+    })
   );
 
   // Collect results, track failures
@@ -298,6 +358,46 @@ export async function runEvaluationWorkflow(input: WorkflowInput): Promise<Workf
 
   const aggregateBps = computeAggregateScore(scores as Record<JudgeDimension, number>);
 
+  // Step 3: Reality Check — post-evaluation coherence validation
+  let marketValidation: MarketValidation | null = null;
+  if (marketContext) {
+    const judgeScoresForCheck = dimensionResults.map((r) => ({
+      dimension: r.dimension,
+      score: r.score,
+      confidence: "medium" as const,
+    }));
+
+    const coherenceReport = await performRealityCheck(
+      judgeScoresForCheck,
+      marketContext
+    );
+
+    if (coherenceReport) {
+      marketValidation = {
+        gapType: marketContext.impact.gapType as "full" | "partial" | "false",
+        competitorCount: marketContext.technical.similarBuilds.length,
+        similarProjectsFound: marketContext.technical.similarBuilds.length,
+        marketCoherenceScore: coherenceReport.coherenceScore,
+        researchConfidence: marketContext.confidence,
+        coherenceFlags: coherenceReport.flags.map((f) => ({
+          dimension: f.dimension,
+          issue: f.issue,
+          severity: f.severity,
+        })),
+        recommendsReview: coherenceReport.recommendsReview,
+      };
+
+      if (coherenceReport.recommendsReview) {
+        logSecurityEvent({
+          type: "coherence_review_recommended",
+          proposalId,
+          coherenceScore: coherenceReport.coherenceScore,
+          flags: coherenceReport.flags.length,
+        });
+      }
+    }
+  }
+
   // Upload aggregate to IPFS
   const aggregateData = {
     type: "https://ipe.city/schemas/aggregate-evaluation-v1",
@@ -309,6 +409,7 @@ export async function runEvaluationWorkflow(input: WorkflowInput): Promise<Workf
       ipfsCid: r.ipfsCid,
     })),
     anomalyFlags: anomalyFlags.length > 0 ? anomalyFlags : undefined,
+    marketValidation,
     computedAt: new Date().toISOString(),
   };
 
@@ -333,5 +434,6 @@ export async function runEvaluationWorkflow(input: WorkflowInput): Promise<Workf
     aggregateScoreBps: aggregateBps,
     dimensionResults,
     anomalyFlags,
+    marketValidation,
   };
 }

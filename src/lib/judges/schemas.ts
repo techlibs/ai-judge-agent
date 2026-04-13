@@ -18,3 +18,21 @@ export const JudgeEvaluationSchema = z.object({
 
 export type JudgeEvaluation = z.infer<typeof JudgeEvaluationSchema>;
 export type IpeAlignment = z.infer<typeof IpeAlignmentSchema>;
+
+export const MarketValidationSchema = z.object({
+  gapType: z.enum(["full", "partial", "false"]),
+  competitorCount: z.number().int().nonnegative(),
+  similarProjectsFound: z.number().int().nonnegative(),
+  marketCoherenceScore: z.number().int().min(0).max(10000),
+  researchConfidence: z.enum(["high", "medium", "low"]),
+  coherenceFlags: z.array(
+    z.object({
+      dimension: z.string(),
+      issue: z.string(),
+      severity: z.enum(["critical", "warning", "info"]),
+    })
+  ),
+  recommendsReview: z.boolean(),
+});
+
+export type MarketValidation = z.infer<typeof MarketValidationSchema>;

@@ -87,6 +87,29 @@ export function getJudgePrompt(dimension: JudgeDimension): string {
   return DIMENSION_PROMPTS[dimension];
 }
 
+export function buildEnrichedProposalContext(
+  proposal: {
+    title: string;
+    description: string;
+    problemStatement: string;
+    proposedSolution: string;
+    teamMembers: Array<{ name: string; role: string }>;
+    budgetAmount: number;
+    budgetBreakdown: string;
+    timeline: string;
+    category: string;
+    residencyDuration: string;
+    demoDayDeliverable: string;
+    communityContribution: string;
+    priorIpeParticipation: boolean;
+    links: string[];
+  },
+  marketContextSection: string
+): string {
+  const base = buildProposalContext(proposal);
+  return `${base}\n\n${marketContextSection}`;
+}
+
 export function buildProposalContext(proposal: {
   title: string;
   description: string;
