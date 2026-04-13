@@ -5,12 +5,12 @@
 
 ## Summary
 
-An AI Judge system that evaluates grant proposals across four weighted dimensions (Technical Feasibility 25%, Impact Potential 30%, Cost Efficiency 20%, Team Capability 25%) using LLM-powered agents. Scores and justifications are pinned to IPFS and recorded on-chain (Base L2), making every evaluation publicly verifiable. A disposable SQLite cache (Turso) powers fast dashboard reads, rebuildable from chain events. The Graph provides decentralized indexed queries. Built with Next.js App Router on Vercel and Vercel AI SDK with Anthropic for structured LLM output.
+An AI Judge system that evaluates grant proposals across four weighted dimensions (Technical Feasibility 25%, Impact Potential 30%, Cost Efficiency 20%, Team Capability 25%) using LLM-powered agents. Scores and justifications are pinned to IPFS and recorded on-chain (Base L2), making every evaluation publicly verifiable. A disposable SQLite cache (Turso) powers fast dashboard reads, rebuildable from chain events. The Graph provides decentralized indexed queries. Built with Next.js App Router on Vercel and Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic for structured LLM output.
 
 ## Technical Context
 
 **Language/Version**: TypeScript (strict mode) on Bun >= 1.3
-**Primary Dependencies**: Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem, `@upstash/ratelimit`, `@upstash/redis`, `isomorphic-dompurify`
+**Primary Dependencies**: Next.js (App Router), Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem, `@upstash/ratelimit`, `@upstash/redis`, `isomorphic-dompurify`
 **Storage (3-layer)**:
   - **Source of truth**: On-chain (Base L2) for scores/state + IPFS (Pinata) for content
   - **Query layer**: The Graph subgraph for indexed chain data

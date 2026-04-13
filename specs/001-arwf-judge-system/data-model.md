@@ -622,7 +622,7 @@ FundReleased          → status: "funded"
 | Boundary | Validated Data | Schema |
 |----------|---------------|--------|
 | Webhook input | Raw proposal from platform | `ProposalContentSchema` (after PII sanitization) |
-| LLM output | Dimension scores from `generateObject` | `DimensionScoreSchema` |
+| LLM output | Dimension scores from Mastra `agent.generate({ structuredOutput })` | `DimensionScoreSchema` |
 | IPFS write | Content before pinning | `ProposalContentSchema`, `EvaluationContentSchema`, `MonitoringReportSchema` |
 | Chain read | Events from The Graph | Event-specific Zod schemas |
 | Cache write | Denormalized rows before SQLite insert | `createInsertSchema` from Drizzle table definitions |

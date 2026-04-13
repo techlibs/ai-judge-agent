@@ -79,18 +79,19 @@
 
 ## R-003: LLM Provider and SDK
 
-**Decision**: Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) with `generateObject` for structured output
+**Decision**: Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK for agent orchestration and structured output
 
-**Rationale**: `generateObject` with `schema: z.object(...)` produces type-safe JSON matching the scoring schema in a single call — no prompt engineering for JSON parsing. Provider flexibility via adapter pattern: swap `@ai-sdk/anthropic` for `@ai-sdk/openai` with zero application logic changes. Fully typed with Zod schema inference, no `any` leakage. First-party Vercel integration for streaming and serverless.
+**Rationale**: Mastra wraps Vercel AI SDK and adds a typed workflow engine with `workflow.parallel()`, built-in evaluation scorer pipeline (`@mastra/evals` with `createScorer()`), and automatic tracing. Under the hood, `agent.generate({ structuredOutput })` uses AI SDK's `generateObject` with `schema: z.object(...)` to produce type-safe JSON matching the scoring schema in a single call — no prompt engineering for JSON parsing. Provider flexibility via AI SDK adapter pattern: swap `@ai-sdk/anthropic` for `@ai-sdk/openai` with zero application logic changes. Fully typed with Zod schema inference, no `any` leakage.
 
 **Alternatives considered**:
+- **Vercel AI SDK directly**: Works well for simple cases, but lacks workflow orchestration, evaluation pipeline, and tracing that Mastra provides out of the box.
 - **Direct OpenAI SDK**: Provider lock-in. `zodResponseFormat` exists but is OpenAI-specific.
 - **Direct Anthropic SDK**: Tool-use-as-structured-output works but is verbose and provider-locked.
 - **LangChain**: Heavy abstraction, poor TypeScript strict mode support (`any` leaks), harder to audit.
 
 **Recommended models**: Claude Sonnet 4.6 for scoring quality, Claude Haiku for cost-sensitive batch runs. OpenAI as failover provider.
 
-**Packages**: `ai`, `@ai-sdk/anthropic`, `@ai-sdk/openai` (failover)
+**Packages**: `@mastra/core`, `@mastra/evals`, `ai`, `@ai-sdk/anthropic`, `@ai-sdk/openai` (failover)
 
 ## R-004: EVM Chain
 

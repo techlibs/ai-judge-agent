@@ -1,12 +1,12 @@
 # Contract: Scoring Schema
 
 **Feature**: 001-arwf-judge-system
-**Type**: LLM Structured Output (Vercel AI SDK `generateObject`)
+**Type**: LLM Structured Output (Mastra `agent.generate({ structuredOutput })`, using AI SDK `generateObject` internally)
 **Validation**: Zod at output boundary
 
 ## Judge Agent Output Schema
 
-Each Judge Agent produces this schema per evaluation dimension via `generateObject`.
+Each Judge Agent produces this schema per evaluation dimension via Mastra `agent.generate({ structuredOutput })` (which uses `generateObject` internally).
 
 ```typescript
 import { z } from 'zod';

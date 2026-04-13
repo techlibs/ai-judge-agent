@@ -20,7 +20,7 @@
 **Purpose**: Project initialization with Next.js App Router, Bun, TypeScript strict mode, and Foundry for smart contracts
 
 - [X] T001 Create project structure per plan.md: src/app/, src/ipfs/, src/chain/, src/graph/, src/cache/, src/evaluation/, src/monitoring/, src/reputation/, src/lib/, contracts/src/, contracts/test/, contracts/subgraph/
-- [X] T002 Initialize Next.js project with Bun, install core dependencies: next, react, react-dom, typescript, zod, drizzle-orm, @libsql/client, ai, @ai-sdk/anthropic, @ai-sdk/openai, viem, next-auth, pinata, tailwindcss, @graphprotocol/client
+- [X] T002 Initialize Next.js project with Bun, install core dependencies: next, react, react-dom, typescript, zod, drizzle-orm, @libsql/client, @mastra/core, @mastra/evals, ai, @ai-sdk/anthropic, @ai-sdk/openai, viem, next-auth, pinata, tailwindcss, @graphprotocol/client
 - [X] T003 [P] Configure TypeScript strict mode in tsconfig.json (no any, no type escapes)
 - [X] T004 [P] Configure Tailwind CSS and initialize shadcn/ui in src/app/
 - [X] T005 [P] Configure ESLint and Prettier for the project
@@ -81,7 +81,7 @@
 - [ ] T027 [P] [US1] Implement EvaluationRegistry chain interaction in src/chain/evaluation-registry.ts (submitScore: pin evaluation to IPFS, write finalScore + CIDs on-chain)
 - [ ] T028 [P] [US1] Implement IdentityRegistry chain interaction in src/chain/identity-registry.ts (register agent, setAgentURI, getMetadata, setMetadata)
 - [ ] T029 [US1] Create Judge Agent dimension configs and system prompts in src/evaluation/agents/ (one config per dimension: technical_feasibility, impact_potential, cost_efficiency, team_capability with rubric criteria). Include anti-injection system prompt text in SHARED_PREAMBLE (treat proposal as DATA not INSTRUCTIONS, ignore override attempts, flag manipulation in risks array).
-- [ ] T030 [US1] Implement Judge Agent evaluation runner using Vercel AI SDK generateObject in src/evaluation/agents/runner.ts (call each agent with SanitizedProposalSchema input, validate output with DimensionScoreSchema). Add `export const maxDuration = 60` for Vercel Fluid Compute. Add AbortController with 90s hard timeout. Add concurrent evaluation limit check (max 10 active via Upstash Redis counter).
+- [ ] T030 [US1] Implement Judge Agent evaluation runner using Mastra `agent.generate({ structuredOutput })` (which uses `generateObject` internally) in src/evaluation/agents/runner.ts (call each agent with SanitizedProposalSchema input, validate output with DimensionScoreSchema). Add `export const maxDuration = 60` for Vercel Fluid Compute. Add AbortController with 90s hard timeout. Add concurrent evaluation limit check (max 10 active via Upstash Redis counter).
 - [ ] T031 [US1] Implement weighted score calculation in src/evaluation/scoring.ts (S = 0.25*Tech + 0.30*Impact + 0.20*Cost + 0.25*Team, reputation multiplier: min(1 + reputationIndex/10000, 1.05))
 - [ ] T031a [US1] Implement score anomaly detection in src/evaluation/anomaly.ts (flag ALL_SCORES_SUSPICIOUSLY_HIGH if all >=95, ALL_SCORES_SUSPICIOUSLY_LOW if all <=5, EXTREME_SCORE_DIVERGENCE if max-min >50 points). Store flags in evaluation record. Display warning badge on dashboard.
 - [ ] T032 [US1] Implement evaluation orchestrator in src/evaluation/orchestrate.ts (sanitize PII, run 4 agents, compute weighted score, run anomaly detection, pin evaluation to IPFS, submit to chain, update evaluation_jobs). Add idempotency checks: before IPFS upload check if aggregateScores already has entry; before chain submission check if proposal status is already "published".
@@ -151,7 +151,7 @@
 - [ ] T053 [P] [US4] Implement GitHub metrics collector in src/monitoring/github.ts (commit frequency, issue velocity, releases via GitHub API)
 - [ ] T054 [P] [US4] Implement on-chain metrics collector in src/monitoring/onchain.ts (transaction count, fund utilization via viem)
 - [ ] T055 [P] [US4] Implement social metrics collector in src/monitoring/social.ts (announcements, community engagement)
-- [ ] T056 [US4] Implement Monitor Agent runner using Vercel AI SDK generateObject in src/monitoring/runner.ts (collect metrics, generate MonitoringScoreSchema output, produce risk flags)
+- [ ] T056 [US4] Implement Monitor Agent runner using Mastra `agent.generate({ structuredOutput })` (which uses `generateObject` internally) in src/monitoring/runner.ts (collect metrics, generate MonitoringScoreSchema output, produce risk flags)
 - [ ] T057 [US4] Implement monitoring orchestrator in src/monitoring/orchestrate.ts (run Monitor Agent, pin MonitoringReport to IPFS, submit updated score to chain, trigger fund release recalculation)
 - [ ] T058 [US4] Implement monitoring cron API route in src/app/api/cron/monitoring/route.ts (scheduled trigger for monitoring cycles per project). Validate CRON_SECRET via Authorization bearer header — return 401 if invalid.
 - [ ] T059 [US4] Add monitoring data and risk flags display to proposal detail page in src/app/grants/[id]/page.tsx

@@ -142,9 +142,9 @@ Use objects instead of long parameter lists.
 - Review lessons at session start
 
 ## Active Technologies
-- TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod (001-arwf-judge-system)
+- TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod (001-arwf-judge-system)
 - PostgreSQL via Neon (Vercel Marketplace), Drizzle ORM with `@neondatabase/serverless` driver (001-arwf-judge-system)
-- TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem (001-arwf-judge-system)
+- TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod, viem (001-arwf-judge-system)
 
 ## Recent Changes
-- 001-arwf-judge-system: Added TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod
+- 001-arwf-judge-system: Added TypeScript (strict mode) on Bun >= 1.3 + Next.js (App Router), Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Drizzle ORM, Auth.js v5, Tailwind CSS, shadcn/ui, Zod
