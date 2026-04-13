@@ -29,6 +29,10 @@ npm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+e2e/test-results/
+playwright-report/
+blob-report/
+test.db
 
 # IDE
 .vscode/
@@ -41,6 +45,12 @@ bun.lockb
 
 # Vercel
 .vercel
+
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/lib/
+contracts/broadcast/
 
 # Note: .planning/ is NOT ignored — GSD artifacts are version-controlled
 # Note: .self-improvement/ is NOT ignored — lessons persist across sessions
