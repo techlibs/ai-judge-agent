@@ -4,6 +4,7 @@ import { proposals } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { evaluationTriggerLimiter, globalEvaluationLimiter } from "@/lib/rate-limit";
 import { logSecurityEvent } from "@/lib/security-log";
+import { runEvaluationWorkflow } from "@/lib/evaluation/workflow";
 
 export async function POST(
   request: Request,
@@ -50,6 +51,19 @@ export async function POST(
     .set({ status: "evaluating" })
     .where(eq(proposals.id, id));
 
+  // Start server-orchestrated workflow in background (non-blocking)
+  runEvaluationWorkflow({
+    proposalId: id,
+    proposal: {
+      ...proposal,
+      ipfsCid: proposal.ipfsCid ?? null,
+    },
+  }).catch((err) => {
+    console.error("Workflow failed:", err);
+    db.update(proposals).set({ status: "failed" }).where(eq(proposals.id, id));
+  });
+
+  // Return dimension URLs for backward compatibility
   return NextResponse.json({
     id,
     status: "evaluating",
