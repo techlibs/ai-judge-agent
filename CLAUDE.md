@@ -64,7 +64,9 @@ bun run build             # Production build
 bun run lint              # Lint check
 bun run lint:fix          # Lint and auto-fix
 bun run typecheck         # TypeScript type checking
-bun run test              # Run tests
+bun run test              # Run tests (vitest)
+bun run test:e2e          # Run Playwright e2e tests (port 3001, local SQLite)
+bun run test:e2e:ui       # Run Playwright e2e tests with interactive UI
 ```
 
 ## Tech Stack
@@ -155,8 +157,9 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 - **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
 - **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
 - **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache rebuildable from chain events
-- **AI provider**: Mastra (`@mastra/core`, `@mastra/evals`) + Vercel AI SDK (`ai`, `@ai-sdk/anthropic`) — Claude Sonnet 4.6 primary, OpenAI failover
-- **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), viem for TypeScript chain interactions
+- **AI provider**: Vercel AI SDK (`ai`, `@ai-sdk/openai`) — GPT-4o primary via `OPENAI_API_KEY`
+- **On-chain**: ERC-8004 on Base Sepolia (chain ID 84532), 6 contracts deployed, viem for TypeScript chain interactions
+- **Deployer wallet**: `0xa7cEd6c599403B5BA0066f45074C5a5EbC70f742` (Base Sepolia testnet ETH)
 - **Smart contracts**: Solidity + Foundry for contract development
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
 - **Prompt transparency**: All AI-generated docs need `.prompt.md` companions
