@@ -155,7 +155,7 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 - **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
 - **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
 - **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache rebuildable from chain events
-- **AI provider**: OpenAI direct (GPT-4o) via OpenAI SDK
+- **AI provider**: Mastra (`@mastra/core`, `@mastra/evals`) + Vercel AI SDK (`ai`, `@ai-sdk/anthropic`) — Claude Sonnet 4.6 primary, OpenAI failover
 - **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), viem for TypeScript chain interactions
 - **Smart contracts**: Solidity + Foundry for contract development
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
@@ -177,11 +177,14 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 |------------|---------|---------|-----|------------|
 | IPFS (Pinata/web3.storage) | -- | Content storage | Content-addressed, immutable, public, decentralized. Proposal content and evaluation results pinned to IPFS. Content hashes stored on-chain for verification. | HIGH |
 | viem | 2.47.x | TypeScript Ethereum client | Type-safe, tree-shakeable. Used server-side in Next.js API routes to read/write on-chain data. Better TypeScript inference than ethers.js. | HIGH |
-### AI / LLM
+### AI / Agent Framework
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| openai (Node SDK) | 6.x | OpenAI API client | Already decided. Direct SDK gives full control over structured output, no abstraction layer overhead. v6 supports `client.beta.chat.completions.parse()` with Zod schemas natively. | HIGH |
-| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) OpenAI structured output via `zodResponseFormat()`, (2) API request/response validation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
+| Mastra | 1.x | Agent framework + evaluation scoring | TypeScript-native agent framework built on Vercel AI SDK. Provides `@mastra/evals` scorer pipeline (separates LLM judgment from deterministic score normalization), typed `workflow.parallel()` for concurrent judge execution with per-step retry, and built-in tracing for audit transparency. 22K+ stars, v1.0 stable, YC W25. | HIGH |
+| Vercel AI SDK (`ai`) | latest | LLM interaction layer | Used internally by Mastra. `generateObject` with Zod schemas for type-safe structured output. Provider-agnostic via adapter pattern. | HIGH |
+| @ai-sdk/anthropic | latest | Anthropic provider | Claude Sonnet 4.6 for scoring quality, Claude Haiku for cost-sensitive batch runs. | HIGH |
+| @ai-sdk/openai | latest | OpenAI provider (failover) | Automatic failover when Anthropic is unavailable. Mastra handles provider failover natively. | HIGH |
+| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) Mastra agent structured output, (2) API request/response validation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
 ### On-Chain / Web3
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
@@ -201,11 +204,11 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ### Supporting Libraries
 | Library | Version | Purpose | When to Use | Confidence |
 |---------|---------|---------|-------------|------------|
-| zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to OpenAI's JSON Schema format for structured output. OpenAI SDK includes this internally via `zodResponseFormat`, so may not need directly. | MEDIUM |
+| @mastra/evals | 1.x | Evaluation scoring | Built-in scorer pipeline for LLM-as-judge pattern. Separates LLM judgment from deterministic score normalization. Used for all judge agent scoring. | HIGH |
 ## Architecture Decisions
-### Next.js API Routes + OpenAI Integration Pattern
+### Next.js API Routes + Mastra Agent Integration Pattern
 ### IPFS + On-Chain Storage Pattern
-### OpenAI Structured Output Pattern
+### Mastra Structured Output + Scorer Pipeline Pattern
 ### ERC-8004 Contract Scope
 - **IdentityRegistry**: `register()`, `setAgentURI()`, `getMetadata()` -- register projects
 - **ReputationRegistry**: `giveFeedback()`, `getSummary()`, `readFeedback()` -- publish evaluation scores
@@ -213,7 +216,9 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ## Alternatives Considered
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| LLM Client | openai SDK direct | @ai-sdk/openai (Vercel AI SDK) | Adds streaming/provider abstraction overhead for a non-streaming, single-provider use case |
+| Agent Framework | Mastra + Vercel AI SDK | Vercel AI SDK only | Raw AI SDK requires building evaluation pipeline, retry logic, score normalization, and tracing from scratch. Mastra provides these as first-class abstractions. |
+| Agent Framework | Mastra + Vercel AI SDK | LangChain | Heavy abstraction, poor TypeScript strict mode support (`any` leaks), harder to audit |
+| Agent Framework | Mastra + Vercel AI SDK | Direct OpenAI/Anthropic SDK | Provider lock-in, no built-in scorer pipeline or workflow engine |
 | Ethereum Client | viem | ethers.js v6 | Larger bundle, weaker TS types, migration fragmentation |
 | Ethereum Client | viem (server-side) | wagmi (React hooks) | No wallet UI needed; on-chain writes are server-side from Next.js API routes |
 | Contract Toolchain | Foundry | Hardhat | Foundry is faster, Solidity-native tests, no JS dependency bloat |
@@ -222,7 +227,7 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 | Storage | On-chain + IPFS | Arweave | IPFS is simpler to integrate; Arweave adds permanent storage guarantee but higher complexity and cost |
 ## Installation
 # Core application (Next.js + TypeScript + Tailwind + shadcn/ui)
-# AI (OpenAI SDK + Zod)
+# AI (Mastra + Vercel AI SDK + Zod)
 # Web3 (viem for chain interactions, IPFS client for content storage)
 # UI (shadcn/ui components)
 # Dev dependencies
@@ -256,6 +261,30 @@ Conventions not yet established. Will populate as patterns emerge during develop
 
 Architecture not yet mapped. Follow existing patterns found in the codebase.
 <!-- GSD:architecture-end -->
+
+## Persisted Worktrees — DO NOT DELETE
+
+The `.worktrees/` directory contains **persisted git worktrees** from an SDD (Spec-Driven Development) framework comparison experiment. Each worktree holds an independent implementation of the agent-reviewer built with a different framework. They represent hours of AI-driven execution and are the primary artifact for the comparison analysis.
+
+| Worktree | Branch | SDD Framework | Status |
+|----------|--------|---------------|--------|
+| `.worktrees/full-vision-roadmap/` | GSD execution | GSD (Get Shit Done) | Phase 1 in progress |
+| `.worktrees/speckit/` | Spec Kit execution | Spec Kit | Phase 1-2 complete, Phase 3+ in progress |
+| `.worktrees/superpower/` | Superpowers execution | Superpowers | Phase 1 complete |
+| `.worktrees/audit-skills-toolkit/` | Audit branch | — | Earlier audit work |
+
+### How Worktrees Relate to Agent Teams
+
+These worktrees were created for the **`sdd-comparison`** Agent Team (config at `~/.claude/teams/sdd-comparison/`). The team lead dispatched teammates into separate worktrees so each framework could build in complete isolation — no merge conflicts, no shared state. Each teammate executed its assigned framework's workflow independently.
+
+Team tasks are tracked at `~/.claude/tasks/sdd-comparison/`. Task #4 (comparative summary) is pending — it requires analyzing all three worktrees to produce the final comparison.
+
+### Rules
+
+- **NEVER delete `.worktrees/`** — these are the source of truth for the framework comparison
+- **NEVER merge worktree branches into main** without explicit user approval
+- When resuming comparison work, check each worktree's git log to understand current state
+- The comparative analysis document (`docs/ecosystem-analysis-expansion-vision.md`) draws from these worktrees
 
 <!-- GSD:skills-start source:skills/ -->
 ## Project Skills
