@@ -314,3 +314,10 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+## Active Technologies
+- TypeScript 5.7+ (strict mode) + Playwright (e2e), Next.js 15 App Router, Zod, drizzle-orm (002-security-audit-tests)
+- SQLite via Turso (local `file:./test.db` in test env) (002-security-audit-tests)
+
+## Recent Changes
+- 002-security-audit-tests: Added TypeScript 5.7+ (strict mode) + Playwright (e2e), Next.js 15 App Router, Zod, drizzle-orm

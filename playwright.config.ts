@@ -5,24 +5,29 @@ import { readFileSync } from "fs";
 const PORT = 3001;
 const BASE_URL = `http://localhost:${PORT}`;
 
-// Load .env.test so the webServer command inherits test env vars
-const envTestPath = resolve(__dirname, ".env.test");
-try {
-  const content = readFileSync(envTestPath, "utf-8");
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eqIndex = trimmed.indexOf("=");
-    if (eqIndex === -1) continue;
-    const key = trimmed.slice(0, eqIndex);
-    const value = trimmed.slice(eqIndex + 1);
-    if (!process.env[key]) {
-      process.env[key] = value;
+// Load env files into process.env (lower priority — won't override existing vars)
+function loadEnvFile(path: string) {
+  try {
+    const content = readFileSync(path, "utf-8");
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIndex = trimmed.indexOf("=");
+      if (eqIndex === -1) continue;
+      const key = trimmed.slice(0, eqIndex);
+      const value = trimmed.slice(eqIndex + 1);
+      if (!process.env[key]) {
+        process.env[key] = value;
+      }
     }
+  } catch {
+    // env file is optional
   }
-} catch {
-  // .env.test is optional — dev server may have its own env
 }
+
+// Load .env.test first (test overrides), then .env.local (for integration tests needing real keys)
+loadEnvFile(resolve(__dirname, ".env.test"));
+loadEnvFile(resolve(__dirname, ".env.local"));
 
 export default defineConfig({
   testDir: "./e2e",
@@ -54,8 +59,14 @@ export default defineConfig({
     {
       name: "chromium",
       testDir: "./e2e",
-      testIgnore: ["api/**"],
+      testIgnore: ["api/**", "integration/**"],
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "integration",
+      testDir: "./e2e/integration",
+      timeout: 120_000,
+      use: {},
     },
   ],
 

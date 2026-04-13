@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { TEST_API_KEY } from "../fixtures/seed-data";
+import { TEST_API_KEY, DUP_TEST_EXTERNAL_ID } from "../fixtures/seed-data";
 
 
 test.describe("POST /api/webhooks/proposals", () => {
@@ -70,7 +70,26 @@ test.describe("POST /api/webhooks/proposals", () => {
     expect(body.message).toContain("signature");
   });
 
-  test("returns 409 for duplicate proposal", async () => {
-    test.skip(true, "duplicate detection depends on computeProposalId hash — requires integration test");
+  test("returns 409 for duplicate proposal", async ({ request }) => {
+    const response = await request.post("/api/webhooks/proposals", {
+      headers: { "X-API-Key": TEST_API_KEY },
+      data: {
+        externalId: DUP_TEST_EXTERNAL_ID,
+        fundingRoundId: "round-dup-test",
+        title: "Duplicate Proposal Test",
+        description: "This proposal should be rejected as duplicate",
+        budgetAmount: 10000,
+        budgetCurrency: "USD",
+        budgetBreakdown: [{ category: "dev", amount: 10000, description: "Development" }],
+        technicalDescription: "Technical details for duplicate test",
+        teamMembers: [{ role: "Lead", experience: "5 years" }],
+        category: "infrastructure",
+        submittedAt: "2026-04-01T10:00:00Z",
+      },
+    });
+    expect(response.status()).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe("DUPLICATE_PROPOSAL");
+    expect(body.message).toContain(DUP_TEST_EXTERNAL_ID);
   });
 });

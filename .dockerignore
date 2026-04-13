@@ -6,5 +6,5 @@ node_modules
 contracts
 e2e
 *.md
-.env*
+.env.local
 AUDIT-REPORT.md

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { validateApiKey, verifyWebhookSignature } from "@/lib/api-key";
-import { proposalSubmitLimiter, checkRateLimit } from "@/lib/rate-limit";
+import { getProposalSubmitLimiter, checkRateLimit } from "@/lib/rate-limit";
 import { getRequestId } from "@/lib/request-id";
 import { orchestrateEvaluation, DuplicateEvaluationError } from "@/evaluation/orchestrate";
 import { findExistingEvaluationJob } from "@/cache/queries";
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     "unknown";
-  const rateLimitResult = await checkRateLimit(proposalSubmitLimiter, ip);
+  const rateLimitResult = await checkRateLimit(getProposalSubmitLimiter(), ip);
   if (!rateLimitResult.success) {
     return NextResponse.json(
       { error: "RATE_LIMITED", retryAfter: rateLimitResult.retryAfter },
