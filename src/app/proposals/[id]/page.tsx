@@ -8,7 +8,26 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/proposals/proposal-status-badge";
 import { ProposalDetailSkeleton } from "@/components/proposals/proposal-detail-skeleton";
-import type { ProposalStatus } from "@/lib/constants/proposal";
+import { z } from "zod";
+
+const proposalDetailSchema = z.object({
+  tokenId: z.string(),
+  owner: z.string(),
+  ipfsCID: z.string(),
+  status: z.enum(["submitted", "evaluating", "evaluated"]),
+  feedbackCount: z.number(),
+  averageScore: z.number(),
+  content: z.object({
+    title: z.string(),
+    description: z.string(),
+    teamInfo: z.string(),
+    budget: z.number(),
+    externalLinks: z.array(z.string()),
+    submittedAt: z.string(),
+  }),
+});
+
+type ProposalDetail = z.infer<typeof proposalDetailSchema>;
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -21,23 +40,6 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   year: "numeric",
 });
-
-interface ProposalDetail {
-  tokenId: string;
-  owner: string;
-  ipfsCID: string;
-  status: ProposalStatus;
-  feedbackCount: number;
-  averageScore: number;
-  content: {
-    title: string;
-    description: string;
-    teamInfo: string;
-    budget: number;
-    externalLinks: string[];
-    submittedAt: string;
-  };
-}
 
 function truncateHash(hash: string): string {
   if (hash.length <= 16) return hash;
@@ -78,8 +80,9 @@ export default function ProposalDetailPage() {
           return;
         }
         const data: unknown = await response.json();
-        if (data && typeof data === "object" && "content" in data) {
-          setProposal(data as ProposalDetail);
+        const parsed = proposalDetailSchema.safeParse(data);
+        if (parsed.success) {
+          setProposal(parsed.data);
         }
       } catch {
         setError("unknown");
@@ -247,7 +250,7 @@ export default function ProposalDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-muted-foreground">On-chain TX</span>
+          <span className="text-muted-foreground">Owner Address</span>
           <a
             href={`https://sepolia.basescan.org/address/${proposal.owner}`}
             target="_blank"
