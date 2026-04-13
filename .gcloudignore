@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.git/
+.planning/
+.self-improvement/
+contracts/
+e2e/
+.worktrees/
+*.md
+.env*
+playwright-report/
+local.db
