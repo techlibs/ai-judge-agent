@@ -72,7 +72,7 @@ export function ScoreRadarChart({
       className="min-h-[250px] w-full"
       aria-label="Radar chart showing evaluation scores across four dimensions"
     >
-      <RadarChart data={chartData}>
+      <RadarChart data={chartData} aria-hidden="true">
         <PolarGrid />
         <PolarAngleAxis dataKey="dimension" />
         <Radar
