@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages } from "ai";
+import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/chat/prompts";
@@ -10,10 +10,14 @@ import { DIMENSION_LABELS, type JudgeDimension } from "@/lib/constants";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const uiMessagePartSchema = z.object({
-  type: z.literal("text"),
-  text: z.string(),
-});
+const uiMessagePartSchema = z.union([
+  z.object({ type: z.literal("text"), text: z.string() }),
+  z.object({ type: z.literal("tool-invocation") }).passthrough(),
+  z.object({ type: z.literal("source") }).passthrough(),
+  z.object({ type: z.literal("reasoning") }).passthrough(),
+  z.object({ type: z.literal("file") }).passthrough(),
+  z.object({ type: z.string() }).passthrough(),
+]);
 
 const uiMessageSchema = z.object({
   id: z.string(),
@@ -148,6 +152,7 @@ export async function POST(request: Request): Promise<Response> {
     },
     temperature: 0.4,
     maxOutputTokens: 1500,
+    stopWhen: stepCountIs(3),
   });
 
   return result.toUIMessageStreamResponse();
