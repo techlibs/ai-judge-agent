@@ -413,7 +413,113 @@ How the toolkit maps to our project's audit surfaces:
 | **Full-repo sweep** | OWASP, OpenClaw Watchdog | Code Audit Readonly | Security Engineer |
 | **CI/CD integration** | OpenClaw Watchdog | Static Analysis (SARIF) | -- |
 
+### Coverage Gaps (Cross-Worktree)
+
+The worktrees use stack components not covered by the skills above. These require manual audit checks or future skill additions:
+
+| Gap | Present In | Risk | Mitigation |
+|-----|-----------|------|------------|
+| **Drizzle ORM / libsql** | speckit, superpower | SQL injection via raw queries, destructive migrations, local .db file exposure | Manual: check for raw SQL, verify `.db` in `.gitignore`, review migrations |
+| **NextAuth v5-beta** | speckit | Session hijacking, CSRF bypass, callback URL open redirect, beta-version bugs | Manual: review auth config, callback validation, session strategy |
+| **GraphQL (graphql-request)** | speckit | Introspection leak, query depth DoS, injection via variables | Manual: check introspection disabled in prod, query depth limits |
+| **Mastra agents (@mastra/core, @mastra/evals)** | superpower | Prompt injection via user-controlled proposal content flowing to LLM, unvalidated structured output | Manual: trace user input → prompt path, verify Zod validation on LLM output |
+| **Upstash Redis / rate limiting** | speckit, superpower | Rate limiter bypass via header spoofing, missing coverage on cost-generating endpoints | Manual: verify rate limits on `/api/evaluate/*`, check IP extraction |
+| **The Graph (subgraph)** | speckit | Stale indexer data treated as authoritative, query manipulation | Manual: verify subgraph data is cross-checked against on-chain reads |
+| **Local SQLite (.db files)** | superpower | Database file committed to repo or exposed via misconfigured static serving | Manual: check `.gitignore`, verify Next.js `public/` exclusion |
+
+---
+
+## Cross-Worktree Audit with Agent Teams
+
+The project has 3 implementation worktrees built with different SDD frameworks. Running audits across all 3 in parallel requires [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams).
+
+### Prerequisites
+
+1. Enable agent teams (one-time):
+
+```json
+// .claude/settings.local.json or ~/.claude/settings.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+2. Install Tier 1 skills (see Quick Install above)
+
+3. The `worktree-audit-runner` agent definition is at `.claude/agents/worktree-audit-runner.md`
+
+### Agent Team Launch
+
+Ask Claude to create a team with one auditor per worktree:
+
+```text
+Create an agent team to audit all 3 implementation worktrees in parallel.
+Spawn 3 teammates using the worktree-audit-runner agent type:
+
+- "gsd-auditor" with prompt: "Audit the worktree at .worktrees/full-vision-roadmap/. 
+  Run the full audit checklist. Write AUDIT-REPORT.md at the worktree root."
+
+- "speckit-auditor" with prompt: "Audit the worktree at .worktrees/speckit/. 
+  Run the full audit checklist. Write AUDIT-REPORT.md at the worktree root."
+
+- "superpower-auditor" with prompt: "Audit the worktree at .worktrees/superpower/. 
+  Run the full audit checklist. Write AUDIT-REPORT.md at the worktree root."
+
+After all 3 complete, synthesize a comparative CROSS-AUDIT-REPORT.md at the repo 
+root that highlights: (1) findings unique to each worktree, (2) findings common 
+across worktrees, (3) stack gaps — components present in one worktree but missing 
+security coverage in another.
+```
+
+### Expected Output
+
+Each teammate produces an `AUDIT-REPORT.md` in its worktree with standardized sections:
+- Stack detection table
+- Findings by severity (CRITICAL → INFO) with file:line locations
+- Audit coverage checklist showing which audits ran and which were skipped
+
+The lead then synthesizes `CROSS-AUDIT-REPORT.md` with:
+- **Common findings**: issues shared across 2+ worktrees (likely architectural)
+- **Unique findings**: issues specific to one framework's approach
+- **Stack coverage comparison**: which worktree covers auth, DB, rate limiting, etc.
+- **Recommendation**: which implementation has the strongest security posture
+
+### Worktree Stack Summary
+
+For reference, here is what each worktree contains:
+
+| Component | full-vision-roadmap (GSD) | speckit (Spec Kit) | superpower (Superpowers) |
+|-----------|--------------------------|-------------------|------------------------|
+| Next.js | 16.2.3 | 15.3.1 | 16.2.3 |
+| Contracts | 2 (Identity, Reputation) | 6 (+ Evaluation, Milestone, Validation, Dispute) | 3 (+ Milestone) |
+| Database | None | Drizzle + libsql | Drizzle + libsql |
+| Auth | None | NextAuth v5-beta | None |
+| AI framework | Vercel AI SDK | Vercel AI SDK | Mastra + Evals |
+| GraphQL | No | Yes (The Graph) | No |
+| IPFS | No | Pinata | Pinata |
+| Rate limiting | No | Upstash | Upstash |
+| Test framework | Playwright BDD | Vitest + Playwright | Playwright |
+| Package manager | Bun | npm | npm |
+
+### Existing Design Auditors
+
+The 3 pre-existing agent definitions in `.claude/agents/` are complementary — they audit the **design docs and specs**, not the running code:
+
+| Agent | Focus | Use With |
+|-------|-------|----------|
+| `vision-design-auditor` | Architecture, trust boundaries, threat models | Reference architecture docs |
+| `speckit-design-auditor` | API contracts, data flow, security headers | Spec Kit feature specs |
+| `superpowers-design-auditor` | Solidity patterns, EVM security, gas | Contract design docs |
+
+The `worktree-audit-runner` audits the **implemented code**. Run design auditors first (on docs), then code auditors (on worktrees) for full coverage.
+
+---
+
 ## Suggested Audit Workflow
+
+### Single-Worktree (daily development)
 
 1. **Pre-commit:** Run `secrets-scanner` to catch leaked credentials
 2. **Per-PR:** Run `security-nextjs` + `owasp-security-check` + `static-analysis` on changed files
@@ -422,3 +528,10 @@ How the toolkit maps to our project's audit surfaces:
 5. **Before deployment:** Run `code-audit-readonly` + `openclaw-audit-watchdog` for a full-repo sweep
 6. **During development:** Use `foundry-solidity` + `solidity-testing` + `solidity-gas-optimization` while writing contracts
 7. **Continuous:** Configure `openclaw-audit-watchdog` for automated scheduled audits with severity alerts
+
+### Cross-Worktree (framework comparison)
+
+1. **Design audit:** Run the 3 design auditor agents against each worktree's planning docs
+2. **Code audit:** Launch the agent team with `worktree-audit-runner` (see above)
+3. **Comparative synthesis:** Lead produces `CROSS-AUDIT-REPORT.md`
+4. **Gap remediation:** Address common findings first (architectural issues), then unique findings per worktree

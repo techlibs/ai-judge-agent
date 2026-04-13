@@ -155,11 +155,70 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 - **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
 - **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
 - **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache rebuildable from chain events
-- **AI provider**: Mastra (`@mastra/core`, `@mastra/evals`) + Vercel AI SDK (`ai`, `@ai-sdk/anthropic`) — Claude Sonnet 4.6 primary, OpenAI failover
-- **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), viem for TypeScript chain interactions
-- **Smart contracts**: Solidity + Foundry for contract development
+- **AI provider**: Vercel AI SDK (`ai`, `@ai-sdk/openai`) — GPT-4o primary via `OPENAI_API_KEY`
+- **On-chain**: ERC-8004 on Base (mainnet chain ID 8453) and Base Sepolia (testnet chain ID 84532), viem for TypeScript chain interactions
+- **Deployer wallet**: `0xa7cEd6c599403B5BA0066f45074C5a5EbC70f742` (dedicated deployer — NOT a personal wallet)
+- **Personal wallet**: `0x7df05b5BC76930a5376Ed9d89549C3DaD169ffC4` (Coinbase Wallet — admin role transfer target)
+- **Smart contracts**: Solidity 0.8.24 + Foundry, 6 contracts deployed and verified on Basescan
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
 - **Prompt transparency**: All AI-generated docs need `.prompt.md` companions
+
+### On-Chain Deployment
+
+Contracts are deployed on **both Base Sepolia (testnet) and Base Mainnet** at identical addresses (same deployer nonce):
+
+| Contract | Address | Basescan |
+|----------|---------|----------|
+| IdentityRegistry | `0xDf1ebEe392e6B6AFEE89Fb83CDBF97dA9f8b7B6a` | [view](https://basescan.org/address/0xDf1ebEe392e6B6AFEE89Fb83CDBF97dA9f8b7B6a) |
+| EvaluationRegistry | `0xa86D6684De7878C36F03697657702A86D13028d8` | [view](https://basescan.org/address/0xa86D6684De7878C36F03697657702A86D13028d8) |
+| ReputationRegistry | `0x0DB2eef99d1Efb3313c6Fe314D137914eCc6FB1f` | [view](https://basescan.org/address/0x0DB2eef99d1Efb3313c6Fe314D137914eCc6FB1f) |
+| ValidationRegistry | `0x5A0Bf56694c8448F681c909C1F61849c1A183f17` | [view](https://basescan.org/address/0x5A0Bf56694c8448F681c909C1F61849c1A183f17) |
+| MilestoneManager | `0xb4161cB90f2664A0d4485265ee150A7f3a7d536b` | [view](https://basescan.org/address/0xb4161cB90f2664A0d4485265ee150A7f3a7d536b) |
+| DisputeRegistry | `0x78f8688c1a3e4ec762E7351996B7b3c275f32b0e` | [view](https://basescan.org/address/0x78f8688c1a3e4ec762E7351996B7b3c275f32b0e) |
+
+### Switching Between Testnet and Mainnet
+
+Change **two env vars** in `.env.local`:
+
+```bash
+# Testnet (Base Sepolia)
+NEXT_PUBLIC_CHAIN_ID=84532
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+
+# Mainnet (Base)
+NEXT_PUBLIC_CHAIN_ID=8453
+BASE_SEPOLIA_RPC_URL=https://mainnet.base.org
+```
+
+Contract addresses are the same on both networks. After switching, restart the dev server (`bun run dev`).
+
+**Validate the switch:**
+```bash
+# Check which network the app connects to
+cast chain-id --rpc-url $BASE_SEPOLIA_RPC_URL
+# 84532 = testnet, 8453 = mainnet
+
+# Verify contract is responding on the target network
+cast call $NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS "totalSupply()(uint256)" --rpc-url $BASE_SEPOLIA_RPC_URL
+```
+
+**Key differences:**
+| | Testnet (84532) | Mainnet (8453) |
+|---|---|---|
+| ETH | Free (faucets) | Real money |
+| Transactions | No financial risk | Irreversible, costs real gas |
+| Explorer | sepolia.basescan.org | basescan.org |
+| Use for | Development, testing | Production |
+
+### Contract Deployment Guide
+
+See `contracts/DEPLOY.md` for full deployment instructions (local Anvil, testnet, mainnet).
+
+### Wallet Architecture
+
+- **Deployer** (`0xa7cEd...0f742`): Throwaway wallet for deploying contracts. Private key in `.env.local`. If compromised, no funds at risk.
+- **Personal** (`0x7df05...ffC4`): Coinbase Wallet. Target for admin role transfer post-deployment. Never put this private key in files.
+- **Anvil default** (`0xf39Fd...92266`): Local development only. Well-known key, pre-funded with 10000 ETH on Anvil.
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:research/STACK.md -->
