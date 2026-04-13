@@ -1,3 +1,5 @@
+// TODO: Replace source-string-matching tests with @testing-library/react render tests
+// once @testing-library/react is added as a dev dependency.
 import { describe, test, expect } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -44,10 +46,9 @@ describe("ScoreSummaryCard", () => {
     expect(source).not.toMatch(/\bany\b/);
   });
 
-  test("renders dimension weight labels", () => {
-    expect(source).toContain("Technical (25%)");
-    expect(source).toContain("Impact (30%)");
-    expect(source).toContain("Cost (20%)");
-    expect(source).toContain("Team (25%)");
+  test("derives dimension weight labels from DIMENSIONS constant", () => {
+    expect(source).toContain("DIMENSIONS");
+    expect(source).toContain("dim.label");
+    expect(source).toContain("dim.weight");
   });
 });

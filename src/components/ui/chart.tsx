@@ -1,3 +1,4 @@
+// shadcn vendored - `as string` casts below are from upstream and should not be modified
 "use client"
 
 import * as React from "react"

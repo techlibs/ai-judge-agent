@@ -1,3 +1,5 @@
+// TODO: Replace source-string-matching tests with @testing-library/react render tests
+// once @testing-library/react is added as a dev dependency.
 import { describe, test, expect } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";

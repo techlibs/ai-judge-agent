@@ -129,22 +129,16 @@ export default function EvaluationPage() {
       {/* Evaluated state */}
       {status === "evaluated" && evaluation && (
         <>
-          {(() => {
-            const dimensionScores: ReadonlyArray<DimensionScore> =
-              evaluation.dimensions.map((dimEval) => ({
+          <div className="mt-6">
+            <ScoreSummaryCard
+              scores={evaluation.dimensions.map((dimEval) => ({
                 dimension: dimEval.dimension,
                 score: dimEval.output.score,
-              }));
-            return (
-              <div className="mt-6">
-                <ScoreSummaryCard
-                  scores={dimensionScores}
-                  aggregateScore={evaluation.aggregate.weightedScore}
-                  loading={false}
-                />
-              </div>
-            );
-          })()}
+              }))}
+              aggregateScore={evaluation.aggregate.weightedScore}
+              loading={false}
+            />
+          </div>
 
           {evaluation.dimensions.length > 0 && (
             <table className="sr-only">
@@ -158,27 +152,14 @@ export default function EvaluationPage() {
               </thead>
               <tbody>
                 {evaluation.dimensions.map((dimEval) => {
-                  const weight =
-                    dimEval.dimension === "technical"
-                      ? "25%"
-                      : dimEval.dimension === "impact"
-                        ? "30%"
-                        : dimEval.dimension === "cost"
-                          ? "20%"
-                          : "25%";
-                  const label =
-                    dimEval.dimension === "technical"
-                      ? "Technical Feasibility"
-                      : dimEval.dimension === "impact"
-                        ? "Impact Potential"
-                        : dimEval.dimension === "cost"
-                          ? "Cost Efficiency"
-                          : "Team Capability";
+                  const dimConfig = DIMENSIONS.find(
+                    (d) => d.key === dimEval.dimension,
+                  );
                   return (
                     <tr key={dimEval.dimension}>
-                      <td>{label}</td>
+                      <td>{dimConfig?.label ?? dimEval.dimension}</td>
                       <td>{dimEval.output.score}/100</td>
-                      <td>{weight}</td>
+                      <td>{dimConfig ? `${Math.round(dimConfig.weight * 100)}%` : "N/A"}</td>
                     </tr>
                   );
                 })}

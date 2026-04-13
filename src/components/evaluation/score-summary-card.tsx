@@ -12,13 +12,7 @@ import {
   ScoreRadarChart,
   type DimensionScore,
 } from "./score-radar-chart";
-
-const DIMENSION_WEIGHT_LABELS = [
-  "Technical (25%)",
-  "Impact (30%)",
-  "Cost (20%)",
-  "Team (25%)",
-] as const;
+import { DIMENSIONS } from "@/lib/evaluation/constants";
 
 interface ScoreSummaryCardProps {
   readonly scores?: ReadonlyArray<DimensionScore> | undefined;
@@ -93,8 +87,8 @@ export function ScoreSummaryCard({
         )}
 
         <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
-          {DIMENSION_WEIGHT_LABELS.map((label) => (
-            <span key={label}>{label}</span>
+          {DIMENSIONS.map((dim) => (
+            <span key={dim.key}>{`${dim.label} (${Math.round(dim.weight * 100)}%)`}</span>
           ))}
         </div>
       </CardContent>
