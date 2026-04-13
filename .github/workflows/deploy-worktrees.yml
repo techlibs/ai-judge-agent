@@ -1,0 +1,181 @@
+name: Deploy Worktrees to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      worktree:
+        description: "Which worktree to deploy (or 'all')"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - gsd
+          - speckit
+          - superpower
+
+env:
+  GCP_PROJECT_ID: ipe-city
+  GCP_REGION: us-central1
+  GAR_LOCATION: us-central1-docker.pkg.dev
+  GAR_REPO: agent-reviewer
+
+jobs:
+  deploy-gsd:
+    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'gsd' }}
+    name: Deploy GSD (full-vision-roadmap)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+
+      - name: Build and push image
+        run: |
+          cd .worktrees/full-vision-roadmap
+          gcloud builds submit \
+            --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsd:${{ github.sha }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --region=${{ env.GCP_REGION }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy agent-reviewer-gsd \
+            --image ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsd:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 3 \
+            --no-invoker-iam-check \
+            --set-env-vars "NODE_ENV=production" \
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest"
+
+      - name: Show deployment URL
+        run: |
+          gcloud run services describe agent-reviewer-gsd \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --format="value(status.url)"
+
+  deploy-speckit:
+    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'speckit' }}
+    name: Deploy Speckit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+
+      - name: Build and push image
+        run: |
+          cd .worktrees/speckit
+          gcloud builds submit \
+            --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/speckit:${{ github.sha }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --region=${{ env.GCP_REGION }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy agent-reviewer-speckit \
+            --image ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/speckit:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 3 \
+            --no-invoker-iam-check \
+            --set-env-vars "NODE_ENV=production" \
+            --set-secrets "ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,AUTH_SECRET=AUTH_SECRET:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest,CRON_SECRET=CRON_SECRET:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
+
+      - name: Show deployment URL
+        run: |
+          gcloud run services describe agent-reviewer-speckit \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --format="value(status.url)"
+
+  deploy-superpower:
+    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'superpower' }}
+    name: Deploy Superpower
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+
+      - name: Build and push image
+        run: |
+          cd .worktrees/superpower
+          gcloud builds submit \
+            --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/superpower:${{ github.sha }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --region=${{ env.GCP_REGION }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy agent-reviewer-superpower \
+            --image ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/superpower:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 3 \
+            --no-invoker-iam-check \
+            --set-env-vars "NODE_ENV=production" \
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest"
+
+      - name: Show deployment URL
+        run: |
+          gcloud run services describe agent-reviewer-superpower \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }} \
+            --format="value(status.url)"

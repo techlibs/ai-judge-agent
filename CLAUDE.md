@@ -163,6 +163,29 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
 - **Prompt transparency**: All AI-generated docs need `.prompt.md` companions
 
+### Cloud Run Deployments (GCP Project: `ipe-city`)
+
+Each SDD framework worktree is deployed as a separate Cloud Run service:
+
+| Worktree | Service | URL |
+|----------|---------|-----|
+| full-vision-roadmap (GSD) | `agent-reviewer-gsd` | https://agent-reviewer-gsd-1010906320334.us-central1.run.app |
+| speckit (Spec Kit) | `agent-reviewer-speckit` | https://agent-reviewer-speckit-1010906320334.us-central1.run.app |
+| superpower (Superpowers) | `agent-reviewer-superpower` | https://agent-reviewer-superpower-1010906320334.us-central1.run.app |
+
+**GCP resources:**
+- **Project**: `ipe-city` (1010906320334)
+- **Region**: `us-central1`
+- **Artifact Registry**: `us-central1-docker.pkg.dev/ipe-city/agent-reviewer/`
+- **CI/CD**: `.github/workflows/deploy-worktrees.yml` (manual dispatch, deploy one or all)
+
+**Deploy a worktree manually:**
+```bash
+cd .worktrees/<worktree-name>
+gcloud builds submit --tag us-central1-docker.pkg.dev/ipe-city/agent-reviewer/<name>:latest --project=ipe-city --region=us-central1
+gcloud run deploy agent-reviewer-<name> --image us-central1-docker.pkg.dev/ipe-city/agent-reviewer/<name>:latest --platform managed --region us-central1 --project ipe-city --port 8080 --allow-unauthenticated
+```
+
 ### On-Chain Deployment
 
 Contracts are deployed on **both Base Sepolia (testnet) and Base Mainnet** at identical addresses (same deployer nonce):
