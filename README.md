@@ -54,7 +54,144 @@ Copy `.env.example` to `.env.local` and fill in your values:
 | `UPSTASH_REDIS_REST_URL` | For rate limiting | Upstash Redis URL for API rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | For rate limiting | Upstash Redis auth token |
 
-**Note:** Contract addresses are currently set to zero addresses (`0x000...000`). You must deploy contracts to Base Sepolia first (see Smart Contracts section below).
+**Note:** Contract addresses are currently set to zero addresses (`0x000...000`). You must deploy contracts to Base Sepolia first (see Setup Guide below).
+
+## Setup Guide (Human Steps)
+
+These are the manual steps that require human interaction — API signups, wallet creation, faucet requests. Everything else is automated.
+
+### 1. Anthropic API Key (required)
+
+1. Go to [console.anthropic.com](https://console.anthropic.com/)
+2. Sign up or log in
+3. Go to **API Keys** → **Create Key**
+4. Copy the key (starts with `sk-ant-`)
+5. Set in `.env.local`:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-your-key-here
+   ```
+
+### 2. Pinata IPFS (required for storing proposals)
+
+1. Go to [pinata.cloud](https://www.pinata.cloud/) and create a free account
+2. Go to **API Keys** → **New Key**
+3. Enable **pinFileToIPFS** and **pinJSONToIPFS** permissions
+4. Copy the JWT token
+5. Set in `.env.local`:
+   ```
+   PINATA_JWT=your-jwt-here
+   PINATA_GATEWAY_URL=https://gateway.pinata.cloud
+   ```
+
+### 3. Base Sepolia Wallet + Testnet ETH (required for contract deployment)
+
+You need a wallet with Base Sepolia ETH to deploy contracts. **Never use a wallet that holds real funds.**
+
+1. **Create a fresh wallet** (one of these):
+   - Install [MetaMask](https://metamask.io/) → Create new account → copy private key from Account Details
+   - Or use `cast wallet new` (Foundry CLI) to generate a keypair:
+     ```bash
+     cast wallet new
+     # Address: 0xYourAddress
+     # Private key: 0xYourPrivateKey
+     ```
+
+2. **Get Base Sepolia testnet ETH** from a faucet (you need ~0.01 ETH):
+   - [Coinbase Faucet](https://www.coinbase.com/faucets/base-ethereum-goerli-faucet) — requires Coinbase account
+   - [Alchemy Faucet](https://www.alchemy.com/faucets/base-sepolia) — requires Alchemy account
+   - [QuickNode Faucet](https://faucet.quicknode.com/base/sepolia) — no account needed
+   - Paste your wallet address, request ETH, wait ~30 seconds
+
+3. **Set in `.env.local`:**
+   ```
+   DEPLOYER_PRIVATE_KEY=0xYourPrivateKeyHere
+   BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+   ```
+
+4. **Deploy the contracts:**
+   ```bash
+   cd contracts
+   source ../.env.local
+   forge script script/Deploy.s.sol \
+     --rpc-url $BASE_SEPOLIA_RPC_URL \
+     --private-key $DEPLOYER_PRIVATE_KEY \
+     --broadcast \
+     --verify
+   ```
+
+5. **Copy the deployed addresses** from the output:
+   ```
+   IdentityRegistry: 0x...
+   ReputationRegistry: 0x...
+   MilestoneManager: 0x...
+   ```
+
+6. **Update `.env.local`** with the real addresses:
+   ```
+   IDENTITY_REGISTRY_ADDRESS=0xDeployedIdentityAddress
+   REPUTATION_REGISTRY_ADDRESS=0xDeployedReputationAddress
+   MILESTONE_MANAGER_ADDRESS=0xDeployedMilestoneAddress
+   ```
+
+### 4. Database (optional — defaults to local file)
+
+For local development, no setup needed — the app uses `file:local.db` by default.
+
+For hosted database (production):
+1. Go to [turso.tech](https://turso.tech/) and create a free account
+2. Create a database: `turso db create agent-reviewer`
+3. Get the URL: `turso db show agent-reviewer --url`
+4. Create a token: `turso db tokens create agent-reviewer`
+5. Set in `.env.local`:
+   ```
+   TURSO_DATABASE_URL=libsql://your-db-name.turso.io
+   TURSO_AUTH_TOKEN=your-token-here
+   ```
+
+### 5. Upstash Redis (optional — for API rate limiting)
+
+Without this, rate limiting is disabled and all API routes are unprotected.
+
+1. Go to [upstash.com](https://upstash.com/) and create a free account
+2. Create a new Redis database (pick the region closest to your Vercel deployment)
+3. Copy the REST URL and token from the dashboard
+4. Set in `.env.local`:
+   ```
+   UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+   UPSTASH_REDIS_REST_TOKEN=your-token-here
+   ```
+
+### 6. OpenAI (optional — AI failover)
+
+Only needed if you want automatic failover when Anthropic is unavailable.
+
+1. Go to [platform.openai.com](https://platform.openai.com/)
+2. Create an API key
+3. Set in `.env.local`:
+   ```
+   OPENAI_API_KEY=sk-your-key-here
+   ```
+
+### Quick Check
+
+After setup, verify everything works:
+
+```bash
+# 1. Install + migrate
+bun install && bunx drizzle-kit migrate
+
+# 2. Start dev server
+bun run dev
+
+# 3. Test the golden path
+#    Open http://localhost:3000/grants/submit and submit a proposal
+
+# 4. Run contract tests (no env vars needed)
+cd contracts && forge test -vvv
+
+# 5. Run E2E tests (requires dev server running)
+bun run test:e2e
+```
 
 ## Available Scripts
 
