@@ -1,7 +1,6 @@
-import { Agent } from "@mastra/core/agent";
-import { anthropic } from "@ai-sdk/anthropic";
 import { JudgeEvaluationSchema } from "@/lib/judges/schemas";
 import { getJudgePrompt, buildProposalContext } from "@/lib/judges/prompts";
+import { judgeAgents } from "@/lib/judges/agents";
 import { getDb } from "@/lib/db/client";
 import { proposals, evaluations } from "@/lib/db/schema";
 import { uploadJson } from "@/lib/ipfs/client";
@@ -26,14 +25,7 @@ async function runJudgeWithRetry(
     const timeout = setTimeout(() => controller.abort(), JUDGE_TIMEOUT_MS);
 
     try {
-      const judgeAgent = new Agent({
-        id: `judge-${dim}`,
-        name: `Judge ${dim}`,
-        model: anthropic("claude-sonnet-4-20250514"),
-        instructions: getJudgePrompt(dim),
-      });
-
-      const result = await judgeAgent.generate(proposalContext, {
+      const result = await judgeAgents[dim].generate(proposalContext, {
         structuredOutput: { schema: JudgeEvaluationSchema },
         abortSignal: controller.signal,
       });
