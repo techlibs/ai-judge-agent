@@ -7,9 +7,16 @@ import {
 import { evaluateDimension, evaluateNaive } from "./agents";
 import { DIMENSION_WEIGHTS, DIMENSIONS } from "./constants";
 import { pinEvaluationToIPFS, publishScoreOnChain } from "./storage";
+import { researchProposal } from "../colosseum/client";
+import { buildDimensionMarketContext } from "../colosseum/research";
+import type { ResearchResult } from "../colosseum/types";
 
 export type EvaluationProgressEvent =
   | { type: "started"; proposalId: string; totalDimensions: number }
+  | {
+      type: "research_complete";
+      result: ResearchResult;
+    }
   | {
       type: "dimension_complete";
       dimension: EvaluationDimension;
@@ -52,13 +59,32 @@ export async function orchestrateEvaluation(
   proposalId: string,
   proposalText: string,
   onProgress: (event: EvaluationProgressEvent) => void,
+  proposalDomain?: string,
 ): Promise<ProposalEvaluation> {
   onProgress({ type: "started", proposalId, totalDimensions: 4 });
 
+  // Step 1: Colosseum research (sequential, before judges)
+  const researchResult = await researchProposal(
+    proposalDomain ?? "crypto",
+    proposalText,
+  );
+  onProgress({ type: "research_complete", result: researchResult });
+
+  const researchData =
+    researchResult.status === "success" ? researchResult.data : null;
+
   const results: Array<DimensionEvaluation | null> = [];
   const dimensionPromises = DIMENSIONS.map(async (dim) => {
+    const marketContext = researchData
+      ? buildDimensionMarketContext(researchData, dim.key)
+      : undefined;
+
     try {
-      const result = await evaluateDimension(dim.key, proposalText);
+      const result = await evaluateDimension(
+        dim.key,
+        proposalText,
+        marketContext,
+      );
       results.push(result);
       onProgress({
         type: "dimension_complete",

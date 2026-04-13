@@ -11,6 +11,7 @@ import { proposalContentSchema } from "@/lib/ipfs/schemas";
 const DEFAULT_PAGE_LIMIT = 20;
 const MAX_PAGE_LIMIT = 100;
 const MAX_PARALLEL_IPFS_FETCHES = 10;
+const MAX_BLOCK_RANGE = 9_999n;
 
 // Deployment block to avoid scanning from block 0
 const DEPLOYMENT_BLOCK = BigInt(process.env.DEPLOYMENT_BLOCK ?? "0");
@@ -27,20 +28,32 @@ export async function GET(request: NextRequest) {
     const publicClient = getPublicClient();
     const { identityRegistry, reputationRegistry } = getContractAddresses();
 
-    const logs = await publicClient.getLogs({
-      address: identityRegistry,
-      event: {
-        type: "event",
-        name: "ProjectRegistered",
-        inputs: [
-          { name: "tokenId", type: "uint256", indexed: true },
-          { name: "owner", type: "address", indexed: true },
-          { name: "agentURI", type: "string", indexed: false },
-        ],
-      },
-      fromBlock: DEPLOYMENT_BLOCK,
-      toBlock: "latest",
-    });
+    const projectRegisteredEvent = {
+      type: "event",
+      name: "ProjectRegistered",
+      inputs: [
+        { name: "tokenId", type: "uint256", indexed: true },
+        { name: "owner", type: "address", indexed: true },
+        { name: "agentURI", type: "string", indexed: false },
+      ],
+    } as const;
+
+    // Chunk getLogs to stay within RPC block range limits (typically 10K)
+    const latestBlock = await publicClient.getBlockNumber();
+    async function fetchAllLogs() {
+      const chunks = [];
+      for (let from = DEPLOYMENT_BLOCK; from <= latestBlock; from += MAX_BLOCK_RANGE + 1n) {
+        const to = from + MAX_BLOCK_RANGE > latestBlock ? latestBlock : from + MAX_BLOCK_RANGE;
+        chunks.push(await publicClient.getLogs({
+          address: identityRegistry,
+          event: projectRegisteredEvent,
+          fromBlock: from,
+          toBlock: to,
+        }));
+      }
+      return chunks.flat();
+    }
+    const logs = await fetchAllLogs();
 
     const totalCount = logs.length;
     const startIndex = (page - 1) * limit;
@@ -110,9 +123,11 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(totalCount / limit),
       },
     });
-  } catch {
+  } catch (err) {
+    console.error("[/api/proposals] Error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to fetch proposals" },
+      { error: "Failed to fetch proposals", detail: message },
       { status: 500 }
     );
   }

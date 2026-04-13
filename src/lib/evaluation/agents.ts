@@ -11,8 +11,9 @@ import { MODEL_CONFIG, DIMENSIONS } from "./constants";
 export async function evaluateDimension(
   dimension: EvaluationDimension,
   proposalText: string,
+  marketContext?: string,
 ): Promise<DimensionEvaluation> {
-  const systemPrompt = buildSystemPrompt(dimension);
+  const systemPrompt = buildSystemPrompt(dimension, marketContext);
 
   const result = await generateObject({
     model: openai(MODEL_CONFIG.model),

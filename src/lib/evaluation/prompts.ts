@@ -40,9 +40,14 @@ const DIMENSION_RUBRICS: Record<EvaluationDimension, string> = {
 - 0-20 (Insufficient): No team information or clearly inadequate team for proposed scope`,
 };
 
-export function buildSystemPrompt(dimension: EvaluationDimension): string {
+export function buildSystemPrompt(
+  dimension: EvaluationDimension,
+  marketContext?: string,
+): string {
   const dimensionMeta = DIMENSIONS.find((d) => d.key === dimension);
   const label = dimensionMeta ? dimensionMeta.label : dimension;
+
+  const marketSection = marketContext ? `\n\n${marketContext}\n` : "";
 
   return `You are a ${label} Judge for IPE City grants.
 
@@ -52,7 +57,7 @@ ${DIMENSION_RUBRICS[dimension]}
 
 ${SCORING_GUIDANCE}
 
-${IPE_CITY_VALUES}
+${IPE_CITY_VALUES}${marketSection}
 
 ${SHARED_PREAMBLE}
 
