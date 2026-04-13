@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages } from "ai";
+import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { buildChatSystemPrompt } from "@/lib/chat/prompts";
@@ -6,21 +6,22 @@ import { buildChatSystemPrompt } from "@/lib/chat/prompts";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const uiMessagePartSchema = z.object({
-  type: z.literal("text"),
-  text: z.string(),
-});
-
-const uiMessageSchema = z.object({
-  id: z.string(),
-  role: z.enum(["user", "assistant", "system"]),
-  parts: z.array(uiMessagePartSchema),
-});
-
-const chatRequestSchema = z.object({
-  messages: z.array(uiMessageSchema),
+const bodySchema = z.object({
+  messages: z.array(z.record(z.string(), z.unknown())),
   proposalContext: z.string().min(1).max(100_000),
 });
+
+function isUIMessageArray(value: unknown): value is UIMessage[] {
+  if (!Array.isArray(value)) return false;
+  return value.every(
+    (m) =>
+      typeof m === "object" &&
+      m !== null &&
+      "role" in m &&
+      "parts" in m &&
+      Array.isArray(m.parts),
+  );
+}
 
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
@@ -30,7 +31,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = chatRequestSchema.safeParse(body);
+  const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(
       { error: "Validation failed", details: parsed.error.issues },
@@ -39,6 +40,14 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const { messages, proposalContext } = parsed.data;
+
+  if (!isUIMessageArray(messages)) {
+    return Response.json(
+      { error: "Invalid message format" },
+      { status: 400 },
+    );
+  }
+
   const systemPrompt = buildChatSystemPrompt(proposalContext);
   const modelMessages = await convertToModelMessages(messages);
 
