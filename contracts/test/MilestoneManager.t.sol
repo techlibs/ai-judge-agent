@@ -26,6 +26,9 @@ contract MilestoneManagerTest is Test {
 
         vm.prank(alice);
         agentId = identity.register("ipfs://proposal.json");
+
+        // Fund alice for milestone creation
+        vm.deal(alice, 100 ether);
     }
 
     // --- Create Milestones ---
