@@ -10,6 +10,8 @@ import { EvaluationProgress } from "@/components/evaluation/evaluation-progress"
 import { DimensionCard } from "@/components/evaluation/dimension-card";
 import { AggregateScore } from "@/components/evaluation/aggregate-score";
 import { PromptComparison } from "@/components/evaluation/prompt-comparison";
+import { ScoreSummaryCard } from "@/components/evaluation/score-summary-card";
+import type { DimensionScore } from "@/components/evaluation/score-radar-chart";
 import { DIMENSIONS } from "@/lib/evaluation/constants";
 
 const SAMPLE_PROPOSAL_TEXT = `This is a sample proposal for testing the evaluation pipeline.
@@ -127,6 +129,63 @@ export default function EvaluationPage() {
       {/* Evaluated state */}
       {status === "evaluated" && evaluation && (
         <>
+          {(() => {
+            const dimensionScores: ReadonlyArray<DimensionScore> =
+              evaluation.dimensions.map((dimEval) => ({
+                dimension: dimEval.dimension,
+                score: dimEval.output.score,
+              }));
+            return (
+              <div className="mt-6">
+                <ScoreSummaryCard
+                  scores={dimensionScores}
+                  aggregateScore={evaluation.aggregate.weightedScore}
+                  loading={false}
+                />
+              </div>
+            );
+          })()}
+
+          {evaluation.dimensions.length > 0 && (
+            <table className="sr-only">
+              <caption>Evaluation scores across four dimensions</caption>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Score</th>
+                  <th>Weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evaluation.dimensions.map((dimEval) => {
+                  const weight =
+                    dimEval.dimension === "technical"
+                      ? "25%"
+                      : dimEval.dimension === "impact"
+                        ? "30%"
+                        : dimEval.dimension === "cost"
+                          ? "20%"
+                          : "25%";
+                  const label =
+                    dimEval.dimension === "technical"
+                      ? "Technical Feasibility"
+                      : dimEval.dimension === "impact"
+                        ? "Impact Potential"
+                        : dimEval.dimension === "cost"
+                          ? "Cost Efficiency"
+                          : "Team Capability";
+                  return (
+                    <tr key={dimEval.dimension}>
+                      <td>{label}</td>
+                      <td>{dimEval.output.score}/100</td>
+                      <td>{weight}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+
           <div className="grid gap-8 lg:grid-cols-2">
             <AggregateScore
               score={evaluation.aggregate.weightedScore}
@@ -141,7 +200,7 @@ export default function EvaluationPage() {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {DIMENSIONS.map((dim) => {
               const dimResult = evaluation.dimensions.find(
                 (d) => d.dimension === dim.key,

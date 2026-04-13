@@ -167,8 +167,8 @@ export default function ProposalDetailPage() {
       </Link>
 
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">{proposal.content.title}</h1>
-        <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold break-words md:text-3xl">{proposal.content.title}</h1>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <StatusBadge status={proposal.status} />
           <span className="text-sm text-muted-foreground">{submittedDate}</span>
         </div>
@@ -183,7 +183,7 @@ export default function ProposalDetailPage() {
             <p className="mb-1 text-sm font-medium text-muted-foreground">
               Description
             </p>
-            <p className="whitespace-pre-wrap">{proposal.content.description}</p>
+            <p className="whitespace-pre-wrap break-words">{proposal.content.description}</p>
           </div>
 
           <Separator />

@@ -45,7 +45,7 @@ export default function ProposalsPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
             All Proposals
           </h1>
         </div>
@@ -57,7 +57,7 @@ export default function ProposalsPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
           All Proposals
         </h1>
         <p className="text-sm text-destructive">{error}</p>
@@ -86,7 +86,7 @@ export default function ProposalsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
           All Proposals
         </h1>
         <Link
@@ -96,7 +96,7 @@ export default function ProposalsPage() {
           Submit Proposal
         </Link>
       </div>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
         {proposals.map((proposal) => (
           <ProposalCard
             key={proposal.tokenId}
