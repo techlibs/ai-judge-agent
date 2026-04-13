@@ -1,24 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { z } from "zod";
-import type {
-  EvaluationOutput,
-  EvaluationDimension,
-  ProposalEvaluation,
+import {
+  evaluationOutputSchema,
+  proposalEvaluationSchema,
+  type EvaluationOutput,
+  type EvaluationDimension,
+  type ProposalEvaluation,
 } from "./schemas";
-
-const evaluationOutputEventSchema = z.object({
-  score: z.number(),
-  justification: z.string(),
-  recommendation: z.enum([
-    "strong_approve",
-    "approve",
-    "needs_revision",
-    "reject",
-  ]),
-  keyFindings: z.array(z.string()),
-});
 
 const dimensionSchema = z.enum(["technical", "impact", "cost", "team"]);
 
@@ -31,7 +21,7 @@ const progressEventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("dimension_complete"),
     dimension: dimensionSchema,
-    output: evaluationOutputEventSchema,
+    output: evaluationOutputSchema,
     completedCount: z.number(),
   }),
   z.object({
@@ -52,16 +42,7 @@ const progressEventSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("complete"),
-    evaluation: z.object({
-      proposalId: z.string(),
-      dimensions: z.array(z.unknown()),
-      aggregate: z.object({
-        weightedScore: z.number(),
-        completedDimensions: z.number(),
-        computedAt: z.number(),
-      }),
-      status: z.enum(["evaluating", "evaluated", "failed"]),
-    }),
+    evaluation: proposalEvaluationSchema,
   }),
   z.object({
     type: z.literal("failed"),
@@ -108,9 +89,20 @@ export function useEvaluation(): UseEvaluationReturn {
   const [ipfsCid, setIpfsCid] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const startEvaluation = useCallback(
     async (proposalId: string, proposalText: string) => {
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       setStatus("evaluating");
       setCompletedDimensions(new Map());
       setFailedDimensions(new Set());
@@ -120,21 +112,28 @@ export function useEvaluation(): UseEvaluationReturn {
       setTxHash(null);
       setError(null);
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+      if (apiKey) {
+        headers["x-api-key"] = apiKey;
+      }
+
       const response = await fetch("/api/evaluate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ proposalId, proposalText }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
         const errorJson: unknown = await response.json().catch(() => null);
-        const errorMsg =
-          errorJson &&
-          typeof errorJson === "object" &&
-          "error" in errorJson &&
-          typeof (errorJson as Record<string, unknown>).error === "string"
-            ? (errorJson as Record<string, string>).error
-            : `Request failed (${response.status})`;
+        const errorResponseSchema = z.object({ error: z.string() });
+        const parsed = errorResponseSchema.safeParse(errorJson);
+        const errorMsg = parsed.success
+          ? parsed.data.error
+          : `Request failed (${response.status})`;
         setError(errorMsg);
         setStatus("failed");
         return;
@@ -186,10 +185,7 @@ export function useEvaluation(): UseEvaluationReturn {
             case "dimension_complete":
               setCompletedDimensions((prev) => {
                 const next = new Map(prev);
-                next.set(
-                  event.dimension,
-                  event.output as EvaluationOutput,
-                );
+                next.set(event.dimension, event.output);
                 return next;
               });
               break;
@@ -215,7 +211,7 @@ export function useEvaluation(): UseEvaluationReturn {
               break;
 
             case "complete":
-              setEvaluation(event.evaluation as ProposalEvaluation);
+              setEvaluation(event.evaluation);
               setStatus("evaluated");
               break;
 

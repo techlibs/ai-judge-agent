@@ -16,11 +16,17 @@ export const evaluationOutputSchema = z.object({
 
 export type EvaluationOutput = z.infer<typeof evaluationOutputSchema>;
 
-export const DIMENSIONS = ["technical", "impact", "cost", "team"] as const;
-export type EvaluationDimension = (typeof DIMENSIONS)[number];
+export const DIMENSION_KEYS = [
+  "technical",
+  "impact",
+  "cost",
+  "team",
+] as const; // const assertion — single source of truth for dimension key literals
+
+export type EvaluationDimension = (typeof DIMENSION_KEYS)[number];
 
 export const dimensionEvaluationSchema = z.object({
-  dimension: z.enum(DIMENSIONS),
+  dimension: z.enum(DIMENSION_KEYS),
   output: evaluationOutputSchema,
   audit: z.object({
     promptSent: z.string(),

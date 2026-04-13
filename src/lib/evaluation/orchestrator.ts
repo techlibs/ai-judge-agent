@@ -3,10 +3,9 @@ import {
   type ProposalEvaluation,
   type EvaluationDimension,
   type EvaluationOutput,
-  DIMENSIONS,
 } from "./schemas";
-import { evaluateDimension } from "./agents";
-import { DIMENSION_WEIGHTS } from "./constants";
+import { evaluateDimension, evaluateNaive } from "./agents";
+import { DIMENSION_WEIGHTS, DIMENSIONS } from "./constants";
 import { pinEvaluationToIPFS, publishScoreOnChain } from "./storage";
 
 export type EvaluationProgressEvent =
@@ -28,6 +27,7 @@ export type EvaluationProgressEvent =
       weightedScore: number;
       completedDimensions: number;
     }
+  | { type: "naive_complete"; naiveOutput: string }
   | { type: "stored"; ipfsCid: string; txHash: string }
   | { type: "complete"; evaluation: ProposalEvaluation }
   | { type: "failed"; error: string };
@@ -55,31 +55,38 @@ export async function orchestrateEvaluation(
 ): Promise<ProposalEvaluation> {
   onProgress({ type: "started", proposalId, totalDimensions: 4 });
 
-  let completedCount = 0;
+  const results: Array<DimensionEvaluation | null> = [];
   const dimensionPromises = DIMENSIONS.map(async (dim) => {
     try {
-      const result = await evaluateDimension(dim, proposalText);
-      completedCount++;
+      const result = await evaluateDimension(dim.key, proposalText);
+      results.push(result);
       onProgress({
         type: "dimension_complete",
-        dimension: dim,
+        dimension: dim.key,
         output: result.output,
-        completedCount,
+        completedCount: results.length,
       });
       return result;
     } catch (err) {
-      completedCount++;
+      results.push(null);
       onProgress({
         type: "dimension_failed",
-        dimension: dim,
+        dimension: dim.key,
         error: err instanceof Error ? err.message : "Unknown error",
-        completedCount,
+        completedCount: results.length,
       });
       return null;
     }
   });
 
-  const results = await Promise.all(dimensionPromises);
+  const naivePromise = evaluateNaive(proposalText)
+    .then((output) => {
+      onProgress({ type: "naive_complete", naiveOutput: output });
+      return output;
+    })
+    .catch(() => null);
+
+  await Promise.all([...dimensionPromises, naivePromise]);
   const successfulDimensions = results.filter(
     (v): v is DimensionEvaluation => v !== null,
   );
