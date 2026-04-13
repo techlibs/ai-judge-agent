@@ -1,4 +1,4 @@
-import { sqliteTable, text, real, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, real, integer, index } from "drizzle-orm/sqlite-core";
 
 export const proposals = sqliteTable("proposals", {
   id: text("id").primaryKey(),
@@ -22,7 +22,12 @@ export const proposals = sqliteTable("proposals", {
   submittedAt: text("submitted_at").notNull(),
   evaluatedAt: text("evaluated_at"),
   chainTimestamp: integer("chain_timestamp"),
-});
+}, (table) => [
+  index("idx_proposals_funding_round").on(table.fundingRoundId),
+  index("idx_proposals_status").on(table.status),
+  index("idx_proposals_chain_timestamp").on(table.chainTimestamp),
+  index("idx_proposals_category").on(table.category),
+]);
 
 export const dimensionScores = sqliteTable("dimension_scores", {
   id: text("id").primaryKey(),
@@ -37,7 +42,9 @@ export const dimensionScores = sqliteTable("dimension_scores", {
   rubricApplied: text("rubric_applied").notNull(),
   modelId: text("model_id").notNull(),
   promptVersion: text("prompt_version").notNull(),
-});
+}, (table) => [
+  index("idx_dimension_scores_proposal").on(table.proposalId),
+]);
 
 export const fundReleases = sqliteTable("fund_releases", {
   id: text("id").primaryKey(),
@@ -90,7 +97,10 @@ export const disputes = sqliteTable("disputes", {
   voteCount: integer("vote_count").default(0),
   upholdVotes: integer("uphold_votes").default(0),
   overturnVotes: integer("overturn_votes").default(0),
-});
+}, (table) => [
+  index("idx_disputes_proposal").on(table.proposalId),
+  index("idx_disputes_status").on(table.status),
+]);
 
 export const fundingRoundStats = sqliteTable("funding_round_stats", {
   fundingRoundId: text("funding_round_id").primaryKey(),
