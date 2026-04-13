@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { proposalContentSchema } from "./schemas";
 
 export const pinataResponseSchema = z.object({
   IpfsHash: z.string(),
@@ -8,11 +9,4 @@ export const pinataResponseSchema = z.object({
 
 export type PinataResponse = z.infer<typeof pinataResponseSchema>;
 
-export interface ProposalContent {
-  title: string;
-  description: string;
-  teamInfo: string;
-  budget: number;
-  externalLinks: string[];
-  submittedAt: string;
-}
+export type ProposalContent = z.infer<typeof proposalContentSchema>;

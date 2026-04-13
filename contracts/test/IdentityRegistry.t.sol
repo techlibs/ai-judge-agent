@@ -104,6 +104,35 @@ contract IdentityRegistryTest is Test {
         assertEq(tokenId, 1);
     }
 
+    function test_pause_blocksSetAgentURI() public {
+        registry.register(user1, "ipfs://QmOld");
+        registry.pause();
+        vm.prank(user1);
+        vm.expectRevert();
+        registry.setAgentURI(1, "ipfs://QmNew");
+    }
+
+    function test_pause_onlyAdmin() public {
+        vm.prank(user1);
+        vm.expectRevert();
+        registry.pause();
+    }
+
+    function test_unpause_onlyAdmin() public {
+        registry.pause();
+        vm.prank(user1);
+        vm.expectRevert();
+        registry.unpause();
+    }
+
+    function test_register_revertsAtMaxSupply() public {
+        for (uint256 i; i < 1000; ++i) {
+            registry.register(makeAddr(string(abi.encodePacked("user", i))), "ipfs://QmTest");
+        }
+        vm.expectRevert(IdentityRegistry.MaxSupplyReached.selector);
+        registry.register(user1, "ipfs://QmOverflow");
+    }
+
     function test_register_revertsOnURITooLong() public {
         // Create a URI that exceeds 256 bytes
         bytes memory longUri = new bytes(257);

@@ -25,7 +25,7 @@ const SKELETON_COUNT = 3;
 
 export function ProposalListSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
       {Array.from({ length: SKELETON_COUNT }, (_, i) => (
         <SkeletonCard key={i} />
       ))}
