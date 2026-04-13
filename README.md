@@ -23,6 +23,7 @@ Each branch represents a parallel exploration of the same product using differen
 - **full-vision-roadmap** — GSD's milestone-driven approach: 4-phase roadmap (foundation → AI pipeline → on-chain reputation → visualization), with per-phase research, UI design contracts, execution plans, and cross-AI peer reviews.
 - **superpower** — Superpowers' brainstorming-first approach: creative exploration of the problem space producing a design spec, then 4 structured implementation plans (smart contracts, app foundation, judge pipeline, UI pages).
 
+
 ## Documentation
 
 | Document | Description |
@@ -35,7 +36,7 @@ Each branch represents a parallel exploration of the same product using differen
 
 - **Runtime**: Bun + TypeScript (strict mode)
 - **Framework**: Next.js (App Router) on Vercel
-- **AI/LLM**: Vercel AI SDK with Anthropic (structured output via `generateObject`)
+- **AI/LLM**: Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic (structured output via `agent.generate`)
 - **Storage**: On-chain (Base L2) + IPFS (Pinata) as source of truth, SQLite (Turso) as disposable read cache
 - **Contracts**: Solidity (Foundry), ERC-8004 for agent identity/reputation
 - **UI**: Tailwind CSS + shadcn/ui

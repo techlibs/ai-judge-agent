@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.planning
+.self-improvement
+contracts
+e2e
+*.md
+.env.local
+AUDIT-REPORT.md
