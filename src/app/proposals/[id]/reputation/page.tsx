@@ -1,7 +1,15 @@
 import { AlertTriangle } from "lucide-react";
 import { ReputationSummaryCard } from "@/components/reputation/reputation-summary-card";
 import { ReputationHistoryList } from "@/components/reputation/reputation-history-list";
-import type { ReputationResponse } from "@/lib/chain/reputation-schemas";
+import {
+  getReputationHistory,
+  getReputationSummary,
+  getTxHashesForBlocks,
+} from "@/lib/chain/reputation";
+import {
+  reputationResponseSchema,
+  type ReputationResponse,
+} from "@/lib/chain/reputation-schemas";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,15 +19,27 @@ export const metadata: Metadata = {
 async function fetchReputation(
   tokenId: string,
 ): Promise<ReputationResponse | null> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   try {
-    const res = await fetch(`${baseUrl}/api/reputation/${tokenId}`, {
-      next: { revalidate: 30 },
+    const [historyResult, summaryResult] = await Promise.all([
+      getReputationHistory(tokenId),
+      getReputationSummary(tokenId),
+    ]);
+
+    if (!historyResult.ok || !summaryResult.ok) return null;
+
+    const blockNumbers = historyResult.data.map((entry) => entry.blockNumber);
+    const txHashMap = await getTxHashesForBlocks(tokenId, blockNumbers);
+
+    const enrichedHistory = historyResult.data.map((entry) => ({
+      ...entry,
+      txHash: txHashMap.get(entry.blockNumber) ?? null,
+    }));
+
+    return reputationResponseSchema.parse({
+      tokenId,
+      summary: summaryResult.data,
+      history: enrichedHistory,
     });
-    if (!res.ok) return null;
-    const data: unknown = await res.json();
-    return data as ReputationResponse;
   } catch {
     return null;
   }
