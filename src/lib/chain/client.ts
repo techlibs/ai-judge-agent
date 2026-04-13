@@ -21,7 +21,10 @@ export function getWalletClient() {
   if (!env.DEPLOYER_PRIVATE_KEY) {
     throw new Error("DEPLOYER_PRIVATE_KEY not configured");
   }
-  const validatedKey = hexStringSchema.parse(env.DEPLOYER_PRIVATE_KEY);
+  const rawKey = env.DEPLOYER_PRIVATE_KEY.startsWith("0x")
+    ? env.DEPLOYER_PRIVATE_KEY.slice(2)
+    : env.DEPLOYER_PRIVATE_KEY;
+  const validatedKey = hexStringSchema.parse(rawKey);
   const account = privateKeyToAccount(`0x${validatedKey}`);
   return createWalletClient({
     account,

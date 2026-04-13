@@ -46,7 +46,10 @@ export async function fetchFromIPFS<T>(
   const env = getServerEnv();
   const gatewayUrl =
     env.PINATA_GATEWAY_URL ?? "https://gateway.pinata.cloud/ipfs";
-  const response = await fetch(`${gatewayUrl}/${cid}`);
+  const fetchUrl = env.PINATA_JWT
+    ? `${gatewayUrl}/${cid}?pinataGatewayToken=${env.PINATA_JWT}`
+    : `${gatewayUrl}/${cid}`;
+  const response = await fetch(fetchUrl);
 
   if (!response.ok) {
     throw new Error(`IPFS fetch failed for ${cid} (${response.status})`);

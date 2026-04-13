@@ -90,14 +90,14 @@ export async function publishScoreOnChain(
     throw new Error(`Invalid proposalId for BigInt conversion: ${proposalId}`);
   }
   const tokenId = BigInt(proposalId);
-  const scoreInBasisPoints = BigInt(Math.round(score * 100));
+  const scoreRounded = BigInt(Math.round(score));
   const contentHash = `ipfs://${ipfsCid}`;
 
   const { request } = await publicClient.simulateContract({
     address: validAddress,
     abi: REPUTATION_REGISTRY_ABI,
     functionName: "giveFeedback",
-    args: [tokenId, scoreInBasisPoints, contentHash],
+    args: [tokenId, scoreRounded, contentHash],
     account: walletClient.account,
   });
 

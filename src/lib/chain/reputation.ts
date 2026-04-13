@@ -66,7 +66,7 @@ export async function getReputationHistory(
 
     const entries: FeedbackEntryWithoutTxHash[] = rawEntries.map((raw) => ({
       clientAddress: raw.evaluator,
-      value: Number(raw.score) / 100,
+      value: Number(raw.score),
       tag1: "grant-evaluation",
       tag2: "",
       feedbackURI: raw.contentHash,
@@ -108,7 +108,7 @@ export async function getReputationSummary(
       ok: true,
       data: {
         feedbackCount: Number(count),
-        averageScore: Number(avgScore) / 100,
+        averageScore: Number(avgScore),
       },
     };
   } catch (error) {
