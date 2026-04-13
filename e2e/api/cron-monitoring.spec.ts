@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("GET /api/cron/monitoring", () => {
   test("returns 401 without Authorization header", async ({ request }) => {

@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("Security headers on GET /", () => {
   test("X-Frame-Options is DENY", async ({ request }) => {

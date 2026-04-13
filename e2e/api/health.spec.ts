@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("GET /api/health", () => {
   test("returns structured response with healthy status and checks", async ({

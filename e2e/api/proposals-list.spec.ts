@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("GET /api/proposals", () => {
   test("returns paginated list with expected structure", async ({

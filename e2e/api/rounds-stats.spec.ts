@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("GET /api/rounds/:id/stats", () => {
   test("returns round statistics for round-1", async ({ request }) => {

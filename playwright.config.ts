@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { resolve } from "path";
 import { readFileSync } from "fs";
 
-const PORT = 3000;
+const PORT = 3001;
 const BASE_URL = `http://localhost:${PORT}`;
 
 // Load .env.test so the webServer command inherits test env vars
@@ -60,10 +60,16 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "bun run dev",
+    command: `next dev --turbopack --port ${PORT}`,
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 60_000,
-    env: process.env as Record<string, string>,
+    env: {
+      ...process.env as Record<string, string>,
+      // Override .env.local values — Next.js loads .env.local with higher priority,
+      // so we must pass these explicitly to ensure test isolation
+      TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL ?? "file:./test.db",
+      NEXT_PUBLIC_APP_URL: BASE_URL,
+    },
   },
 });

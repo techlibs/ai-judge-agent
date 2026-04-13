@@ -4,7 +4,6 @@ import {
   PENDING_PROPOSAL_ID,
 } from "../fixtures/seed-data";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("GET /api/proposals/:id", () => {
   test("returns full proposal with evaluation for evaluated proposal", async ({

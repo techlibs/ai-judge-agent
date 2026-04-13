@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { TEST_API_KEY } from "../fixtures/seed-data";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("POST /api/webhooks/disputes", () => {
   test("returns 401 without X-API-Key header", async ({ request }) => {

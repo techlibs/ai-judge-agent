@@ -4,7 +4,6 @@ import {
   PENDING_PROPOSAL_ID,
 } from "../fixtures/seed-data";
 
-test.use({ baseURL: "http://localhost:3000" });
 
 test.describe("POST /api/evaluate/:id/finalize", () => {
   test("returns 404 for nonexistent proposal", async ({ request }) => {
