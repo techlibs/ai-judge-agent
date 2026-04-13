@@ -8,6 +8,8 @@ import { eq, and } from "drizzle-orm";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
 import { evaluationTriggerLimiter } from "@/lib/rate-limit";
 import { runQualityScorers } from "@/lib/evaluation/scorers";
+import { logSecurityEvent } from "@/lib/security-log";
+import { detectInjectionPatterns } from "@/lib/judges/agents";
 
 export const maxDuration = 120;
 
@@ -101,6 +103,15 @@ export async function GET(
 
   const proposalContext = buildProposalContext(proposal);
   const promptText = getJudgePrompt(dim);
+
+  const detectedPatterns = detectInjectionPatterns(proposalContext);
+  if (detectedPatterns.length > 0) {
+    logSecurityEvent({
+      type: "injection_attempt",
+      proposalId: id,
+      stripped: detectedPatterns,
+    });
+  }
 
   try {
     const { output, attempts } = await runJudgeWithRetry(dim, proposalContext);
