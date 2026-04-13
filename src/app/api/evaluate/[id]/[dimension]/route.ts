@@ -1,6 +1,6 @@
 import { JudgeEvaluationSchema } from "@/lib/judges/schemas";
 import { getJudgePrompt, buildProposalContext } from "@/lib/judges/prompts";
-import { judgeAgents } from "@/lib/judges/agents";
+import { mastra } from "@/lib/mastra";
 import { getDb } from "@/lib/db/client";
 import { proposals, evaluations } from "@/lib/db/schema";
 import { uploadJson } from "@/lib/ipfs/client";
@@ -26,7 +26,7 @@ async function runJudgeWithRetry(
     const timeout = setTimeout(() => controller.abort(), JUDGE_TIMEOUT_MS);
 
     try {
-      const result = await judgeAgents[dim].generate(proposalContext, {
+      const result = await mastra.getAgent(`judge-${dim}`).generate(proposalContext, {
         structuredOutput: { schema: JudgeEvaluationSchema },
         abortSignal: controller.signal,
       });
