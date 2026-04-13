@@ -6,6 +6,7 @@ import {
   dimensionScores,
   fundReleases,
   fundingRoundStats,
+  disputes,
 } from "./schema";
 
 const MAX_RETRY_COUNT = 3;
@@ -169,7 +170,7 @@ export async function listProposals(params: ListProposalsParams) {
 export async function getProposalById(proposalId: string) {
   const db = getDb();
 
-  const [proposalResults, dimensionResults, fundReleaseResults] = await Promise.all([
+  const [proposalResults, dimensionResults, fundReleaseResults, disputeResults] = await Promise.all([
     db
       .select()
       .from(proposals)
@@ -184,6 +185,10 @@ export async function getProposalById(proposalId: string) {
       .from(fundReleases)
       .where(eq(fundReleases.projectId, proposalId))
       .limit(1),
+    db
+      .select()
+      .from(disputes)
+      .where(eq(disputes.proposalId, proposalId)),
   ]);
 
   const proposal = proposalResults[0];
@@ -195,6 +200,7 @@ export async function getProposalById(proposalId: string) {
     ...proposal,
     dimensions: dimensionResults,
     fundRelease: fundReleaseResults[0] ?? null,
+    disputes: disputeResults,
   };
 }
 

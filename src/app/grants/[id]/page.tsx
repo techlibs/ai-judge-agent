@@ -200,6 +200,86 @@ export default async function ProposalDetailPage({
         )}
       </ChainErrorBoundary>
 
+      {proposal.disputes.length > 0 && (
+        <div className="mb-8 space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Disputes</h2>
+          {proposal.disputes.map((dispute) => {
+            const statusColors: Record<string, string> = {
+              open: "bg-yellow-100 text-yellow-800",
+              upheld: "bg-green-100 text-green-800",
+              overturned: "bg-red-100 text-red-800",
+            };
+            const statusColor =
+              statusColors[dispute.status] ?? "bg-gray-100 text-gray-800";
+
+            return (
+              <div
+                key={dispute.id}
+                className="rounded-lg border border-gray-200 bg-white p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-medium text-gray-900">
+                      Dispute #{dispute.id}
+                    </h3>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}
+                    >
+                      {dispute.status}
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    Stake: {dispute.stakeAmount} wei
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <span className="text-sm text-gray-600">Initiator</span>
+                    <p className="truncate text-sm font-medium text-gray-900">
+                      {dispute.initiatorAddress.slice(0, 10)}...
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Deadline</span>
+                    <p className="text-sm font-medium text-gray-900">
+                      {new Date(dispute.deadline * 1000).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Votes</span>
+                    <p className="text-sm font-medium text-gray-900">
+                      {dispute.upholdVotes ?? 0} uphold / {dispute.overturnVotes ?? 0} overturn
+                    </p>
+                  </div>
+                  {dispute.newScore !== null && (
+                    <div>
+                      <span className="text-sm text-gray-600">New Score</span>
+                      <p className="text-sm font-medium text-gray-900">
+                        {dispute.newScore.toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {dispute.evidenceCid && (
+                  <div className="mt-3">
+                    <a
+                      href={`https://${pinataGateway}/ipfs/${dispute.evidenceCid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      View Evidence on IPFS
+                    </a>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-gray-900">Verification</h2>
         <div className="mt-4 space-y-3">

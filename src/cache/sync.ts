@@ -5,11 +5,13 @@ import {
   fundReleases,
   agents,
   fundingRoundStats,
+  disputes,
 } from "./schema";
 import {
   fetchEvaluations,
   fetchAgents,
   fetchFundReleases,
+  fetchDisputes,
 } from "@/graph/queries";
 import { fetchJsonFromIpfs } from "@/ipfs/pin";
 import {
@@ -42,6 +44,9 @@ export async function syncCache(): Promise<SyncResult> {
 
   const fundResult = await syncFundReleases();
   eventsProcessed += fundResult.eventsProcessed;
+
+  const disputeResult = await syncDisputes();
+  eventsProcessed += disputeResult.eventsProcessed;
 
   await recomputeFundingRoundStats();
 
@@ -281,6 +286,71 @@ async function syncFundReleases(): Promise<SyncResult> {
 
     skip += BATCH_SIZE;
     if (releases.length < BATCH_SIZE) break;
+  }
+
+  return { eventsProcessed, ipfsFetched: 0 };
+}
+
+async function syncDisputes(): Promise<SyncResult> {
+  let eventsProcessed = 0;
+  let skip = 0;
+
+  while (true) {
+    const disputeList = await fetchDisputes(BATCH_SIZE, skip);
+    if (disputeList.length === 0) break;
+
+    for (const dispute of disputeList) {
+      eventsProcessed++;
+
+      const db = getDb();
+      const disputeId = Number(dispute.id);
+
+      const voteCount = dispute.votes.length;
+      let upholdVotes = 0;
+      let overturnVotes = 0;
+      for (const vote of dispute.votes) {
+        if (vote.voteUphold) {
+          upholdVotes++;
+        } else {
+          overturnVotes++;
+        }
+      }
+
+      const statusMap: Record<number, string> = {
+        0: "open",
+        1: "upheld",
+        2: "overturned",
+      };
+
+      await db
+        .insert(disputes)
+        .values({
+          id: disputeId,
+          proposalId: dispute.proposal?.id ?? "",
+          initiatorAddress: dispute.initiator,
+          stakeAmount: dispute.stakeAmount,
+          evidenceCid: dispute.evidenceCid,
+          status: statusMap[dispute.status] ?? "open",
+          newScore: dispute.newScore ? dispute.newScore / SCORE_PRECISION : null,
+          deadline: Number(dispute.deadline),
+          voteCount,
+          upholdVotes,
+          overturnVotes,
+        })
+        .onConflictDoUpdate({
+          target: disputes.id,
+          set: {
+            status: statusMap[dispute.status] ?? "open",
+            newScore: dispute.newScore ? dispute.newScore / SCORE_PRECISION : null,
+            voteCount,
+            upholdVotes,
+            overturnVotes,
+          },
+        });
+    }
+
+    skip += BATCH_SIZE;
+    if (disputeList.length < BATCH_SIZE) break;
   }
 
   return { eventsProcessed, ipfsFetched: 0 };

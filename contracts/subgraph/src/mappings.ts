@@ -12,7 +12,12 @@ import {
   FundsForwarded as FundsForwardedEvent,
   BonusDistributed as BonusDistributedEvent,
 } from "../../generated/MilestoneManager/MilestoneManager";
-import { Evaluation, Agent, AgentMetadata, FundRelease } from "../../generated/schema";
+import {
+  DisputeOpened as DisputeOpenedEvent,
+  DisputeVoteCast as DisputeVoteCastEvent,
+  DisputeResolved as DisputeResolvedEvent,
+} from "../../generated/DisputeRegistry/DisputeRegistry";
+import { Evaluation, Agent, AgentMetadata, FundRelease, Dispute, DisputeVote } from "../../generated/schema";
 
 export function handleEvaluationSubmitted(
   event: EvaluationSubmittedEvent
@@ -103,4 +108,52 @@ export function handleFundsForwarded(event: FundsForwardedEvent): void {
 
 export function handleBonusDistributed(event: BonusDistributedEvent): void {
   // Logged for indexing — no separate entity needed
+}
+
+export function handleDisputeOpened(event: DisputeOpenedEvent): void {
+  const id = Bytes.fromI32(event.params.disputeId.toI32());
+  let dispute = new Dispute(id);
+
+  let evaluation = Evaluation.load(event.params.proposalId);
+  if (evaluation != null) {
+    dispute.proposal = evaluation.id;
+  }
+
+  dispute.initiator = event.params.initiator;
+  dispute.stakeAmount = event.params.stakeAmount;
+  dispute.evidenceCid = event.params.evidenceCid;
+  dispute.status = 0; // Open
+  dispute.deadline = BigInt.fromI64(event.params.deadline);
+
+  dispute.save();
+}
+
+export function handleDisputeVoteCast(event: DisputeVoteCastEvent): void {
+  const disputeId = Bytes.fromI32(event.params.disputeId.toI32());
+  const voteId = disputeId.concat(event.params.validator);
+
+  let vote = new DisputeVote(voteId);
+  vote.dispute = disputeId;
+  vote.validator = event.params.validator;
+  vote.stakeAmount = event.params.stakeAmount;
+  vote.voteUphold = event.params.voteUphold;
+  vote.timestamp = event.block.timestamp;
+
+  vote.save();
+}
+
+export function handleDisputeResolved(event: DisputeResolvedEvent): void {
+  const id = Bytes.fromI32(event.params.disputeId.toI32());
+  let dispute = Dispute.load(id);
+  if (dispute == null) {
+    return;
+  }
+
+  dispute.status = event.params.status;
+  if (event.params.status == 2) {
+    // Overturned
+    dispute.newScore = event.params.newScore;
+  }
+
+  dispute.save();
 }

@@ -182,4 +182,57 @@ export async function fetchFundReleases(
   return data.fundReleases;
 }
 
-export type { GraphEvaluation, GraphFundRelease, GraphAgent };
+const DISPUTES_QUERY = gql`
+  query GetDisputes($first: Int!, $skip: Int!) {
+    disputes(first: $first, skip: $skip) {
+      id
+      proposal {
+        id
+      }
+      initiator
+      stakeAmount
+      evidenceCid
+      status
+      newScore
+      deadline
+      votes {
+        id
+        validator
+        stakeAmount
+        voteUphold
+        timestamp
+      }
+    }
+  }
+`;
+
+interface GraphDispute {
+  readonly id: string;
+  readonly proposal: { readonly id: string } | null;
+  readonly initiator: string;
+  readonly stakeAmount: string;
+  readonly evidenceCid: string;
+  readonly status: number;
+  readonly newScore: number | null;
+  readonly deadline: string;
+  readonly votes: ReadonlyArray<{
+    readonly id: string;
+    readonly validator: string;
+    readonly stakeAmount: string;
+    readonly voteUphold: boolean;
+    readonly timestamp: string;
+  }>;
+}
+
+export async function fetchDisputes(
+  first: number,
+  skip: number
+): Promise<ReadonlyArray<GraphDispute>> {
+  const client = getGraphClient();
+  const data = await client.request<{
+    disputes: ReadonlyArray<GraphDispute>;
+  }>(DISPUTES_QUERY, { first, skip });
+  return data.disputes;
+}
+
+export type { GraphEvaluation, GraphFundRelease, GraphAgent, GraphDispute };
