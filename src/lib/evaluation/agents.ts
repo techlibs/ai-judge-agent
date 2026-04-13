@@ -21,7 +21,7 @@ export async function evaluateDimension(
     prompt: proposalText,
     schema: evaluationOutputSchema,
     temperature: MODEL_CONFIG.temperature,
-    maxTokens: MODEL_CONFIG.maxTokens,
+    maxOutputTokens: MODEL_CONFIG.maxTokens,
   });
 
   return {
@@ -51,7 +51,7 @@ export async function evaluateNaive(proposalText: string): Promise<string> {
     system: NAIVE_PROMPT,
     prompt: proposalText,
     temperature: MODEL_CONFIG.temperature,
-    maxTokens: MODEL_CONFIG.maxTokens,
+    maxOutputTokens: MODEL_CONFIG.maxTokens,
   });
 
   return result.text;
