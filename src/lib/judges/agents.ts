@@ -1,5 +1,5 @@
 import { Agent } from "@mastra/core/agent";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import type { InputProcessor, ProcessInputArgs, ProcessInputResult } from "@mastra/core/processors";
 import { getJudgePrompt } from "./prompts";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
@@ -60,7 +60,7 @@ export const judgeAgents: Record<JudgeDimension, Agent> = Object.fromEntries(
     new Agent({
       id: `judge-${dim}`,
       name: `Judge ${dim}`,
-      model: anthropic("claude-sonnet-4-20250514"),
+      model: openai("gpt-5.4"),
       instructions: getJudgePrompt(dim),
       inputProcessors: [injectionGuard],
     }),
