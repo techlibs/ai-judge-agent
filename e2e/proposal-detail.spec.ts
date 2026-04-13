@@ -34,7 +34,7 @@ test.describe("Proposal Detail", () => {
       ).toBeVisible();
       // Should have verification section
       await expect(
-        page.getByRole("heading", { name: "Verification" })
+        page.getByRole("heading", { name: "Verification", exact: true })
       ).toBeVisible();
     }
   });

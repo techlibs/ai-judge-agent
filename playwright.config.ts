@@ -47,7 +47,14 @@ export default defineConfig({
 
   projects: [
     {
+      name: "api",
+      testDir: "./e2e/api",
+      use: {},
+    },
+    {
       name: "chromium",
+      testDir: "./e2e",
+      testIgnore: ["api/**"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],

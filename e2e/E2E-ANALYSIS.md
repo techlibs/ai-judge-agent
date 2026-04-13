@@ -7,70 +7,124 @@
 
 ## Test Results
 
-| Suite | Tests | Passed | Failed | Duration |
-|-------|-------|--------|--------|----------|
-| navigation.spec.ts | 3 | 3 | 0 | ~2.5s |
-| grants-list.spec.ts | 3 | 3 | 0 | ~3.6s |
-| proposal-detail.spec.ts | 3 | 3 | 0 | ~2.2s |
-| operator-dashboard.spec.ts | 1 | 1 | 0 | ~1.6s |
-| **Total** | **10** | **10** | **0** | **16.4s** |
+**78 passed, 1 skipped, 0 failed** in 39.3s
 
-## Coverage by Route
+### By Project
 
-| Route | Tests | What's Covered |
-|-------|-------|---------------|
-| `/` | 1 | Heading renders, main element visible |
-| `/grants` | 5 | Empty state, proposal cards, search form, heading, search input |
-| `/grants/[id]` | 3 | 404 for missing ID, back link, metadata sections |
-| `/dashboard/operator` | 1 | Auth redirect for unauthenticated users |
+| Project | Tests | Passed | Skipped |
+|---------|-------|--------|---------|
+| api (no browser) | 39 | 38 | 1 |
+| chromium (browser) | 40 | 40 | 0 |
+| **Total** | **79** | **78** | **1** |
 
-## Page Screenshots
+### By Suite
 
-| Screenshot | Description |
-|-----------|-------------|
-| `screenshots/01-landing.png` | Landing page — centered "IPE City Grants" heading with subtitle |
-| `screenshots/02-grants-list-empty.png` | Grants list with empty DB — "No proposals found" card, search bar |
-| `screenshots/03-grants-search.png` | Search query applied — URL params work correctly |
-| `screenshots/04-proposal-404.png` | Default Next.js 404 for non-existent proposal |
-| `screenshots/05-operator-auth-redirect.png` | Auth redirect — shows 404 (next-auth redirect chain) |
+| Suite | Tests | Status |
+|-------|-------|--------|
+| **API Layer** | | |
+| `api/health.spec.ts` | 4 | all pass |
+| `api/proposals-list.spec.ts` | 7 | all pass |
+| `api/proposal-detail.spec.ts` | 5 | all pass |
+| `api/rounds-stats.spec.ts` | 2 | all pass |
+| `api/webhooks-proposals.spec.ts` | 7 | 6 pass, 1 skipped (duplicate detection) |
+| `api/webhooks-disputes.spec.ts` | 2 | all pass |
+| `api/evaluate-finalize.spec.ts` | 3 | all pass |
+| `api/cron-monitoring.spec.ts` | 3 | all pass |
+| `api/sync.spec.ts` | 1 | all pass |
+| `api/security-headers.spec.ts` | 5 | all pass |
+| **Page Layer** | | |
+| `pages/grants-list-populated.spec.ts` | 8 | all pass |
+| `pages/proposal-detail-evaluated.spec.ts` | 12 | all pass |
+| `pages/proposal-detail-pending.spec.ts` | 5 | all pass |
+| **Original Tests** | | |
+| `navigation.spec.ts` | 3 | all pass |
+| `grants-list.spec.ts` | 3 | all pass |
+| `proposal-detail.spec.ts` | 3 | all pass |
+| `operator-dashboard.spec.ts` | 1 | all pass |
+| `screenshots.spec.ts` | 5 | all pass |
 
-## Architecture Observations
+## Coverage Map (Spec → Tests)
 
-### What Works Well
+### US1: Submit and Evaluate Proposals
 
-1. **Server Components render correctly** — `/grants` page uses `listProposals()` server-side query with drizzle/libsql; renders clean empty state when DB has no data.
-2. **Search is server-driven** — form submits as query params, page re-renders server-side. No client-side state management needed.
-3. **Auth guard works** — `/dashboard/operator` properly redirects unauthenticated users via `next-auth`.
-4. **404 handling** — `notFound()` in `grants/[id]/page.tsx` correctly returns 404 for missing proposals.
+| Acceptance Criteria | Test Coverage |
+|---|---|
+| Webhook ingestion with API key validation | `webhooks-proposals.spec.ts` — 401 without key, 401 invalid key, 413 oversized, 400 invalid JSON, 400 missing fields, 401 bad HMAC |
+| 4 dimension scores produced | `proposal-detail.spec.ts` — dimensions array has 4 items, each with weight/score/reasoning/rubric/data |
+| Weighted final score | `proposal-detail.spec.ts` — finalScore present on evaluated proposal |
+| Reputation multiplier | `proposal-detail.spec.ts` — adjustedScore and reputationMultiplier present |
+| Evaluation finalize | `evaluate-finalize.spec.ts` — 404 missing, 409 already finalized, 400 not ready |
+| Full orchestration (AI+IPFS+chain) | Not covered — requires external services (requires-env) |
 
-### Issues Found
+### US2: View Proposals on Dashboard
 
-1. **No shared navigation** — Landing page has no nav bar or links to `/grants`. Users must know the URL. The superpower worktree had a proper nav with "IPE City Grants" brand and "Submit Proposal" CTA.
-2. **No proposal submission flow** — Unlike the superpower worktree which has `/grants/submit`, speckit has no form to create proposals. The only data entry path is via API webhooks.
-3. **Operator dashboard auth UX** — Redirects to a 404-like page rather than a styled sign-in page. `next-auth` default pages are unstyled.
-4. **No global layout chrome** — `layout.tsx` is minimal (just font + body wrapper). No header, footer, or navigation.
+| Acceptance Criteria | Test Coverage |
+|---|---|
+| Paginated listing with scores | `proposals-list.spec.ts` — pagination, filters (round, status, search), sort, pageSize clamping |
+| Proposal detail with evaluation | `proposal-detail.spec.ts` — full proposal with 4 dimensions, verification links |
+| Score color coding | `grants-list-populated.spec.ts` — green for >=7 |
+| Status badges | `grants-list-populated.spec.ts` — pending/evaluated/funded/disputed across pages |
+| Expandable justifications | `proposal-detail-evaluated.spec.ts` — 4 details elements, expand shows reasoning/criteria |
+| Pagination UI | `grants-list-populated.spec.ts` — page info text, Next link navigation |
+| Funding round stats | `rounds-stats.spec.ts` — returns stats, 404 for unknown round |
 
-### Comparison with Other Worktrees
+### US3: On-Chain Fund Release
 
-| Aspect | Speckit | Superpower | Full-Vision-Roadmap |
-|--------|---------|------------|---------------------|
-| E2E test style | Modular per-feature | Single golden-path serial | Modular per-feature |
-| Test count | 10 | 8 | ~15 |
-| Proposal submission | No UI form | Full multi-step form | Full form with validation |
-| Navigation | None | Header with nav | Header with nav |
-| Auth testing | Redirect check | N/A | N/A |
-| DB setup | Global setup with local SQLite | N/A (in-memory) | N/A |
+| Acceptance Criteria | Test Coverage |
+|---|---|
+| Fund release visible on dashboard | `proposal-detail-evaluated.spec.ts` — Fund Release section, percentage, tx hash link to basescan |
 
-### Test Infrastructure
+### US4: Monitor Agent
 
-- **Global setup** (`e2e/global-setup.ts`): Creates SQLite tables via raw SQL before tests run. This ensures the Next.js dev server can start without a remote Turso connection.
-- **`.env.test`**: Minimal env using `file:./test.db` for local SQLite. No external service dependencies.
-- **Serial execution**: `fullyParallel: false` + `workers: 1` ensures tests run in order. Important because the dev server shares state across all tests.
+| Acceptance Criteria | Test Coverage |
+|---|---|
+| Cron endpoint auth | `cron-monitoring.spec.ts` — 401 without auth, 401 wrong token, 200 valid CRON_SECRET |
 
-## Recommendations
+### US5: Dispute Resolution
 
-1. **Add shared layout with navigation** — Header component linking `/` -> `/grants` -> `/grants/submit`
-2. **Add proposal submission page** — `/grants/submit` with form matching the schema
-3. **Style auth pages** — Custom next-auth sign-in page at `/auth/signin`
-4. **Expand e2e coverage** — Add tests for API routes (`/api/proposals`, `/api/sync`) and evaluation flow once AI integration is wired
-5. **Add CI integration** — Wire `bun run test:e2e` into GitHub Actions with `playwright install --with-deps chromium`
+| Acceptance Criteria | Test Coverage |
+|---|---|
+| Dispute webhook auth | `webhooks-disputes.spec.ts` — 401 without key, 400 invalid body |
+| Disputes visible on detail page | `proposal-detail-evaluated.spec.ts` — Disputes section, status badges, votes, evidence link |
+
+### US6: Reputation
+
+| Acceptance Criteria | Test Coverage |
+|---|---|
+| Reputation multiplier in scoring | `proposal-detail-evaluated.spec.ts` — adjusted score with multiplier, Reputation Bonus Active badge |
+
+### Cross-cutting
+
+| Feature | Test Coverage |
+|---|---|
+| Health check | `health.spec.ts` — DB ok, IPFS error, chain status |
+| Auth (operator dashboard) | `operator-dashboard.spec.ts` — redirect to sign-in |
+| Cache sync auth | `sync.spec.ts` — 401 without auth |
+| Security headers | `security-headers.spec.ts` — X-Frame-Options, CSP, HSTS, nosniff, Referrer-Policy |
+| 404 handling | `proposal-detail.spec.ts` — notFound() for missing proposals |
+| Pending state (no scores) | `proposal-detail-pending.spec.ts` — no evaluation/dimensions/disputes/fund-release sections |
+
+## Infrastructure
+
+### Test Layers
+- **API project** (`--project=api`): 39 tests, no browser launch, uses Playwright `request` context
+- **Chromium project** (`--project=chromium`): 40 tests, full browser via Desktop Chrome
+
+### Seed Data
+- `e2e/fixtures/seed-data.ts`: 25 proposals, 80 dimension scores, 5 fund releases, 7 disputes, funding round stats, evaluation jobs, platform integration
+- `e2e/global-setup.ts`: Creates tables + seeds data before test run
+
+### Environment
+- `.env.test`: Local SQLite (`file:./test.db`), test auth secret, test cron secret
+- Rate limiter: No-op when `UPSTASH_REDIS_REST_URL` is empty (allows webhook tests without Redis)
+
+## Gaps and Future Work
+
+| Gap | Reason | How to Close |
+|---|---|---|
+| Full evaluation orchestration (AI scoring) | Requires ANTHROPIC_API_KEY | Add golden-path test with `test.skip(!process.env.ANTHROPIC_API_KEY)` |
+| IPFS pinning | Requires PINATA_JWT | Same golden-path test |
+| On-chain transaction submission | Requires deployed contracts + RPC | Same golden-path test |
+| Duplicate proposal detection | Depends on `computeProposalId` hash function | Integration test with known hash |
+| Authenticated operator dashboard | No auth providers configured | Mock next-auth session or add test provider |
+| Cache sync execution | Requires Graph + IPFS | Integration test with mocked services |

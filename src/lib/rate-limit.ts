@@ -32,6 +32,10 @@ export async function checkRateLimit(
   limiter: Ratelimit,
   key: string
 ): Promise<{ success: boolean; retryAfter: number }> {
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    return { success: true, retryAfter: 0 };
+  }
+
   const result = await limiter.limit(key);
 
   if (!result.success) {

@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import * as schema from "../src/cache/schema";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { seedTestData } from "./fixtures/seed-data";
 
 /**
  * Playwright global setup: loads .env.test and creates SQLite tables
@@ -157,4 +158,7 @@ export default async function globalSetup() {
   await db.run(sql`CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status)`);
 
   client.close();
+
+  // Seed test data into the database
+  await seedTestData(dbUrl);
 }
