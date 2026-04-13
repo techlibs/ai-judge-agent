@@ -2,7 +2,7 @@
 
 Curated Claude Code skills for auditing the agent-reviewer project across all layers: Solidity smart contracts, Next.js web app, TypeScript code quality, dependency supply chain, and secrets management.
 
-**Stack context:** Next.js 15 (App Router) + TypeScript strict + Solidity 0.8.24+ (Foundry) + viem + IPFS (Pinata) + OpenAI SDK + Vercel
+**Stack context:** Next.js 15 (App Router) + TypeScript strict + Solidity 0.8.24+ (Foundry) + viem + IPFS (Pinata) + Mastra (`@mastra/core`, `@mastra/evals`) + Vercel AI SDK + Anthropic + Vercel
 
 **Last updated:** 2026-04-12
 
@@ -136,7 +136,7 @@ npx skills add igorwarzocha/opencode-workflows@security-nextjs -g -y
 
 **What it audits:** npm package legitimacy, known CVEs, suspicious indicators, dependency tree depth, license compatibility. Checks for vulnerable transitive dependencies.
 
-**Why we need it:** We depend on `openai`, `viem`, `@pinata/sdk`, `zod`, and the full Next.js/React stack. A compromised dependency in the OpenAI SDK or viem could exfiltrate private keys or API tokens.
+**Why we need it:** We depend on `@mastra/core`, `@mastra/evals`, `ai`, `@ai-sdk/anthropic`, `viem`, `@pinata/sdk`, `zod`, and the full Next.js/React stack. A compromised dependency in Mastra, AI SDK, or viem could exfiltrate private keys or API tokens.
 
 ```
 npx skills add useai-pro/openclaw-skills-security@dependency-auditor -g -y
