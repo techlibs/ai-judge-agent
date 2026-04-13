@@ -9,6 +9,11 @@ then("I should be redirected to {string}", async ({ page }, path: string) => {
   const pattern = path.replace(/\{[^}]+\}/g, "[\\w-]+");
   // Submit + IPFS upload can take a while
   await page.waitForURL(new RegExp(pattern), { timeout: 30_000 });
+  // Navigate away from evaluate page to prevent background AI workflow
+  // from crashing the dev server (no API key in test environment)
+  if (page.url().includes("/evaluate")) {
+    await page.goto("about:blank");
+  }
 });
 
 when("all {int} judges have completed", async ({ page }, _count: number) => {

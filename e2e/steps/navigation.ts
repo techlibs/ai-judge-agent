@@ -65,10 +65,15 @@ then("I should be navigated to {string}", async ({ page }, path: string) => {
 then("I should be redirected to the evaluation page {string}", async ({ page }, pattern: string) => {
   const urlPattern = pattern.replace(/\{[^}]+\}/g, "[\\w-]+");
   await page.waitForURL(new RegExp(urlPattern), { timeout: 30_000 });
+  // Navigate away immediately to prevent the evaluate page from triggering
+  // background AI evaluation workflows that crash the dev server (no API key in tests)
+  await page.goto("about:blank");
 });
 
 then("I should be redirected to the evaluation page", async ({ page }) => {
   await page.waitForURL(/\/grants\/[\w-]+\/evaluate/, { timeout: 30_000 });
+  // Navigate away to prevent background evaluation workflow
+  await page.goto("about:blank");
 });
 
 then("I should be redirected to {string} after 3 seconds", async ({ page }, path: string) => {
