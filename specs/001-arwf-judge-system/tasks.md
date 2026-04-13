@@ -101,23 +101,23 @@
 
 ### Cache and Data Layer for US2
 
-- [ ] T035 [P] [US2] Implement Graph queries for evaluations, agents, and fund releases in src/graph/queries.ts
-- [ ] T036 [P] [US2] Implement cache sync from Graph + IPFS in src/cache/sync.ts (query Graph for events, fetch IPFS CIDs, denormalize into SQLite tables, recompute derived fields)
-- [ ] T037 [US2] Implement dashboard query functions in src/cache/queries.ts (listProposals with pagination/filtering/search, getProposalById with dimensions, getFundingRoundStats)
+- [X] T035 [P] [US2] Implement Graph queries for evaluations, agents, and fund releases in src/graph/queries.ts
+- [X] T036 [P] [US2] Implement cache sync from Graph + IPFS in src/cache/sync.ts (query Graph for events, fetch IPFS CIDs, denormalize into SQLite tables, recompute derived fields)
+- [X] T037 [US2] Implement dashboard query functions in src/cache/queries.ts (listProposals with pagination/filtering/search, getProposalById with dimensions, getFundingRoundStats)
 
 ### API Routes for US2
 
-- [ ] T038 [US2] Implement GET /api/proposals route in src/app/api/proposals/route.ts (pagination, fundingRoundId filter, status filter, full-text search, sort per webhook-api.md)
-- [ ] T039 [US2] Implement GET /api/proposals/:id route in src/app/api/proposals/[id]/route.ts (full detail with evaluation dimensions, fund release, reputation, verification URLs per webhook-api.md)
-- [ ] T040 [US2] Implement POST /api/sync route in src/app/api/sync/route.ts (operator-authenticated, triggers incremental cache rebuild)
-- [ ] T041 [US2] Implement GET /api/rounds/:id/stats route in src/app/api/rounds/[id]/stats/route.ts (aggregate funding round statistics from cache)
+- [X] T038 [US2] Implement GET /api/proposals route in src/app/api/proposals/route.ts (pagination, fundingRoundId filter, status filter, full-text search, sort per webhook-api.md)
+- [X] T039 [US2] Implement GET /api/proposals/:id route in src/app/api/proposals/[id]/route.ts (full detail with evaluation dimensions, fund release, reputation, verification URLs per webhook-api.md)
+- [X] T040 [US2] Implement POST /api/sync route in src/app/api/sync/route.ts (operator-authenticated, triggers incremental cache rebuild)
+- [X] T041 [US2] Implement GET /api/rounds/:id/stats route in src/app/api/rounds/[id]/stats/route.ts (aggregate funding round statistics from cache)
 
 ### UI Pages for US2
 
-- [ ] T042 [US2] Implement public grants listing page in src/app/grants/page.tsx (proposal cards with summary scores, category badges, pagination, funding round filter, search). Sanitize all IPFS-sourced text with sanitizeDisplayText() before rendering.
-- [ ] T043 [US2] Implement proposal detail page in src/app/grants/[id]/page.tsx (final score, 4 dimension scores with expandable justifications, fund release status, reputation badge, IPFS/chain verification links). Sanitize all IPFS-sourced text (descriptions, reasoningChain) with sanitizeDisplayText() before rendering.
-- [ ] T043a [US2] Add ChainErrorBoundary component in src/components/error-boundary.tsx and IPFS fetch timeouts (10s AbortController). Wrap chain/IPFS-dependent components with error boundaries.
-- [ ] T044 [US2] Implement operator dashboard layout and sync controls in src/app/dashboard/operator/page.tsx (auth-protected, cache sync trigger, evaluation job status)
+- [X] T042 [US2] Implement public grants listing page in src/app/grants/page.tsx (proposal cards with summary scores, category badges, pagination, funding round filter, search). Sanitize all IPFS-sourced text with sanitizeDisplayText() before rendering.
+- [X] T043 [US2] Implement proposal detail page in src/app/grants/[id]/page.tsx (final score, 4 dimension scores with expandable justifications, fund release status, reputation badge, IPFS/chain verification links). Sanitize all IPFS-sourced text (descriptions, reasoningChain) with sanitizeDisplayText() before rendering.
+- [X] T043a [US2] Add ChainErrorBoundary component in src/components/error-boundary.tsx and IPFS fetch timeouts (10s AbortController). Wrap chain/IPFS-dependent components with error boundaries.
+- [X] T044 [US2] Implement operator dashboard layout and sync controls in src/app/dashboard/operator/page.tsx (auth-protected, cache sync trigger, evaluation job status)
 
 **Checkpoint**: Browse proposals at /grants, view full evaluation detail, verify data matches IPFS content via verification links
 
