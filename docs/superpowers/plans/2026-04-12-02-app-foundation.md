@@ -145,8 +145,8 @@ const nextConfig = {
 ```bash
 cd /Users/libardo/carlos/projects/ipe-city/agent-reviewer
 
-# AI SDK
-bun add ai @ai-sdk/openai
+# AI — Mastra (built on Vercel AI SDK) + Anthropic provider
+bun add @mastra/core @mastra/evals ai @ai-sdk/anthropic
 
 # Database
 bun add drizzle-orm @libsql/client

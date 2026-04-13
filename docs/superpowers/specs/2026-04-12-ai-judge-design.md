@@ -65,7 +65,7 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 **Data flow — unidirectional:**
 
 1. User submits proposal → SQLite (fast ID) + IPFS (canonical)
-2. 4 judges stream to browser via AI SDK `streamObject`
+2. 4 judges evaluated in parallel via Mastra `workflow.parallel()`
 3. Each judge result → SQLite + IPFS
 4. All 4 done → compute S0 → `giveFeedback()` ×4 on ReputationRegistry
 5. UI reads from SQLite for speed; everything verifiable from chain + IPFS
@@ -257,13 +257,11 @@ const JudgeEvaluationSchema = z.object({
 
 ```
 Next.js Route Handler
-  → streamObject({
-      model: openai("gpt-4o"),
-      schema: JudgeEvaluationSchema,
-      system: judgeSystemPrompt[dimension],
-      prompt: proposalContext,
+  → Mastra agent.generate({
+      structuredOutput: JudgeEvaluationSchema,
+      messages: [systemMessage, proposalContext],
     })
-  → SSE stream → browser (useObject renders partial state)
+  → Mastra workflow.parallel() fires 4 judges
   → on complete: save to SQLite + upload JSON to IPFS
 ```
 
@@ -357,7 +355,7 @@ Borrowed from Superpowers' anti-rationalization engineering:
   "keyFindings": ["...", "...", "..."],
   "risks": ["...", "..."],
   "ipeAlignment": { "proTechnology": 85, "proFreedom": 70, "proHumanProgress": 90 },
-  "model": "gpt-4o-2024-08-06",
+  "model": "claude-sonnet-4-20250514",
   "promptVersion": "judge-tech-v1",
   "evaluatedAt": "2026-04-12T..."
 }
@@ -525,7 +523,7 @@ agent-reviewer/
 | Language | TypeScript (strict) | Type safety |
 | Runtime | Bun | Package management, scripts |
 | Styling | Tailwind CSS 4 + shadcn/ui | UI components |
-| AI | Vercel AI SDK + OpenAI GPT-4o | Streaming judge evaluations |
+| AI | Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK + Anthropic | Typed workflow engine with evaluation scorer pipeline |
 | Database | SQLite via Turso + Drizzle ORM | Disposable read cache |
 | Storage | IPFS via Pinata | Canonical content storage |
 | Contracts | Solidity 0.8.24+ / Foundry | ERC-8004 registries |
@@ -542,7 +540,7 @@ agent-reviewer/
 |---|---|
 | Chain + IPFS as source of truth, SQLite as cache | Web3 principles — storage should be transparent and verifiable. DB is disposable, rebuildable from chain events. |
 | ERC-8004 full compliance | Any ERC-8004 reader can query evaluations natively. Future-proof for ecosystem composability. |
-| AI SDK `streamObject` over OpenAI SDK direct | Purpose-built for streaming structured output to React. `useObject` handles partial JSON, type safety, error recovery. |
+| Mastra (`@mastra/core`) over OpenAI SDK direct | Typed workflow engine with `workflow.parallel()`, built-in evaluation scorer pipeline (`@mastra/evals` with `createScorer()`), and automatic tracing. Uses Vercel AI SDK internally so Zod schemas and structured output patterns stay the same. |
 | 4 parallel streams over sequential | ~8-10s vs ~30s total latency. Better UX for live evaluation theater. |
 | Pinata for IPFS | Simple SDK, free tier covers scale, HTTP API from server actions. |
 | Base Sepolia over Ethereum Sepolia | Lower gas, faster blocks, ERC-8004 expanding to Base. |

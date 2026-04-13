@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Agent Reviewer is an AI Judge system for evaluating grant proposals at ipe.city/grants. It operates as a fan-out evaluation pipeline: proposals are submitted, then evaluated in parallel by 4 independent Judge Agents (Technical Feasibility 25%, Impact Potential 30%, Cost Efficiency 20%, Team Capability 25%), with results aggregated and published on-chain via the ERC-8004 ReputationRegistry. The recommended approach uses Next.js App Router with Convex as the unified backend — replacing a traditional Postgres + BullMQ + Redis stack with a single reactive system that handles persistence, scheduling, and real-time subscriptions natively. OpenAI GPT-4o with structured output (Zod + zodResponseFormat) handles all AI evaluation, and viem handles server-side on-chain interaction from Convex Node.js actions.
+Agent Reviewer is an AI Judge system for evaluating grant proposals at ipe.city/grants. It operates as a fan-out evaluation pipeline: proposals are submitted, then evaluated in parallel by 4 independent Judge Agents (Technical Feasibility 25%, Impact Potential 30%, Cost Efficiency 20%, Team Capability 25%), with results aggregated and published on-chain via the ERC-8004 ReputationRegistry. The recommended approach uses Next.js App Router with Convex as the unified backend — replacing a traditional Postgres + BullMQ + Redis stack with a single reactive system that handles persistence, scheduling, and real-time subscriptions natively. Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic Claude handles all AI evaluation via typed agents with structured output (Zod schemas), and viem handles server-side on-chain interaction from Convex Node.js actions.
 
 The most important architectural constraint is the fan-out parallel evaluation pattern: each judge must be an independent Convex action receiving only its own dimension's rubric (no cross-contamination). A completion gate mutation fires the aggregation step only when all 4 dimensions are saved. This design prevents both score cross-contamination and the Convex action timeout that results from sequential LLM calls in a single action. The on-chain integration via ERC-8004 is genuine differentiation but carries the highest scope creep risk — it must be a distinct phase, not added during the core evaluation build.
 
@@ -17,14 +17,15 @@ The primary risks are prompt-engineering quality (uncalibrated LLM scores with t
 
 ### Recommended Stack
 
-The full stack is substantially decided by the project's existing constraints (Next.js 15 App Router, TypeScript strict, Bun, Tailwind, shadcn/ui, Vercel). The research identified the remaining decisions: Convex 1.35.x as the database and backend runtime, `@convex-dev/workflow` 0.3.x for durable orchestration, OpenAI Node SDK v6 with `zodResponseFormat` for structured judge output, viem 2.47.x for server-side Ethereum interaction, and Foundry for smart contract development. The research explicitly rejected `@convex-dev/agent` (designed for conversational AI, not stateless judges), `@ai-sdk/openai` (unnecessary streaming abstraction), ethers.js (weaker types, larger bundle), and Hardhat (slower than Foundry, JS dependency bloat).
+The full stack is substantially decided by the project's existing constraints (Next.js 15 App Router, TypeScript strict, Bun, Tailwind, shadcn/ui, Vercel). The research identified the remaining decisions: Convex 1.35.x as the database and backend runtime, `@convex-dev/workflow` 0.3.x for durable orchestration, Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic for agent orchestration and structured judge output, viem 2.47.x for server-side Ethereum interaction, and Foundry for smart contract development. The research explicitly rejected `@convex-dev/agent` (designed for conversational AI, not stateless judges), using Vercel AI SDK directly without Mastra (misses workflow engine, eval scorers, and tracing), ethers.js (weaker types, larger bundle), and Hardhat (slower than Foundry, JS dependency bloat).
 
 **Core technologies:**
 - **Next.js 15 App Router**: Web framework — RSC for initial loads, Server Actions for forms
 - **Convex 1.35.x**: Database + backend + scheduler — reactive subscriptions for real-time evaluation progress
 - **@convex-dev/workflow 0.3.x**: Durable evaluation orchestration — retries without re-running completed steps
-- **OpenAI Node SDK v6**: LLM client — `client.beta.chat.completions.parse()` with Zod schemas for structured judge output
-- **Zod 3.x**: Single source of truth for evaluation schemas — used for OpenAI structured output, Convex validators, and TypeScript types simultaneously
+- **Mastra (`@mastra/core`, `@mastra/evals`)**: Agent framework — typed workflow engine with `workflow.parallel()`, evaluation scorer pipeline with `createScorer()`, automatic tracing. Built on Vercel AI SDK.
+- **Vercel AI SDK (`ai`) + `@ai-sdk/anthropic`**: LLM abstraction — used internally by Mastra for `agent.generate({ structuredOutput })` with Zod schemas
+- **Zod 3.x**: Single source of truth for evaluation schemas — used for Mastra/AI SDK structured output, Convex validators, and TypeScript types simultaneously
 - **viem 2.47.x**: Server-side Ethereum client — type-safe, tree-shakeable, used in Convex Node.js actions only
 - **Foundry 1.6.x**: Smart contract toolchain — Solidity-native tests, fast compilation, anvil for local testnet
 - **Base Sepolia**: Testnet — lower gas, more reliable faucets than Ethereum Sepolia, ERC-8004 expanding to Base
@@ -61,7 +62,7 @@ Research reviewed Gitcoin Grants Stack, Optimism RPGF, Karma HQ, SoPact, and tra
 
 ### Architecture Approach
 
-The system has four layers: Next.js App Router (rendering and routing), Convex (database, mutations, queries, scheduler), AI Evaluation (OpenAI GPT-4o via Convex Node.js actions), and On-chain (ERC-8004 registries via viem in Convex Node.js actions). The central pattern is mutation-schedules-action: mutations capture intent and schedule actions for external side effects, ensuring scheduling is atomic and actions can be independently retried. The 4 parallel judge evaluations use a completion gate — each dimension writes to its own document, and the save mutation triggers aggregation only when all 4 are present, avoiding OCC write conflicts when judges complete simultaneously.
+The system has four layers: Next.js App Router (rendering and routing), Convex (database, mutations, queries, scheduler), AI Evaluation (Mastra agents with Anthropic Claude via Convex Node.js actions), and On-chain (ERC-8004 registries via viem in Convex Node.js actions). The central pattern is mutation-schedules-action: mutations capture intent and schedule actions for external side effects, ensuring scheduling is atomic and actions can be independently retried. The 4 parallel judge evaluations use a completion gate — each dimension writes to its own document, and the save mutation triggers aggregation only when all 4 are present, avoiding OCC write conflicts when judges complete simultaneously.
 
 **Major components:**
 1. **Proposal Form (frontend)** — collects structured proposal data; calls `useMutation(api.proposals.create)`
@@ -101,9 +102,9 @@ Based on the combined research, the architecture's build-order dependencies and 
 
 ### Phase 2: AI Evaluation Pipeline
 **Rationale:** The core value proposition. Depends on proposals existing (Phase 1). Must be built and validated before on-chain work — on-chain publishes scores that must already exist. This is also the highest-uncertainty phase (prompt engineering) and needs the most iteration time.
-**Delivers:** Prompt/rubric storage + seeding, evaluateDimension action (OpenAI GPT-4o), fan-out orchestration, completion gate + aggregation, evaluation dashboard with real-time progress, before/after prompt comparison demo feature
+**Delivers:** Prompt/rubric storage + seeding, evaluateDimension action (Mastra agent with Anthropic Claude), fan-out orchestration, completion gate + aggregation, evaluation dashboard with real-time progress, before/after prompt comparison demo feature
 **Addresses:** Multi-dimension scoring, weighted aggregate, evaluation audit trail population, real-time updates, scoring rubric with bands, IPE City values context, before/after prompt comparison
-**Uses:** OpenAI Node SDK v6 + zodResponseFormat, Zod schemas, Convex Node.js actions, `ctx.scheduler.runAfter`, `@convex-dev/workflow`
+**Uses:** Mastra agents (`@mastra/core`) + `@mastra/evals` scorers, Vercel AI SDK + `@ai-sdk/anthropic` for structured output, Zod schemas, Convex Node.js actions, `ctx.scheduler.runAfter`, `@convex-dev/workflow`
 **Avoids:** Score drift (temperature 0, explicit scoring bands), sequential LLM timeout (fan-out pattern), structured output crashes (Zod safeParse + error states), cross-contaminated scores (isolated action per dimension), generic justifications (key_findings schema requirement)
 
 ### Phase 3: On-Chain Integration (ERC-8004)
@@ -139,7 +140,7 @@ Phases with standard patterns (skip `/gsd-research-phase`):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All decisions based on official docs. Convex 1.35.1 and OpenAI SDK 6.33.0 are confirmed current versions. |
+| Stack | HIGH | All decisions based on official docs. Convex 1.35.1 and Mastra/Vercel AI SDK are confirmed current versions. |
 | Features | MEDIUM-HIGH | Competitive landscape well-researched (Gitcoin, Optimism, traditional platforms). ERC-8004 feature is live standard but cutting-edge with limited production examples. |
 | Architecture | HIGH | Convex patterns (mutation-schedules-action, completion gate, OCC avoidance) verified from official docs and community guidelines. Fan-out pattern is canonical Convex. |
 | Pitfalls | HIGH | LLM-as-judge domain is well-studied academically. Convex limits verified from official docs. ERC-8004 pitfalls based on live standard documentation. |
@@ -149,7 +150,7 @@ Phases with standard patterns (skip `/gsd-research-phase`):
 ### Gaps to Address
 
 - **ERC-8004 deployed addresses on Base Sepolia**: Research confirmed the standard is live and Sepolia addresses exist, but exact Base Sepolia addresses for ReputationRegistry were not verified. Must check `github.com/erc-8004/erc-8004-contracts` during Phase 3 planning.
-- **GPT-4o structured output compliance with specific Zod shapes**: Research cites 99.7% compliance rate, but edge case behavior with our specific schema is not verified. Must test with intentional malformed responses during Phase 2 execution.
+- **Claude structured output compliance with specific Zod shapes**: Mastra/AI SDK handles schema enforcement, but edge case behavior with our specific schema is not verified. Must test with intentional malformed responses during Phase 2 execution.
 - **Convex ActionRetrier compatibility with @convex-dev/workflow**: Both are recommended but their interaction was not verified. May need to choose one or validate compatibility during Phase 2 planning.
 - **OpenAI rate limits at concurrent fan-out scale**: At low proposal volumes this is fine. If multiple proposals are submitted simultaneously, RPM limits could be hit. Rate limiting on submission (Phase 4) mitigates this.
 

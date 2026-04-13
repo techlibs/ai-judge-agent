@@ -8,7 +8,7 @@
 
 Phase 2 builds the core AI evaluation pipeline: 4 independent Judge Agents evaluate grant proposals across Technical Feasibility (25%), Impact Potential (30%), Cost Efficiency (20%), and Team Capability (25%). Each agent produces structured output (score 0-100, justification, recommendation, key findings) via OpenAI's structured output with Zod schemas. The evaluation is orchestrated as a durable Convex workflow with parallel agent execution, real-time progress via Convex subscriptions, and a complete audit trail.
 
-The stack is fully decided: OpenAI SDK v6 direct with `zodResponseFormat` for structured output, `@convex-dev/workflow` for durable orchestration, and Convex real-time subscriptions for live progress. The highest-uncertainty area is prompt engineering for calibrated scoring rubrics -- the rubric bands (0-20, 21-40, etc.) need careful wording to produce consistent, non-inflated scores.
+The stack is fully decided: Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic Claude for agent orchestration and structured output, `@convex-dev/workflow` for durable orchestration, and Convex real-time subscriptions for live progress. The highest-uncertainty area is prompt engineering for calibrated scoring rubrics -- the rubric bands (0-20, 21-40, etc.) need careful wording to produce consistent, non-inflated scores.
 
 **Primary recommendation:** Define Zod schemas as the single source of truth for evaluation output, use them simultaneously for OpenAI structured output, Convex validators (via convex-helpers), and TypeScript types. Orchestrate the 4 agents as parallel steps in a Convex durable workflow, writing each result to the database as it completes so Convex subscriptions push real-time progress to the UI.
 
@@ -35,7 +35,7 @@ The stack is fully decided: OpenAI SDK v6 direct with `zodResponseFormat` for st
 - **Framework:** Next.js App Router on Vercel
 - **Language:** TypeScript strict mode -- no `any`, no `as Type`, no `!`, no `@ts-ignore`
 - **Database:** Convex DB with domain-driven `server/` structure
-- **AI provider:** OpenAI direct (GPT-4o) via OpenAI SDK -- NOT AI SDK, NOT Anthropic
+- **AI provider:** Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic Claude
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Validation:** Zod at all boundaries
 - **Prompt transparency:** AI-generated docs need `.prompt.md` companions
@@ -48,7 +48,9 @@ The stack is fully decided: OpenAI SDK v6 direct with `zodResponseFormat` for st
 
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
-| openai | 6.34.0 | OpenAI API client | Direct SDK with native Zod structured output support via `zodResponseFormat`. Supports both Zod v3 and v4 auto-detected at runtime. [VERIFIED: npm registry] |
+| @mastra/core | latest | Agent framework | Typed workflow engine with `workflow.parallel()`, built-in evaluation scorer pipeline, automatic tracing. Built on Vercel AI SDK. [VERIFIED: npm registry] |
+| @mastra/evals | latest | Evaluation scorer pipeline | Built-in scorer framework with `createScorer()` for calibrating judge output quality. [VERIFIED: npm registry] |
+| ai + @ai-sdk/anthropic | latest | LLM abstraction + Anthropic provider | Used internally by Mastra. Provides `generateObject` with Zod structured output. Supports both Zod v3 and v4. [VERIFIED: npm registry] |
 | convex | 1.35.1 | Database + backend functions | Real-time subscriptions, actions for external API calls, scheduling. [VERIFIED: npm registry] |
 | @convex-dev/workflow | 0.3.9 | Durable evaluation workflow | Orchestrates 4 parallel agent steps with retry, exactly-once mutations, and completion handlers. [VERIFIED: npm registry] |
 | zod | 3.25.76 (latest 3.x) | Schema validation + structured output | Single source of truth for evaluation schemas: OpenAI structured output, Convex validators, TypeScript types. Use 3.x to avoid any edge-case issues with convex-helpers zod4 module. [VERIFIED: npm registry] |
@@ -63,10 +65,10 @@ The stack is fully decided: OpenAI SDK v6 direct with `zodResponseFormat` for st
 
 **Use Zod 3.25.x (not Zod 4).** Rationale:
 
-1. OpenAI SDK 6.34 supports both `^3.25` and `^4.0` [VERIFIED: npm peerDependencies]
+1. Vercel AI SDK (used by Mastra) supports both Zod `^3.25` and `^4.0` [VERIFIED: npm peerDependencies]
 2. convex-helpers has a `zod4` module but it is newer and less battle-tested [CITED: github.com/get-convex/convex-helpers/issues/558]
 3. Zod 3.x is the conservative choice that avoids any integration friction
-4. If Zod 4 is desired later, OpenAI SDK auto-detects version and convex-helpers has `server/zod4` import path [VERIFIED: openai-node source, convex-helpers docs]
+4. If Zod 4 is desired later, Vercel AI SDK (used by Mastra) auto-detects version and convex-helpers has `server/zod4` import path [VERIFIED: ai-sdk source, convex-helpers docs]
 
 **Installation:**
 ```bash
@@ -131,21 +133,18 @@ export const evaluationOutputSchema = z.object({
 export type EvaluationOutput = z.infer<typeof evaluationOutputSchema>;
 ```
 
-### Pattern 2: OpenAI Structured Output with zodResponseFormat
+### Pattern 2: Mastra Agent Structured Output
 
-**What:** Pass Zod schema to OpenAI and get typed, validated response.
+**What:** Pass Zod schema to Mastra agent and get typed, validated response. Mastra uses Vercel AI SDK internally.
 **When to use:** Every judge agent call.
 
 ```typescript
 // convex/evaluations/agents.ts
-// Source: https://github.com/openai/openai-node/blob/master/helpers.md
 "use node";
 
-import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { Agent } from "@mastra/core";
+import { anthropic } from "@ai-sdk/anthropic";
 import { evaluationOutputSchema } from "./schemas";
-
-const openai = new OpenAI(); // uses OPENAI_API_KEY env var
 
 export async function evaluateDimension(
   systemPrompt: string,
@@ -155,25 +154,25 @@ export async function evaluateDimension(
   rawResponse: string;
   model: string;
 }> {
-  const completion = await openai.chat.completions.parse({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: proposalText },
-    ],
-    response_format: zodResponseFormat(evaluationOutputSchema, "evaluation"),
+  const judgeAgent = new Agent({
+    name: "judge-evaluator",
+    model: anthropic("claude-sonnet-4-20250514"),
+    instructions: systemPrompt,
+  });
+
+  const result = await judgeAgent.generate(proposalText, {
+    structuredOutput: evaluationOutputSchema,
     temperature: 0.3, // lower temp for more consistent scoring
   });
 
-  const message = completion.choices[0]?.message;
-  if (!message?.parsed) {
+  if (!result.object) {
     throw new Error("Failed to parse structured output");
   }
 
   return {
-    parsed: message.parsed,
-    rawResponse: JSON.stringify(message),
-    model: completion.model,
+    parsed: result.object,
+    rawResponse: JSON.stringify(result),
+    model: "claude-sonnet-4-20250514",
   };
 }
 ```
@@ -298,7 +297,7 @@ evaluationAggregates: defineTable({
 
 ### Anti-Patterns to Avoid
 
-- **Calling OpenAI from mutations:** Mutations are transactional and cannot make external API calls. OpenAI calls MUST be in actions (or Convex `"use node"` actions). [CITED: docs.convex.dev/functions/actions]
+- **Calling LLM APIs from mutations:** Mutations are transactional and cannot make external API calls. Mastra agent calls MUST be in actions (or Convex `"use node"` actions). [CITED: docs.convex.dev/functions/actions]
 - **Calling actions directly from client:** Anti-pattern per Convex docs. Use mutations to capture intent, then schedule actions or use workflows. [CITED: docs.convex.dev/functions/actions]
 - **Non-deterministic workflow handlers:** The workflow handler replays deterministically. Do NOT use `Date.now()`, `Math.random()`, or conditional logic based on external state inside the handler. Side effects belong in steps. [CITED: github.com/get-convex/workflow README]
 - **Storing parsed output only:** Must also store raw response and prompt for audit trail (EVAL-06). Store before parsing to avoid losing data on parse failure.
@@ -308,7 +307,7 @@ evaluationAggregates: defineTable({
 | Problem | Don't Build | Use Instead | Why |
 |---------|-------------|-------------|-----|
 | Workflow orchestration | Custom scheduler with retries | @convex-dev/workflow | Handles retries, exactly-once mutations, parallel step limits, and persistence across restarts |
-| Structured LLM output | JSON.parse + manual validation | zodResponseFormat | OpenAI SDK handles schema conversion, parsing, and validation; refusal detection built-in |
+| Structured LLM output | JSON.parse + manual validation | Mastra `agent.generate({ structuredOutput })` | Mastra/AI SDK handles schema conversion, parsing, and validation via Zod |
 | Real-time progress | Polling or WebSocket server | Convex subscriptions (useQuery) | Automatic push updates on data changes, zero setup |
 | Zod-to-Convex schema | Manual parallel type definitions | convex-helpers zodToConvex | Keeps Zod and Convex validators in sync automatically |
 | Score aggregation math | Custom weighted average | Simple constants object | Define weights as named constants; the math is trivial, the error is in getting weights wrong |
@@ -333,9 +332,9 @@ evaluationAggregates: defineTable({
 
 ### Pitfall 3: Convex Action "use node" Gotcha
 
-**What goes wrong:** OpenAI SDK requires Node.js APIs. Without `"use node"` directive at the top of the file, the action fails in Convex's default runtime.
-**Why it happens:** Convex runs actions in a V8 isolate by default, not full Node. The `openai` package needs Node-specific APIs.
-**How to avoid:** Add `"use node";` as the first line in any file that imports `openai`. Note: this means you cannot define queries or mutations in the same file.
+**What goes wrong:** Mastra/AI SDK requires Node.js APIs. Without `"use node"` directive at the top of the file, the action fails in Convex's default runtime.
+**Why it happens:** Convex runs actions in a V8 isolate by default, not full Node. The `@mastra/core` and `ai` packages need Node-specific APIs.
+**How to avoid:** Add `"use node";` as the first line in any file that imports `@mastra/core` or `ai`. Note: this means you cannot define queries or mutations in the same file.
 **Warning signs:** Runtime errors about missing `process`, `Buffer`, or `crypto` in Convex actions.
 
 ### Pitfall 4: Workflow Determinism Violations
@@ -355,7 +354,7 @@ evaluationAggregates: defineTable({
 ### Pitfall 6: Large Prompt + Proposal Token Limits
 
 **What goes wrong:** System prompt (rubric + values + instructions) plus proposal text exceeds context or eats into output budget.
-**Why it happens:** Rubrics are verbose. Proposals can be long. GPT-4o has 128K context but output is limited.
+**Why it happens:** Rubrics are verbose. Proposals can be long. Claude has 200K context but output is limited.
 **How to avoid:** Keep system prompts under 2000 tokens. Truncate proposal text if needed (with warning). Use `max_tokens` parameter to ensure output budget. Consider summarizing very long proposals before evaluation.
 **Warning signs:** Truncated justifications, incomplete key findings arrays.
 
@@ -410,7 +409,7 @@ IPE City core values that should inform evaluation:
 `;
 
 export const MODEL_CONFIG = {
-  model: "gpt-4o" as const,
+  model: "claude-sonnet-4-20250514" as const,
   temperature: 0.3,
   maxTokens: 1500,
 };
@@ -487,14 +486,14 @@ Evaluate the following proposal:`;
 
 | Old Approach | Current Approach | When Changed | Impact |
 |--------------|------------------|--------------|--------|
-| JSON mode + manual parsing | Structured Output with Zod via `zodResponseFormat` | OpenAI Aug 2024, SDK v4.55+ | Guaranteed valid JSON matching schema; no parse failures |
+| JSON mode + manual parsing | Structured Output with Zod via Mastra `agent.generate({ structuredOutput })` / AI SDK `generateObject` | Mastra + Vercel AI SDK | Guaranteed valid JSON matching schema; no parse failures |
 | Manual retry logic for LLM calls | Durable workflows with step-level retry | @convex-dev/workflow 0.3.x, 2024 | Automatic retry, persistence, parallel execution |
 | Polling for evaluation status | Convex real-time subscriptions | Core Convex feature | Zero-latency UI updates, no polling infrastructure |
 | Zod 3 only | Zod 4 with v3 compat subpath | Zod 4.0, early 2025 | Can install v4, use `zod/v3` import for libraries not yet upgraded |
 
 **Deprecated/outdated:**
-- `client.chat.completions.create()` for structured output: Use `.parse()` method instead for automatic Zod validation
-- `JSON.parse()` + manual Zod `.parse()`: The SDK does both steps via `.parse()` method
+- Direct OpenAI SDK `client.chat.completions.create()`: Use Mastra `agent.generate({ structuredOutput })` instead, which wraps AI SDK `generateObject` for automatic Zod validation
+- `JSON.parse()` + manual Zod `.parse()`: Mastra/AI SDK handles both steps automatically
 
 ## Assumptions Log
 
@@ -503,7 +502,7 @@ Evaluate the following proposal:`;
 | A1 | Temperature 0.3 produces consistent scoring | Code Examples | If scoring is too deterministic or too random, adjust between 0.1-0.5 |
 | A2 | System prompts under 2000 tokens are sufficient for rubric + values + instructions | Pitfall 6 | May need to condense rubric or split into multi-turn |
 | A3 | Cross-contamination is prevented by separate agent calls | Pitfall 2 | If scores still correlate too strongly, may need more aggressive prompt isolation |
-| A4 | GPT-4o is the right model for all 4 dimensions | Standard Stack | Could use gpt-4o-mini for cost savings on simpler dimensions |
+| A4 | Anthropic Claude is the right model for all 4 dimensions | Standard Stack | Could use lighter models for cost savings on simpler dimensions |
 | A5 | Max 3 key findings is sufficient per dimension | Requirements | Users may want more detail; 3 keeps output focused |
 
 ## Open Questions
@@ -528,12 +527,12 @@ Evaluate the following proposal:`;
 | Dependency | Required By | Available | Version | Fallback |
 |------------|------------|-----------|---------|----------|
 | Bun | Package management, runtime | Yes | 1.3.1 | -- |
-| Node.js | Convex CLI, OpenAI SDK in actions | Yes | 23.10.0 | -- |
+| Node.js | Convex CLI, Mastra/AI SDK in actions | Yes | 23.10.0 | -- |
 | Docker | Not required this phase | Yes | 24.0.6 | -- |
-| OpenAI API key | Judge agent calls | Not checked (env var) | -- | Must be set in Convex dashboard |
+| Anthropic API key | Judge agent calls (via Mastra) | Not checked (env var) | -- | Must be set in Convex dashboard |
 
 **Missing dependencies with no fallback:**
-- OPENAI_API_KEY must be configured in Convex dashboard environment variables
+- ANTHROPIC_API_KEY must be configured in Convex dashboard environment variables
 
 **Missing dependencies with fallback:**
 - None
@@ -554,22 +553,23 @@ Evaluate the following proposal:`;
 
 | Pattern | STRIDE | Standard Mitigation |
 |---------|--------|---------------------|
-| Prompt injection via proposal text | Tampering | Separate system prompt from user content; use OpenAI's structured output mode which constrains output format |
-| API key exposure | Information Disclosure | Store OPENAI_API_KEY in Convex environment variables, never in client code; all OpenAI calls via server-side actions |
+| Prompt injection via proposal text | Tampering | Separate system prompt from user content; use Mastra/AI SDK structured output mode which constrains output format |
+| API key exposure | Information Disclosure | Store ANTHROPIC_API_KEY in Convex environment variables, never in client code; all Mastra agent calls via server-side actions |
 | Cost abuse (repeated evaluations) | Denial of Service | Rate limit evaluation triggers; check proposal status before starting new evaluation (no re-evaluation of already-evaluated proposals) |
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [OpenAI Node SDK helpers.md](https://github.com/openai/openai-node/blob/master/helpers.md) - zodResponseFormat patterns, Zod v3/v4 auto-detection
-- [OpenAI Node SDK zod.ts source](https://github.com/openai/openai-node/blob/master/src/helpers/zod.ts) - Confirmed dual Zod version support
+- [Mastra documentation](https://mastra.ai/docs) - Agent framework, workflow engine, evaluation scorers
+- [Mastra Evals documentation](https://mastra.ai/docs/evals) - createScorer() patterns
+- [Vercel AI SDK](https://sdk.vercel.ai/docs) - generateObject structured output, Zod integration
 - [Convex Workflow README](https://github.com/get-convex/workflow/blob/main/README.md) - Workflow definition, parallel steps, retry config
 - [Convex Actions docs](https://docs.convex.dev/functions/actions) - Action patterns, anti-patterns, "use node" directive
-- npm registry - Version verification for all packages (openai 6.34.0, convex 1.35.1, @convex-dev/workflow 0.3.9, zod 3.25.76, convex-helpers 0.1.114)
+- npm registry - Version verification for all packages (@mastra/core, @mastra/evals, ai, @ai-sdk/anthropic, convex 1.35.1, @convex-dev/workflow 0.3.9, zod 3.25.76, convex-helpers 0.1.114)
 
 ### Secondary (MEDIUM confidence)
 - [Convex Workflow component page](https://www.convex.dev/components/workflow) - Feature overview and use cases
-- [OpenAI Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs) - Official structured output documentation
+- [Vercel AI SDK Structured Output](https://sdk.vercel.ai/docs/ai-sdk-core/generating-structured-data) - generateObject documentation
 - [Zod v4 versioning docs](https://zod.dev/v4/versioning) - v3 subpath permanence guarantee
 - [convex-helpers Zod 4 support issue](https://github.com/get-convex/convex-helpers/issues/558) - Zod 4 compatibility status
 

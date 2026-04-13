@@ -24,12 +24,15 @@
 
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| openai (Node SDK) | 6.x | OpenAI API client | Already decided. Direct SDK gives full control over structured output, no abstraction layer overhead. v6 supports `client.beta.chat.completions.parse()` with Zod schemas natively. | HIGH |
-| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) OpenAI structured output via `zodResponseFormat()`, (2) Convex validator generation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
+| Mastra (`@mastra/core`) | latest | Agent framework | Typed workflow engine with `workflow.parallel()` for parallel judge execution, built-in evaluation scorer pipeline (`@mastra/evals` with `createScorer()`), and automatic tracing. Built on Vercel AI SDK so Zod schemas and `generateObject` patterns work unchanged. | HIGH |
+| `@mastra/evals` | latest | Evaluation scorer pipeline | Built-in scorer framework with `createScorer()` for calibrating and validating judge output quality. Integrates with Mastra agents natively. | HIGH |
+| ai (Vercel AI SDK) | latest | LLM abstraction layer | Used internally by Mastra. Provides `generateObject` with Zod structured output, provider-agnostic model interface. | HIGH |
+| @ai-sdk/anthropic | latest | Anthropic provider | Anthropic Claude models via Vercel AI SDK provider interface. Used by Mastra agents for judge evaluations. | HIGH |
+| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) Mastra/AI SDK structured output via `generateObject()`, (2) Convex validator generation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
 
-**NOT using @convex-dev/agent:** While Convex has an official Agent component (v0.3.2), it's designed for conversational AI with threads, memory, and RAG. Our judge agents are stateless evaluators -- they receive a proposal, produce a structured score, and exit. The Agent component adds unnecessary complexity (thread management, message history) for a non-conversational use case. Use plain Convex actions with the OpenAI SDK directly.
+**NOT using @convex-dev/agent:** While Convex has an official Agent component (v0.3.2), it's designed for conversational AI with threads, memory, and RAG. Our judge agents are stateless evaluators -- they receive a proposal, produce a structured score, and exit. The Agent component adds unnecessary complexity (thread management, message history) for a non-conversational use case. Mastra agents are a better fit for structured evaluation workflows.
 
-**NOT using Vercel AI SDK (@ai-sdk/openai):** The AI SDK adds streaming, provider abstraction, and UI hooks -- none of which we need. Our judges produce structured JSON evaluations, not streamed chat responses. Direct OpenAI SDK with `zodResponseFormat` is simpler and more predictable for structured output.
+**Using Mastra over Vercel AI SDK directly:** Mastra wraps Vercel AI SDK and adds: typed workflow engine with `workflow.parallel()` for orchestrating 4 judges, built-in evaluation scorer pipeline (`@mastra/evals`) for calibrating judge quality, and automatic tracing for observability. The Zod schemas and structured output patterns stay the same since Mastra uses AI SDK internally.
 
 ### On-Chain / Web3
 
@@ -66,7 +69,7 @@
 | Library | Version | Purpose | When to Use | Confidence |
 |---------|---------|---------|-------------|------------|
 | convex-helpers | latest | Convex utilities | Zod-to-Convex validator conversion, custom function wrappers, relationship helpers. Saves boilerplate. | MEDIUM |
-| zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to OpenAI's JSON Schema format for structured output. OpenAI SDK includes this internally via `zodResponseFormat`, so may not need directly. | MEDIUM |
+| zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to JSON Schema format for structured output. Vercel AI SDK (used by Mastra) handles this internally via `generateObject`, so may not need directly. | MEDIUM |
 
 ## Architecture Decisions
 
@@ -93,10 +96,11 @@ To publish evaluation hashes on-chain from Convex:
 
 This is server-side only -- no wallet connection UI needed for v1. The backend wallet is a hot wallet funded with testnet ETH.
 
-### OpenAI Structured Output Pattern
+### Mastra Agent Structured Output Pattern
 
 ```typescript
-import { zodResponseFormat } from "openai/helpers/zod";
+import { Agent } from "@mastra/core";
+import { anthropic } from "@ai-sdk/anthropic";
 
 const JudgeEvaluation = z.object({
   score: z.number().min(0).max(100),
@@ -105,13 +109,17 @@ const JudgeEvaluation = z.object({
   keyFindings: z.array(z.string()).max(3),
 });
 
-const completion = await openai.beta.chat.completions.parse({
-  model: "gpt-4o",
-  messages: [systemPrompt, proposalContext],
-  response_format: zodResponseFormat(JudgeEvaluation, "judge_evaluation"),
+const judgeAgent = new Agent({
+  name: "tech-judge",
+  model: anthropic("claude-sonnet-4-20250514"),
+  instructions: systemPrompt,
 });
 
-const evaluation = completion.choices[0].message.parsed; // Fully typed
+const result = await judgeAgent.generate(proposalContext, {
+  structuredOutput: JudgeEvaluation,
+});
+
+const evaluation = result.object; // Fully typed via Zod schema
 ```
 
 ### ERC-8004 Contract Scope
@@ -128,8 +136,8 @@ Use the official reference at `github.com/erc-8004/erc-8004-contracts` as a star
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| LLM Client | openai SDK direct | @ai-sdk/openai (Vercel AI SDK) | Adds streaming/provider abstraction overhead for a non-streaming, single-provider use case |
-| LLM Client | openai SDK direct | @convex-dev/agent | Designed for conversational agents with threads/memory; our judges are stateless evaluators |
+| Agent Framework | Mastra (`@mastra/core`, `@mastra/evals`) | Vercel AI SDK direct (`ai`, `@ai-sdk/anthropic`) | Mastra adds typed workflow engine with `workflow.parallel()`, built-in evaluation scorer pipeline, and automatic tracing on top of AI SDK |
+| Agent Framework | Mastra (`@mastra/core`) | @convex-dev/agent | Designed for conversational agents with threads/memory; our judges are stateless evaluators. Mastra's workflow engine is a better fit. |
 | Ethereum Client | viem | ethers.js v6 | Larger bundle, weaker TS types, migration fragmentation |
 | Ethereum Client | viem (server-side) | wagmi (React hooks) | No wallet UI needed; on-chain writes are server-side from Convex actions |
 | Contract Toolchain | Foundry | Hardhat | Foundry is faster, Solidity-native tests, no JS dependency bloat |
@@ -140,7 +148,7 @@ Use the official reference at `github.com/erc-8004/erc-8004-contracts` as a star
 
 ```bash
 # Core application
-bun add convex openai zod next react react-dom
+bun add convex @mastra/core @mastra/evals ai @ai-sdk/anthropic zod next react react-dom
 
 # Convex components
 bun add @convex-dev/workflow
@@ -186,12 +194,13 @@ CONVEX_DEPLOY_KEY=prod:...  # Vercel only, not local
 - [Convex Next.js App Router setup](https://docs.convex.dev/client/nextjs/app-router/)
 - [Convex + Vercel deployment](https://docs.convex.dev/production/hosting/vercel)
 - [@convex-dev/workflow component](https://www.convex.dev/components/workflow)
-- [OpenAI Structured Outputs guide](https://platform.openai.com/docs/guides/structured-outputs)
-- [OpenAI Node SDK (npm)](https://www.npmjs.com/package/openai) -- v6.33.0
+- [Mastra documentation](https://mastra.ai/docs)
+- [Mastra Evals documentation](https://mastra.ai/docs/evals)
+- [Vercel AI SDK](https://sdk.vercel.ai/docs)
 - [Convex npm package](https://www.npmjs.com/package/convex) -- v1.35.1
 - [viem documentation](https://viem.sh/)
 - [ERC-8004 specification](https://eips.ethereum.org/EIPS/eip-8004)
 - [ERC-8004 reference contracts](https://github.com/erc-8004/erc-8004-contracts)
 - [Foundry toolchain](https://github.com/foundry-rs/foundry)
-- [Zod + OpenAI structured output pattern](https://hooshmand.net/zod-zodresponseformat-structured-outputs-openai/)
+- [Zod structured output patterns](https://hooshmand.net/zod-zodresponseformat-structured-outputs-openai/)
 - [Convex anti-pattern: calling actions from clients](https://docs.convex.dev/functions/actions)

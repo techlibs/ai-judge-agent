@@ -4,9 +4,9 @@
 
 **Goal:** Build the streaming AI evaluation pipeline — 4 parallel judges stream structured output to the browser, results persist to SQLite + IPFS, scores publish on-chain via ERC-8004 giveFeedback.
 
-**Architecture:** Next.js Route Handlers use Vercel AI SDK `streamObject` to fire 4 parallel OpenAI calls. Each judge streams a Zod-typed evaluation. On completion, results save to SQLite, upload to IPFS, and publish on-chain. Client uses `useObject` for real-time partial rendering.
+**Architecture:** Next.js Route Handlers use Mastra (`@mastra/core`) agents with `workflow.parallel()` to fire 4 parallel judge evaluations via Anthropic. Each judge produces a Zod-typed evaluation via `agent.generate({ structuredOutput })`. On completion, results save to SQLite, upload to IPFS, and publish on-chain. Mastra provides automatic tracing for observability.
 
-**Tech Stack:** Vercel AI SDK (`ai`, `@ai-sdk/openai`), Zod, Drizzle ORM, Pinata, viem.
+**Tech Stack:** Mastra (`@mastra/core`, `@mastra/evals`), Vercel AI SDK (`ai`, `@ai-sdk/anthropic`), Zod, Drizzle ORM, Pinata, viem.
 
 ---
 
@@ -244,8 +244,8 @@ git commit -m "feat: add proposal creation API with IPFS upload"
 Create `src/app/api/evaluate/[id]/[dimension]/route.ts`:
 
 ```typescript
-import { streamText, Output } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { Agent } from "@mastra/core";
+import { anthropic } from "@ai-sdk/anthropic";
 import { JudgeEvaluationSchema } from "@/lib/judges/schemas";
 import { getJudgePrompt, buildProposalContext } from "@/lib/judges/prompts";
 import { getDb } from "@/lib/db/client";
@@ -305,7 +305,7 @@ export async function GET(
     proposalId: id,
     dimension: dim,
     status: "streaming",
-    model: "gpt-4o",
+    model: "claude-sonnet-4-20250514",
     promptVersion: `judge-${dim}-v1`,
     startedAt: new Date(),
   });
@@ -314,16 +314,22 @@ export async function GET(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90_000);
 
-  // Stream judge evaluation (AI SDK v6: streamText + Output.object)
-  const result = streamText({
-    model: openai("gpt-4o"),
-    output: Output.object({ schema: JudgeEvaluationSchema }),
-    system: getJudgePrompt(dim),
-    prompt: buildProposalContext(proposal),
-    abortSignal: controller.signal,
-    onFinish: async ({ output }) => {
-      clearTimeout(timeout);
-      if (!output) {
+  // Evaluate via Mastra agent (uses Vercel AI SDK internally)
+  const judgeAgent = new Agent({
+    name: `judge-${dim}`,
+    model: anthropic("claude-sonnet-4-20250514"),
+    instructions: getJudgePrompt(dim),
+  });
+
+  try {
+    const result = await judgeAgent.generate(buildProposalContext(proposal), {
+      structuredOutput: JudgeEvaluationSchema,
+      abortSignal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const output = result.object;
+
+    if (!output) {
         await db
           .update(evaluations)
           .set({ status: "failed" })
@@ -338,7 +344,7 @@ export async function GET(
           proposalCID: proposal.ipfsCid,
           dimension: dim,
           ...output,
-          model: "gpt-4o",
+          model: "claude-sonnet-4-20250514",
           promptVersion: `judge-${dim}-v1`,
           evaluatedAt: new Date().toISOString(),
         },
@@ -364,10 +370,19 @@ export async function GET(
           completedAt: new Date(),
         })
         .where(eq(evaluations.id, evalId));
-    },
-  });
 
-  return result.toTextStreamResponse();
+    return new Response(JSON.stringify(output), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    clearTimeout(timeout);
+    await db
+      .update(evaluations)
+      .set({ status: "failed" })
+      .where(eq(evaluations.id, evalId));
+    return new Response("Evaluation failed", { status: 500 });
+  }
 }
 ```
 
@@ -385,7 +400,7 @@ Expected: Build succeeds.
 ```bash
 cd /Users/libardo/carlos/projects/ipe-city/agent-reviewer
 git add src/app/api/evaluate/
-git commit -m "feat: add streaming judge evaluation endpoint (AI SDK streamObject)"
+git commit -m "feat: add judge evaluation endpoint (Mastra agent with structured output)"
 ```
 
 ---
@@ -915,7 +930,7 @@ git commit -m "feat: add judge retry endpoint for failed evaluations"
 | Task | What | Depends on |
 |------|------|------------|
 | 1 | Proposal creation API (validate + SQLite + IPFS) | Plan 2 (foundation) |
-| 2 | Single judge streaming endpoint (AI SDK streamObject) | Plan 2 (schemas, prompts) |
+| 2 | Single judge evaluation endpoint (Mastra agent structured output) | Plan 2 (schemas, prompts) |
 | 3 | Evaluation orchestrator (detect completion + aggregate) | Tasks 1-2 |
 | 4 | Status polling endpoint | Task 3 |
 | 5 | On-chain publishing (IdentityRegistry + ReputationRegistry) | Plan 1 (contracts) |

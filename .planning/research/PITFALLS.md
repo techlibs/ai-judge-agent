@@ -9,7 +9,7 @@
 ### Pitfall 1: Score Drift from Naive Prompts
 
 **What goes wrong:**
-The same grant proposal evaluated twice produces significantly different scores (e.g., 72 vs 58). Without structured rubrics and anchored scoring criteria, LLM judges exhibit high variance. Research shows 93% of teams struggle with LLM judge implementation. GPT-4o without careful prompt design produces scores that cluster around training-data-biased ranges (typically 60-80) rather than utilizing the full 0-100 scale.
+The same grant proposal evaluated twice produces significantly different scores (e.g., 72 vs 58). Without structured rubrics and anchored scoring criteria, LLM judges exhibit high variance. Research shows 93% of teams struggle with LLM judge implementation. LLMs without careful prompt design produce scores that cluster around training-data-biased ranges (typically 60-80) rather than utilizing the full 0-100 scale.
 
 **Why it happens:**
 LLMs default to "generous grading" patterns from their training data. Without explicit scoring anchors (what does a 30 look like vs a 70?), the model interprets the scale differently each run. Temperature > 0 amplifies this. Vague rubric language like "evaluate the technical feasibility" gives the model too much interpretive freedom.
@@ -17,7 +17,7 @@ LLMs default to "generous grading" patterns from their training data. Without ex
 **How to avoid:**
 - Use temperature 0 for all judge evaluations (deterministic output).
 - Define explicit scoring bands with examples: "0-20: No technical plan. 21-40: Vague technical approach. 41-60: Clear approach with gaps. 61-80: Solid plan with minor concerns. 81-100: Exceptional, detailed, proven approach."
-- Use OpenAI Structured Outputs (response_format with JSON schema) to force consistent output shape. Compliance is 99.7%+ with GPT-4o.
+- Use Mastra `agent.generate({ structuredOutput })` (backed by Vercel AI SDK) to force consistent output shape via Zod schemas.
 - Include 1-2 "anchor examples" in the system prompt showing a scored proposal at different quality levels.
 - Run the same proposal 3 times during development and compare scores. Variance > 5 points means the prompt needs tightening.
 
@@ -67,10 +67,10 @@ Developers trust the "100% reliable" marketing of Structured Outputs and skip va
 
 **How to avoid:**
 - Always validate OpenAI responses with Zod before passing to mutations. The project already mandates Zod at boundaries -- enforce it here.
-- Define a Zod schema that mirrors the OpenAI response_format JSON schema. Parse with `schema.safeParse()`, not `schema.parse()`.
+- Define a Zod schema for structured output via Mastra's `agent.generate({ structuredOutput })`. Parse with `schema.safeParse()`, not `schema.parse()`.
 - On validation failure, save a structured error to the evaluation record (status: "error", error message, dimension that failed).
 - Classify errors: 429/5xx = retryable (use ActionRetrier), 4xx = log and fail, validation error = log the raw response for debugging.
-- Set explicit timeouts on the OpenAI client (30s for a single evaluation call).
+- Set explicit timeouts on the Mastra agent call (30s for a single evaluation call).
 
 **Warning signs:**
 - Evaluations stuck in "pending" status with no error logged.
@@ -183,7 +183,7 @@ Phase 1 (database schema design) -- the schema must accommodate independent writ
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
 | Hardcoded scoring weights (0.25/0.30/0.20/0.25) | Fast to implement | Cannot A/B test different weight schemes | MVP only -- extract to config by v2 |
-| Single OpenAI model for all judges | Simpler API key/config | Cannot optimize per-dimension (cost vs quality) | MVP -- all judges use GPT-4o |
+| Single model for all judges | Simpler config | Cannot optimize per-dimension (cost vs quality) | MVP -- all judges use Claude Sonnet via Mastra |
 | No evaluation versioning | Less schema complexity | Cannot compare old vs new prompt versions | MVP only -- add version field in Phase 2 |
 | Storing full LLM response in Convex | Easy debugging | Document size grows, wasted storage | Acceptable in MVP -- trim to structured fields later |
 | Skip rate limiting on submission | Fewer moving parts | Someone submits 100 proposals and burns your OpenAI budget | Only if submissions are not public-facing yet |
@@ -192,10 +192,10 @@ Phase 1 (database schema design) -- the schema must accommodate independent writ
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| OpenAI Structured Outputs | Using `JSON mode` instead of `response_format: { type: "json_schema" }` | Use the strict JSON schema mode, not the older JSON mode. They are different features with different reliability guarantees. |
-| OpenAI API Key in Convex | Hardcoding API key in action code | Use Convex environment variables (`process.env.OPENAI_API_KEY` in actions). Never commit keys. |
+| Mastra/AI SDK Structured Output | Using raw JSON parsing instead of `agent.generate({ structuredOutput })` | Use Mastra's structured output with Zod schemas for guaranteed valid output. |
+| API Key in Convex | Hardcoding API key in action code | Use Convex environment variables (`process.env.ANTHROPIC_API_KEY` in actions). Never commit keys. |
 | Convex Scheduler | Using `ctx.scheduler.runAfter` in an action | Schedulers are only available in mutations, not actions. To schedule from an action, first call a mutation via `ctx.runMutation` then schedule from there. |
-| Convex + OpenAI SDK | Importing OpenAI SDK in a query/mutation | OpenAI SDK (and any Node API) can only be used in actions, not queries or mutations. Mutations run in Convex's V8 runtime without Node APIs. |
+| Convex + Mastra/AI SDK | Importing Mastra or AI SDK in a query/mutation | Mastra/AI SDK (and any Node API) can only be used in actions, not queries or mutations. Mutations run in Convex's V8 runtime without Node APIs. |
 | ERC-8004 Identity Registry | Implementing custom NFT logic | Use OpenZeppelin's ERC-721 with URIStorage extension -- this is exactly what ERC-8004 Identity Registry is built on. |
 | Foundry + Sepolia | Deploying without sufficient testnet ETH | Use Base Sepolia instead of Sepolia -- faucets are more reliable and gas is cheaper. Or defer deployment entirely. |
 
@@ -212,7 +212,7 @@ Phase 1 (database schema design) -- the schema must accommodate independent writ
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Exposing OpenAI API key to client | Key theft, budget drain | Only use in Convex actions (server-side). Never pass to frontend. |
+| Exposing Anthropic API key to client | Key theft, budget drain | Only use in Convex actions (server-side). Never pass to frontend. |
 | No input sanitization on proposals | Prompt injection -- attacker crafts proposal text that manipulates judge scoring | Sanitize/truncate proposal text before including in LLM prompt. Set max lengths per field. |
 | Trusting client-submitted scores | Fake evaluations in the system | All scoring happens server-side in Convex actions. Client only submits proposals and reads results. |
 | Public mutations for evaluation triggers | Anyone can trigger expensive OpenAI calls | Use `internalAction`/`internalMutation` for the evaluation pipeline. Only expose a public `submitProposal` mutation that validates input. |

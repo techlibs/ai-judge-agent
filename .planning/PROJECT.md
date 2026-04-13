@@ -57,7 +57,7 @@ Every grant proposal gets a fair, transparent, reproducible evaluation — with 
 - **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
 - **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
 - **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache (Neon Postgres or similar) for query performance, rebuildable from chain events
-- **AI provider**: OpenAI direct (GPT-4o) via OpenAI SDK
+- **AI provider**: Mastra (`@mastra/core`, `@mastra/evals`) built on Vercel AI SDK with Anthropic Claude
 - **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), typed interfaces in Convex
 - **Smart contracts**: Solidity + Foundry for contract development
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
@@ -69,7 +69,7 @@ Every grant proposal gets a fair, transparent, reproducible evaluation — with 
 |----------|-----------|---------|
 | GSD as SDD framework | Best context management, parallel execution, flexible ceremony (scored 8.8/10 in analysis) | -- Pending |
 | On-chain + IPFS over Convex DB | All evaluation data is public and write-once; web3-native storage aligns with transparency values, eliminates vendor lock-in, and makes the chain the source of truth | -- Pending |
-| OpenAI direct over OpenRouter/Anthropic | Simpler setup, structured output support, user preference | -- Pending |
+| Mastra + Anthropic over OpenAI direct | Typed workflow engine with `workflow.parallel()`, built-in eval scorers (`@mastra/evals`), automatic tracing; Anthropic Claude for judge evaluations | -- Pending |
 | 4 separate agents over single combined | Reference architecture specifies independent dimension evaluation — prevents cross-contamination of scores | -- Pending |
 | Testnet-first for contracts | Validate contract design before mainnet deployment, lower risk | -- Pending |
 | No auth for v1 | Evaluations are public goods — auth adds complexity without value for MVP | -- Pending |
