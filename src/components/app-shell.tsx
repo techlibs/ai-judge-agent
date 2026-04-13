@@ -7,12 +7,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-secondary px-4 sm:px-6">
-        <Link
-          href="/proposals"
-          className="text-lg font-semibold tracking-tight"
-        >
-          IPE City Grants
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/proposals"
+            className="text-lg font-semibold tracking-tight"
+          >
+            IPE City Grants
+          </Link>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+            GSD
+          </span>
+        </div>
         <Link
           href="/proposals/new"
           className={buttonVariants({ size: "sm" })}
