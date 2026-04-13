@@ -19,14 +19,14 @@
 
 **Purpose**: Project initialization with Next.js App Router, Bun, TypeScript strict mode, and Foundry for smart contracts
 
-- [ ] T001 Create project structure per plan.md: src/app/, src/ipfs/, src/chain/, src/graph/, src/cache/, src/evaluation/, src/monitoring/, src/reputation/, src/lib/, contracts/src/, contracts/test/, contracts/subgraph/
-- [ ] T002 Initialize Next.js project with Bun, install core dependencies: next, react, react-dom, typescript, zod, drizzle-orm, @libsql/client, ai, @ai-sdk/anthropic, @ai-sdk/openai, viem, next-auth, pinata, tailwindcss, @graphprotocol/client
-- [ ] T003 [P] Configure TypeScript strict mode in tsconfig.json (no any, no type escapes)
-- [ ] T004 [P] Configure Tailwind CSS and initialize shadcn/ui in src/app/
-- [ ] T005 [P] Configure ESLint and Prettier for the project
-- [ ] T006 [P] Create .env.example with all required variables: ANTHROPIC_API_KEY, PINATA_JWT, PINATA_GATEWAY, TURSO_DATABASE_URL, TURSO_AUTH_TOKEN, AUTH_SECRET, WEBHOOK_API_KEY_HASH, NEXT_PUBLIC_CHAIN_ID, NEXT_PUBLIC_GRAPH_URL
-- [ ] T006a [P] Configure security headers in next.config.ts (CSP, X-Frame-Options: DENY, HSTS with max-age 31536000, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy)
-- [ ] T007 [P] Initialize Foundry project in contracts/ with forge init, install OpenZeppelin contracts dependency
+- [X] T001 Create project structure per plan.md: src/app/, src/ipfs/, src/chain/, src/graph/, src/cache/, src/evaluation/, src/monitoring/, src/reputation/, src/lib/, contracts/src/, contracts/test/, contracts/subgraph/
+- [X] T002 Initialize Next.js project with Bun, install core dependencies: next, react, react-dom, typescript, zod, drizzle-orm, @libsql/client, ai, @ai-sdk/anthropic, @ai-sdk/openai, viem, next-auth, pinata, tailwindcss, @graphprotocol/client
+- [X] T003 [P] Configure TypeScript strict mode in tsconfig.json (no any, no type escapes)
+- [X] T004 [P] Configure Tailwind CSS and initialize shadcn/ui in src/app/
+- [X] T005 [P] Configure ESLint and Prettier for the project
+- [X] T006 [P] Create .env.example with all required variables: ANTHROPIC_API_KEY, PINATA_JWT, PINATA_GATEWAY, TURSO_DATABASE_URL, TURSO_AUTH_TOKEN, AUTH_SECRET, WEBHOOK_API_KEY_HASH, NEXT_PUBLIC_CHAIN_ID, NEXT_PUBLIC_GRAPH_URL
+- [X] T006a [P] Configure security headers in next.config.ts (CSP, X-Frame-Options: DENY, HSTS with max-age 31536000, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy)
+- [X] T007 [P] Initialize Foundry project in contracts/ with forge init, install OpenZeppelin contracts dependency
 
 ---
 
@@ -36,21 +36,21 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Define shared IPFS Zod schemas in src/ipfs/schemas.ts: ProposalContentSchema, EvaluationContentSchema, MonitoringReportSchema, DisputeEvidenceSchema, AgentRegistrationSchema, AgentFeedbackSchema
-- [ ] T009 [P] Define scoring Zod schemas in src/evaluation/schemas.ts: DimensionScoreSchema, SanitizedProposalSchema, DIMENSION_WEIGHTS constant, MonitoringScoreSchema
-- [ ] T010 [P] Implement IPFS Pinata client in src/ipfs/client.ts (Pinata SDK initialization from env)
-- [ ] T011 [P] Implement IPFS pin function in src/ipfs/pin.ts (validate with Zod, serialize to canonical JSON, pin to Pinata, return CID)
-- [ ] T012 [P] Configure viem chain client in src/chain/contracts.ts (Base L2 public client, contract addresses from env, ABI imports). Use DEPLOYMENT_BLOCK env var as fromBlock in all getLogs/getContractEvents calls to avoid scanning from genesis.
-- [ ] T013 [P] Configure Graph client in src/graph/client.ts (GraphQL client pointed at NEXT_PUBLIC_GRAPH_URL)
-- [ ] T014 Define all SQLite cache tables with Drizzle in src/cache/schema.ts: proposals, dimension_scores, fund_releases, agents, agent_feedback, disputes, funding_round_stats, platform_integrations, evaluation_jobs
-- [ ] T015 Implement Turso/LibSQL client in src/cache/client.ts (createClient from env vars)
-- [ ] T016 [P] Implement Auth.js v5 configuration in src/lib/auth.ts (OAuth2 providers, session config, middleware matcher for /dashboard/operator/*)
-- [ ] T017 [P] Implement per-platform API key validation utility in src/lib/api-key.ts (hash provided key with SHA-256, lookup in platform_integrations table, use crypto.timingSafeEqual for comparison). Implement HMAC-SHA256 webhook signature verification (verify X-Signature-256 header against per-platform webhookSecret).
-- [ ] T017a [P] Implement HTML sanitization utility for IPFS-sourced content in src/lib/sanitize-html.ts. Use isomorphic-dompurify with allowlist of safe tags. Export sanitizeDisplayText (strip ALL HTML) and sanitizeRichText (allow safe subset).
-- [ ] T017b [P] Add Origin header validation to mutating API routes (validate against NEXT_PUBLIC_APP_URL, exempt webhook endpoints which use API key auth).
-- [ ] T018 Create Next.js root layout in src/app/layout.tsx (HTML head, Tailwind, font, auth session provider)
-- [ ] T018a [P] Implement rate limiting middleware with @upstash/ratelimit in src/lib/rate-limit.ts (proposalSubmitLimiter: 5/hour/IP, evaluationTriggerLimiter: 10/hour/IP, globalEvaluationLimiter: 10/min global)
-- [ ] T018b [P] Add request ID generation middleware (use x-request-id header or crypto.randomUUID(), pass through to all downstream operations and log entries)
+- [X] T008 Define shared IPFS Zod schemas in src/ipfs/schemas.ts: ProposalContentSchema, EvaluationContentSchema, MonitoringReportSchema, DisputeEvidenceSchema, AgentRegistrationSchema, AgentFeedbackSchema
+- [X] T009 [P] Define scoring Zod schemas in src/evaluation/schemas.ts: DimensionScoreSchema, SanitizedProposalSchema, DIMENSION_WEIGHTS constant, MonitoringScoreSchema
+- [X] T010 [P] Implement IPFS Pinata client in src/ipfs/client.ts (Pinata SDK initialization from env)
+- [X] T011 [P] Implement IPFS pin function in src/ipfs/pin.ts (validate with Zod, serialize to canonical JSON, pin to Pinata, return CID)
+- [X] T012 [P] Configure viem chain client in src/chain/contracts.ts (Base L2 public client, contract addresses from env, ABI imports). Use DEPLOYMENT_BLOCK env var as fromBlock in all getLogs/getContractEvents calls to avoid scanning from genesis.
+- [X] T013 [P] Configure Graph client in src/graph/client.ts (GraphQL client pointed at NEXT_PUBLIC_GRAPH_URL)
+- [X] T014 Define all SQLite cache tables with Drizzle in src/cache/schema.ts: proposals, dimension_scores, fund_releases, agents, agent_feedback, disputes, funding_round_stats, platform_integrations, evaluation_jobs
+- [X] T015 Implement Turso/LibSQL client in src/cache/client.ts (createClient from env vars)
+- [X] T016 [P] Implement Auth.js v5 configuration in src/lib/auth.ts (OAuth2 providers, session config, middleware matcher for /dashboard/operator/*)
+- [X] T017 [P] Implement per-platform API key validation utility in src/lib/api-key.ts (hash provided key with SHA-256, lookup in platform_integrations table, use crypto.timingSafeEqual for comparison). Implement HMAC-SHA256 webhook signature verification (verify X-Signature-256 header against per-platform webhookSecret).
+- [X] T017a [P] Implement HTML sanitization utility for IPFS-sourced content in src/lib/sanitize-html.ts. Use isomorphic-dompurify with allowlist of safe tags. Export sanitizeDisplayText (strip ALL HTML) and sanitizeRichText (allow safe subset).
+- [X] T017b [P] Add Origin header validation to mutating API routes (validate against NEXT_PUBLIC_APP_URL, exempt webhook endpoints which use API key auth).
+- [X] T018 Create Next.js root layout in src/app/layout.tsx (HTML head, Tailwind, font, auth session provider)
+- [X] T018a [P] Implement rate limiting middleware with @upstash/ratelimit in src/lib/rate-limit.ts (proposalSubmitLimiter: 5/hour/IP, evaluationTriggerLimiter: 10/hour/IP, globalEvaluationLimiter: 10/min global)
+- [X] T018b [P] Add request ID generation middleware (use x-request-id header or crypto.randomUUID(), pass through to all downstream operations and log entries)
 
 **Checkpoint**: Foundation ready - user story implementation can begin
 
