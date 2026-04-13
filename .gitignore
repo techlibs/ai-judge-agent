@@ -29,6 +29,10 @@ npm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+e2e/test-results/
+playwright-report/
+blob-report/
+test.db
 
 # IDE
 .vscode/
