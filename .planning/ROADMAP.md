@@ -38,9 +38,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — ERC-8004 smart contracts (IdentityRegistry + ReputationRegistry) with Foundry
-- [ ] 01-02-PLAN.md — Next.js bootstrap, shadcn/ui, shared types/schemas, app shell
-- [ ] 01-03-PLAN.md — Proposal submission flow (IPFS pin + on-chain register + form UI)
-- [ ] 01-04-PLAN.md — Proposal browsing flow (on-chain read + IPFS fetch + list/detail pages)
+- [x] 01-02-PLAN.md — Next.js bootstrap, shadcn/ui, shared types/schemas, app shell
+- [x] 01-03-PLAN.md — Proposal submission flow (IPFS pin + on-chain register + form UI)
+- [x] 01-04-PLAN.md — Proposal browsing flow (on-chain read + IPFS fetch + list/detail pages)
 
 ### Phase 2: AI Evaluation Pipeline
 **Goal**: Every submitted proposal receives independent AI evaluation across 4 dimensions, with results stored on IPFS, scores published on-chain, and real-time progress visible to users
