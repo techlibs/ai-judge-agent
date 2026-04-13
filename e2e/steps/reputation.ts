@@ -8,14 +8,11 @@ Then(
   async ({ page }) => {
     const errorState = page.getByText(/could not load reputation data/i);
     const emptyState = page.getByText(/no reputation history/i);
-    const historyList = page
-      .locator("[data-testid='reputation-list']")
-      .or(page.getByRole("list"));
+    const reputationCard = page.getByText(/On-Chain Reputation/i);
 
-    const hasError = await errorState.isVisible().catch(() => false);
-    const isEmpty = await emptyState.isVisible().catch(() => false);
-    const hasHistory = await historyList.isVisible().catch(() => false);
-
-    expect(hasError || isEmpty || hasHistory).toBeTruthy();
+    // At least one specific state MUST render — no catch-all
+    await expect(
+      errorState.or(emptyState).or(reputationCard),
+    ).toBeVisible({ timeout: 15_000 });
   },
 );

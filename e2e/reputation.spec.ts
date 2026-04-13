@@ -1,27 +1,23 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Reputation history page", () => {
-  test("navigates to reputation page", async ({ page }) => {
+  test("shows reputation heading for valid proposal", async ({ page }) => {
     await page.goto("/proposals/1/reputation");
 
-    // One of three states: error, empty, or populated
-    const errorState = page.getByText(/could not load reputation data/i);
-    const emptyState = page.getByText(/no reputation history/i);
-    const historyList = page.locator("[data-testid='reputation-list']").or(page.getByRole("list"));
+    // Must show either the reputation card or a specific error — NOT a catch-all
+    const reputationCard = page.getByText(/On-Chain Reputation/i);
+    const errorHeading = page.getByText(/Could not load reputation data/i);
 
-    const hasError = await errorState.isVisible().catch(() => false);
-    const isEmpty = await emptyState.isVisible().catch(() => false);
-    const hasHistory = await historyList.isVisible().catch(() => false);
-
-    // At least one state should be visible
-    expect(hasError || isEmpty || hasHistory).toBeTruthy();
+    await expect(reputationCard.or(errorHeading)).toBeVisible({ timeout: 15_000 });
   });
 
-  test("page has reputation metadata title", async ({ page }) => {
-    await page.goto("/proposals/1/reputation");
+  test("error state shows retry link", async ({ page }) => {
+    // Use an ID unlikely to have data but that won't 404 (contract returns empty)
+    await page.goto("/proposals/999/reputation");
 
-    // Check for the page heading or document title
-    const heading = page.getByRole("heading", { name: /reputation/i });
-    await expect(heading).toBeVisible();
+    const errorHeading = page.getByText(/Could not load reputation data/i);
+    const emptyState = page.getByText(/No reputation history/i);
+
+    await expect(errorHeading.or(emptyState)).toBeVisible({ timeout: 15_000 });
   });
 });

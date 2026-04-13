@@ -6,80 +6,58 @@ const { When, Then } = createBdd();
 // --- Proposals list steps ---
 
 When("no proposals exist", async ({ page }) => {
-  const emptyMessage = page.getByText("No proposals yet");
-  await emptyMessage.isVisible().catch(() => false);
+  await expect(page.getByText("No proposals yet")).toBeVisible({ timeout: 10_000 });
 });
 
 When("proposals exist", async ({ page }) => {
-  await page
-    .locator("[data-testid='proposal-card']")
-    .first()
-    .isVisible()
-    .catch(() => false);
+  await expect(
+    page.locator("a[href^='/proposals/']").first(),
+  ).toBeVisible({ timeout: 15_000 });
 });
 
 Then(
   "I should see {string} message",
   async ({ page }, messageText: string) => {
-    const message = page.getByText(messageText);
-    const isVisible = await message.isVisible().catch(() => false);
-    if (isVisible) {
-      await expect(message).toBeVisible();
-    }
+    await expect(page.getByText(messageText)).toBeVisible({ timeout: 10_000 });
   },
 );
 
 Then("I should see a link to submit the first proposal", async ({ page }) => {
-  const submitLink = page.getByRole("link", {
-    name: /submit the first proposal/i,
-  });
-  const isVisible = await submitLink.isVisible().catch(() => false);
-  if (isVisible) {
-    await expect(submitLink).toBeVisible();
-  }
+  await expect(
+    page.getByRole("link", { name: /submit the first proposal/i }),
+  ).toBeVisible();
 });
 
 Then("I should see proposal cards", async ({ page }) => {
-  const hasProposals = await page
-    .locator("[data-testid='proposal-card']")
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (hasProposals) {
-    await expect(
-      page.locator("[data-testid='proposal-card']").first(),
-    ).toBeVisible();
-  }
+  await expect(
+    page.locator("a[href^='/proposals/']").first(),
+  ).toBeVisible({ timeout: 15_000 });
 });
 
 // --- Proposal detail steps ---
 
 When("the proposal exists", async ({ page }) => {
-  await page.getByText(/proposal not found/i).isVisible().catch(() => false);
+  // Verify page rendered — back link is always present
+  await expect(
+    page.getByRole("link", { name: /back.*proposals/i }),
+  ).toBeVisible({ timeout: 10_000 });
 });
 
 Then("I should see proposal details", async ({ page }) => {
-  const notFound = page.getByText(/proposal not found/i);
-  const isNotFound = await notFound.isVisible().catch(() => false);
-  if (!isNotFound) {
-    await expect(page.getByRole("heading").first()).toBeVisible();
-  }
+  await expect(page.getByRole("heading").first()).toBeVisible({ timeout: 10_000 });
 });
 
 Then("I should see proposal content or error state", async ({ page }) => {
-  const notFound = page.getByText(/proposal not found/i);
-  const loadError = page.getByText(/failed to load proposal/i);
-  const ipfsError = page.getByText(/content unavailable/i);
-  const heading = page.getByRole("heading").first();
-
+  // Back link is present in all states — assert it renders
   await expect(
-    notFound.or(loadError).or(ipfsError).or(heading),
+    page.getByRole("link", { name: /back.*proposals/i }),
   ).toBeVisible({ timeout: 10_000 });
 });
 
 Then("I should see a back to proposals link", async ({ page }) => {
-  const backLink = page.getByRole("link", { name: /back.*proposals/i });
-  await expect(backLink).toBeVisible({ timeout: 10_000 });
+  await expect(
+    page.getByRole("link", { name: /back.*proposals/i }),
+  ).toBeVisible({ timeout: 10_000 });
 });
 
 // --- Proposal submission steps ---

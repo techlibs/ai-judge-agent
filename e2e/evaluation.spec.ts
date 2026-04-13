@@ -1,19 +1,18 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Evaluation page", () => {
-  test("shows evaluation page content", async ({ page }) => {
+  test("shows page heading", async ({ page }) => {
     await page.goto("/proposals/1/evaluation");
 
-    // Page always shows the heading regardless of proposal load state
     await expect(
       page.getByRole("heading", { name: /Proposal Evaluation/i }),
     ).toBeVisible();
   });
 
-  test("shows idle state or error state", async ({ page }) => {
+  test("shows ready state or proposal load error", async ({ page }) => {
     await page.goto("/proposals/1/evaluation");
 
-    // Either shows "Ready for evaluation" (proposal loaded) or error text (proposal failed to load)
+    // Both are valid states — but at least one MUST appear
     const readyText = page.getByText(/ready for evaluation/i);
     const errorText = page.getByText(/failed to load proposal/i);
 
@@ -23,7 +22,8 @@ test.describe("Evaluation page", () => {
   test("has back to proposal link", async ({ page }) => {
     await page.goto("/proposals/1/evaluation");
 
-    const backLink = page.getByRole("link", { name: /back to proposal/i });
-    await expect(backLink).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /back to proposal/i }),
+    ).toBeVisible();
   });
 });
