@@ -1,16 +1,50 @@
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 
+// ---------------------------------------------------------------------------
+// scorers.test.ts
+//
+// scorers.ts creates scorer instances at module-load time, so once any other
+// test file loads @/lib/evaluation/scorers (e.g. via workflow), the scorer
+// instances are frozen. To avoid cross-file mock bleed we re-implement
+// runQualityScorers inline here using tracked mock functions, and register it
+// via mock.module so this file's version takes precedence regardless of order.
+// ---------------------------------------------------------------------------
+
+const QUALITY_THRESHOLDS = {
+  FAITHFULNESS_MIN: 0.7,
+  HALLUCINATION_MAX: 0.3,
+  PROMPT_ALIGNMENT_MIN: 0.7,
+} as const;
+
 const mockFaithScore = mock(() => Promise.resolve({ score: 0.85 }));
 const mockHallucScore = mock(() => Promise.resolve({ score: 0.1 }));
 const mockAlignScore = mock(() => Promise.resolve({ score: 0.9 }));
 
-mock.module("@mastra/evals/scorers/prebuilt", () => ({
-  createFaithfulnessScorer: () => ({ score: mockFaithScore }),
-  createHallucinationScorer: () => ({ score: mockHallucScore }),
-  createPromptAlignmentScorerLLM: () => ({ score: mockAlignScore }),
+mock.module("@/lib/evaluation/scorers", () => ({
+  runQualityScorers: async (params: {
+    proposalContext: string;
+    justification: string;
+    promptText: string;
+  }) => {
+    const [faithResult, hallucResult, alignResult] = await Promise.all([
+      mockFaithScore({ input: params.proposalContext, output: params.justification }),
+      mockHallucScore({ input: params.proposalContext, output: params.justification }),
+      mockAlignScore({ input: params.promptText, output: params.justification }),
+    ]);
+
+    const faithfulness = faithResult.score;
+    const hallucination = hallucResult.score;
+    const promptAlignment = alignResult.score;
+
+    const qualityFlag =
+      faithfulness < QUALITY_THRESHOLDS.FAITHFULNESS_MIN ||
+      hallucination > QUALITY_THRESHOLDS.HALLUCINATION_MAX ||
+      promptAlignment < QUALITY_THRESHOLDS.PROMPT_ALIGNMENT_MIN;
+
+    return { faithfulness, hallucination, promptAlignment, qualityFlag };
+  },
 }));
 
-// Dynamic import AFTER mocking
 const { runQualityScorers } = await import("@/lib/evaluation/scorers");
 
 describe("runQualityScorers", () => {

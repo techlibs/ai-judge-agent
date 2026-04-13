@@ -203,12 +203,18 @@ mock.module("@/lib/ipfs/client", () => ({
   },
 }));
 
-mock.module("@/lib/evaluation/scorers", () => ({
-  runQualityScorers: async () => ({
-    faithfulness: 0.9,
-    hallucination: 0.1,
-    promptAlignment: 0.85,
-    qualityFlag: false,
+// Mock @mastra/evals/scorers/prebuilt so the real scorers.ts runs but with
+// controlled outputs — avoids clobbering the @/lib/evaluation/scorers module
+// entry that scorers.test.ts tests directly.
+mock.module("@mastra/evals/scorers/prebuilt", () => ({
+  createFaithfulnessScorer: () => ({
+    score: async () => ({ score: 0.9 }),
+  }),
+  createHallucinationScorer: () => ({
+    score: async () => ({ score: 0.1 }),
+  }),
+  createPromptAlignmentScorerLLM: () => ({
+    score: async () => ({ score: 0.85 }),
   }),
 }));
 

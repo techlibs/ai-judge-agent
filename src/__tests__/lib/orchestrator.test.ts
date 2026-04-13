@@ -365,30 +365,37 @@ describe("checkAndFinalizeEvaluation", () => {
   });
 
   // -----------------------------------------------------------------------
-  // 8. IPFS upload failure -> throws
+  // 8. IPFS upload failure -> resolves (non-fatal), stores empty ipfsCid
   // -----------------------------------------------------------------------
-  it("throws when IPFS upload fails", async () => {
+  it("resolves with complete=true when IPFS upload fails (non-fatal)", async () => {
     seedCompleteEvaluations(PROPOSAL_ID);
     ipfsShouldFail = true;
 
-    await expect(
-      checkAndFinalizeEvaluation(PROPOSAL_ID)
-    ).rejects.toThrow();
+    const result = await checkAndFinalizeEvaluation(PROPOSAL_ID);
+
+    expect(result.complete).toBe(true);
+    expect(result.aggregateScore).toBeGreaterThan(0);
+    // Aggregate score is still stored despite IPFS failure
+    const stored = store.aggregateScores.find(
+      (a) => a.proposalId === PROPOSAL_ID
+    );
+    expect(stored).toBeDefined();
   });
 
   // -----------------------------------------------------------------------
-  // 9. Chain publish failure -> throws, proposal status set to "failed"
+  // 9. Chain publish failure -> resolves, proposal status set to "published"
   // -----------------------------------------------------------------------
-  it("throws 'On-chain publishing failed' and sets proposal to failed when chain publish fails", async () => {
+  it("resolves with complete=true when chain publish fails (non-fatal), sets proposal to published", async () => {
     seedCompleteEvaluations(PROPOSAL_ID);
     chainShouldFail = true;
 
-    await expect(
-      checkAndFinalizeEvaluation(PROPOSAL_ID)
-    ).rejects.toThrow("On-chain publishing failed");
+    const result = await checkAndFinalizeEvaluation(PROPOSAL_ID);
+
+    expect(result.complete).toBe(true);
+    expect(result.aggregateScore).toBeGreaterThan(0);
 
     const proposal = store.proposals.find((p) => p.id === PROPOSAL_ID);
-    expect(proposal?.status).toBe("failed");
+    expect(proposal?.status).toBe("published");
   });
 
   // -----------------------------------------------------------------------

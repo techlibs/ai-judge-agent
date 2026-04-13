@@ -44,6 +44,50 @@ mock.module("@ai-sdk/anthropic", () => ({
   anthropic: (_model: string) => "mock-anthropic-model",
 }));
 
+const mockMastraAgent = {
+  generate() {
+    if (judgeShouldThrow) {
+      throw new Error("LLM call failed");
+    }
+    return Promise.resolve(judgeGenerateResult);
+  },
+};
+
+mock.module("@/lib/mastra", () => ({
+  mastra: {
+    getAgent: (_name: string) => mockMastraAgent,
+  },
+}));
+
+// Mock @mastra/evals/scorers/prebuilt so the real scorers.ts runs but with
+// controlled outputs — avoids clobbering the @/lib/evaluation/scorers module
+// entry that scorers.test.ts tests directly.
+mock.module("@mastra/evals/scorers/prebuilt", () => ({
+  createFaithfulnessScorer: () => ({
+    score: async () => ({ score: 0.9 }),
+  }),
+  createHallucinationScorer: () => ({
+    score: async () => ({ score: 0.1 }),
+  }),
+  createPromptAlignmentScorerLLM: () => ({
+    score: async () => ({ score: 0.9 }),
+  }),
+}));
+
+mock.module("@/lib/security-log", () => ({
+  logSecurityEvent: () => undefined,
+}));
+
+mock.module("@/lib/judges/agents", () => ({
+  detectInjectionPatterns: () => [],
+  judgeAgents: {
+    tech: {},
+    impact: {},
+    cost: {},
+    team: {},
+  },
+}));
+
 // ---------------------------------------------------------------------------
 // Mock DB with Symbol-based drizzle table name resolution
 // ---------------------------------------------------------------------------
