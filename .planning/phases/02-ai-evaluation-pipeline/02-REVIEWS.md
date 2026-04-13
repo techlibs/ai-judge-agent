@@ -18,7 +18,7 @@ This is a well-structured, thoughtfully decomposed phase. The three-wave approac
 **Risk: LOW**
 
 Strengths:
-- Zod as single source of truth for OpenAI structured output, validation, and TypeScript types eliminates type drift
+- Zod as single source of truth for Mastra/AI SDK structured output, validation, and TypeScript types eliminates type drift
 - Audit trail baked into DimensionEvaluation schema from day one
 - Calibrated 5-band rubrics per dimension with dimension-specific scoring language
 - Prompt injection mitigated by proposal text as user message only
@@ -74,7 +74,7 @@ Concerns:
 - **MEDIUM** — `useEvaluation` hook manages 8 pieces of state with `useState`. A `useReducer` with event-driven dispatch would be safer.
 - **LOW** — EVAL-08 prompt comparison is static demo, not live comparison of actual proposal
 - **LOW** — `lucide-react` dependency not listed in install steps (likely included via shadcn/ui)
-- **LOW** — No input size limit on `proposalText` — could generate very large OpenAI requests
+- **LOW** — No input size limit on `proposalText` — could generate very large LLM requests
 
 Suggestions:
 - Add a hardcoded SAMPLE_PROPOSAL constant for the verification checkpoint

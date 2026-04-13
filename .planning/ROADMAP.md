@@ -58,7 +58,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Evaluation schemas, constants, prompts, and 4 judge agent functions with OpenAI structured output
+- [ ] 02-01-PLAN.md — Evaluation schemas, constants, prompts, and 4 judge agent functions with Mastra structured output
 - [ ] 02-02-PLAN.md — Evaluation orchestration API with SSE progress, IPFS storage, and on-chain score publication
 - [ ] 02-03-PLAN.md — Evaluation UI: results page, real-time progress, dimension cards, prompt comparison
 

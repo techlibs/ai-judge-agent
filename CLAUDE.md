@@ -155,7 +155,7 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 - **Timeline**: ~3 hour continuous session — build as much as possible, prioritize working end-to-end over polish
 - **Tech stack**: Bun, Next.js App Router, TypeScript strict, Tailwind + shadcn/ui, Vercel
 - **Storage**: On-chain (scores/hashes) + IPFS (content) as source of truth. Optional read cache rebuildable from chain events
-- **AI provider**: OpenAI direct (GPT-4o) via OpenAI SDK
+- **AI provider**: Mastra (`@mastra/core`) with Anthropic via Vercel AI SDK (`ai` + `@ai-sdk/anthropic`)
 - **On-chain**: ERC-8004 on testnet (Sepolia or Base Sepolia), viem for TypeScript chain interactions
 - **Smart contracts**: Solidity + Foundry for contract development
 - **Code standards**: No `any`, no `as Type`, no `!`, Zod validation at boundaries
@@ -180,8 +180,9 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ### AI / LLM
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| openai (Node SDK) | 6.x | OpenAI API client | Already decided. Direct SDK gives full control over structured output, no abstraction layer overhead. v6 supports `client.beta.chat.completions.parse()` with Zod schemas natively. | HIGH |
-| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) OpenAI structured output via `zodResponseFormat()`, (2) API request/response validation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
+| Mastra (`@mastra/core`, `@mastra/evals`) | latest | Agent framework | Built on Vercel AI SDK. Provides typed workflow engine with `workflow.parallel()`, built-in evaluation scorer pipeline (`@mastra/evals` with `createScorer()`), and automatic tracing. Uses AI SDK's `generateObject` internally with Zod schemas. | HIGH |
+| ai + @ai-sdk/anthropic | latest | LLM provider layer | Vercel AI SDK used internally by Mastra. Provides `generateObject` with Zod structured output, provider abstraction, and Anthropic Claude integration. | HIGH |
+| Zod | 3.x | Schema validation + structured output | Define judge evaluation schemas once, use for: (1) Mastra/AI SDK structured output via `generateObject()`, (2) API request/response validation, (3) TypeScript type inference. Single source of truth for evaluation shapes. | HIGH |
 ### On-Chain / Web3
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
@@ -201,11 +202,11 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ### Supporting Libraries
 | Library | Version | Purpose | When to Use | Confidence |
 |---------|---------|---------|-------------|------------|
-| zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to OpenAI's JSON Schema format for structured output. OpenAI SDK includes this internally via `zodResponseFormat`, so may not need directly. | MEDIUM |
+| zod-to-json-schema | 3.x | Schema conversion | Bridge Zod schemas to JSON Schema format for structured output. AI SDK handles this internally via `generateObject`, so may not need directly. | MEDIUM |
 ## Architecture Decisions
-### Next.js API Routes + OpenAI Integration Pattern
+### Next.js API Routes + Mastra Agent Integration Pattern
 ### IPFS + On-Chain Storage Pattern
-### OpenAI Structured Output Pattern
+### Mastra Structured Output Pattern
 ### ERC-8004 Contract Scope
 - **IdentityRegistry**: `register()`, `setAgentURI()`, `getMetadata()` -- register projects
 - **ReputationRegistry**: `giveFeedback()`, `getSummary()`, `readFeedback()` -- publish evaluation scores
@@ -213,7 +214,7 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ## Alternatives Considered
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| LLM Client | openai SDK direct | @ai-sdk/openai (Vercel AI SDK) | Adds streaming/provider abstraction overhead for a non-streaming, single-provider use case |
+| Agent Framework | Mastra (built on Vercel AI SDK) | openai SDK direct | Mastra adds typed workflows, evaluation scorers, and tracing on top of AI SDK's structured output. Worth the abstraction for multi-agent orchestration. |
 | Ethereum Client | viem | ethers.js v6 | Larger bundle, weaker TS types, migration fragmentation |
 | Ethereum Client | viem (server-side) | wagmi (React hooks) | No wallet UI needed; on-chain writes are server-side from Next.js API routes |
 | Contract Toolchain | Foundry | Hardhat | Foundry is faster, Solidity-native tests, no JS dependency bloat |
@@ -222,7 +223,7 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 | Storage | On-chain + IPFS | Arweave | IPFS is simpler to integrate; Arweave adds permanent storage guarantee but higher complexity and cost |
 ## Installation
 # Core application (Next.js + TypeScript + Tailwind + shadcn/ui)
-# AI (OpenAI SDK + Zod)
+# AI (Mastra + Vercel AI SDK + Anthropic + Zod)
 # Web3 (viem for chain interactions, IPFS client for content storage)
 # UI (shadcn/ui components)
 # Dev dependencies
@@ -234,13 +235,13 @@ An AI-powered grant evaluation system for IPE City (ipe.city/grants) that uses 4
 ### On-Chain (RPC + Contract Addresses)
 ### Vercel / .env.local
 ## Sources
-- [OpenAI Structured Outputs guide](https://platform.openai.com/docs/guides/structured-outputs)
-- [OpenAI Node SDK (npm)](https://www.npmjs.com/package/openai) -- v6.33.0
+- [Mastra documentation](https://mastra.ai/docs)
+- [Vercel AI SDK Structured Output](https://sdk.vercel.ai/docs/ai-sdk-core/generating-structured-data)
 - [viem documentation](https://viem.sh/)
 - [ERC-8004 specification](https://eips.ethereum.org/EIPS/eip-8004)
 - [ERC-8004 reference contracts](https://github.com/erc-8004/erc-8004-contracts)
 - [Foundry toolchain](https://github.com/foundry-rs/foundry)
-- [Zod + OpenAI structured output pattern](https://hooshmand.net/zod-zodresponseformat-structured-outputs-openai/)
+- [Mastra agents with structured output](https://mastra.ai/docs/agents/overview)
 - [Pinata IPFS SDK](https://docs.pinata.cloud/)
 - [The Graph documentation](https://thegraph.com/docs/)
 <!-- GSD:stack-end -->

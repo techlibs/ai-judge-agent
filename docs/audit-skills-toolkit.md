@@ -2,7 +2,7 @@
 
 Curated Claude Code skills for auditing the agent-reviewer project across all layers: Solidity smart contracts, Next.js web app, TypeScript code quality, dependency supply chain, and secrets management.
 
-**Stack context:** Next.js 15 (App Router) + TypeScript strict + Solidity 0.8.24+ (Foundry) + viem + IPFS (Pinata) + OpenAI SDK + Vercel
+**Stack context:** Next.js 15 (App Router) + TypeScript strict + Solidity 0.8.24+ (Foundry) + viem + IPFS (Pinata) + Mastra (`@mastra/core`, `@mastra/evals`) + Vercel AI SDK + Vercel
 
 **Last updated:** 2026-04-12
 
@@ -136,7 +136,7 @@ npx skills add igorwarzocha/opencode-workflows@security-nextjs -g -y
 
 **What it audits:** npm package legitimacy, known CVEs, suspicious indicators, dependency tree depth, license compatibility. Checks for vulnerable transitive dependencies.
 
-**Why we need it:** We depend on `openai`, `viem`, `@pinata/sdk`, `zod`, and the full Next.js/React stack. A compromised dependency in the OpenAI SDK or viem could exfiltrate private keys or API tokens.
+**Why we need it:** We depend on `@mastra/core`, `@mastra/evals`, `ai`, `@ai-sdk/anthropic`, `viem`, `@pinata/sdk`, `zod`, and the full Next.js/React stack. A compromised dependency in Mastra, AI SDK, or viem could exfiltrate private keys or API tokens.
 
 ```
 npx skills add useai-pro/openclaw-skills-security@dependency-auditor -g -y
@@ -155,7 +155,7 @@ npx skills add useai-pro/openclaw-skills-security@dependency-auditor -g -y
 
 **What it audits:** Hardcoded AWS keys, GitHub tokens, Slack webhooks, private keys, API keys, JWT tokens, database connection strings. Scans source files before they reach version control.
 
-**Why we need it:** This project handles OpenAI API keys, IPFS pinning keys, and blockchain private keys for contract deployment. A single leaked key in a commit could drain testnet funds or rack up OpenAI charges.
+**Why we need it:** This project handles Anthropic API keys, IPFS pinning keys, and blockchain private keys for contract deployment. A single leaked key in a commit could drain testnet funds or rack up LLM charges.
 
 ```
 npx skills add patricio0312rev/skills@secrets-scanner -g -y
@@ -407,7 +407,7 @@ How the toolkit maps to our project's audit surfaces:
 |--------------|--------|--------|--------|
 | **Solidity contracts** (ERC-8004, registries) | Solidity Audit, Solidity Security Audit | Token Integration Analyzer, Solidity Security | Gas Optimization, Foundry, Testing |
 | **Next.js App Router** (API routes, Server Actions) | Security-NextJS, OWASP | Code Audit Readonly, Static Analysis | Security Engineer, Security Bootstrap |
-| **npm dependencies** (openai, viem, zod, pinata) | Dependency Auditor | Supply Chain Security | -- |
+| **npm dependencies** (@mastra/core, ai, viem, zod, pinata) | Dependency Auditor | Supply Chain Security | -- |
 | **Secrets and credentials** (API keys, private keys) | Secrets Scanner | Static Analysis | Security Bootstrap |
 | **TypeScript code quality** (strict mode, patterns) | -- | Static Analysis | Code Quality |
 | **Full-repo sweep** | OWASP, OpenClaw Watchdog | Code Audit Readonly | Security Engineer |

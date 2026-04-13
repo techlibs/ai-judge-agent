@@ -5,7 +5,7 @@
 
 ## Recommended Architecture
 
-The system has four layers: **Frontend** (Next.js App Router), **Backend** (Convex functions), **AI Evaluation** (OpenAI GPT-4o via Convex actions), and **On-chain** (ERC-8004 registries via Convex Node.js actions). Convex replaces the reference architecture's Postgres + BullMQ + Redis with a single reactive database that handles persistence, scheduling, and real-time subscriptions natively.
+The system has four layers: **Frontend** (Next.js App Router), **Backend** (Convex functions), **AI Evaluation** (Mastra agents with Anthropic via Convex actions), and **On-chain** (ERC-8004 registries via Convex Node.js actions). Convex replaces the reference architecture's Postgres + BullMQ + Redis with a single reactive database that handles persistence, scheduling, and real-time subscriptions natively.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -55,8 +55,8 @@ The system has four layers: **Frontend** (Next.js App Router), **Backend** (Conv
           │              │              │
           ▼              ▼              ▼
    ┌────────────┐ ┌────────────┐ ┌──────────────┐
-   │  OpenAI    │ │  OpenAI    │ │   ERC-8004   │
-   │  GPT-4o   │ │  GPT-4o   │ │   Registries │
+   │  Mastra    │ │  Mastra    │ │   ERC-8004   │
+   │  Agent    │ │  Agent    │ │   Registries │
    │ (parallel │ │ (parallel │ │  (Sepolia)   │
    │  evals)   │ │  evals)   │ │              │
    └────────────┘ └────────────┘ └──────────────┘
@@ -70,7 +70,7 @@ The system has four layers: **Frontend** (Next.js App Router), **Backend** (Conv
 | **Evaluation Dashboard** (frontend) | Displays per-dimension scores, justifications, aggregate score, real-time evaluation progress | Convex queries via `useQuery` (reactive) |
 | **Reputation Explorer** (frontend) | Shows evaluation history per project, on-chain publication status | Convex queries via `useQuery` |
 | **convex/proposals/** | Proposal CRUD, status management, triggers evaluation pipeline on creation | convex/evaluation/ (via scheduler) |
-| **convex/evaluation/** | Orchestrates 4 parallel judge evaluations, aggregates scores, manages evaluation lifecycle | OpenAI API (via actions), convex/reputation/ (via scheduler) |
+| **convex/evaluation/** | Orchestrates 4 parallel judge evaluations, aggregates scores, manages evaluation lifecycle | Mastra agents with Anthropic (via actions), convex/reputation/ (via scheduler) |
 | **convex/reputation/** | Manages ERC-8004 identity references, publishes evaluation hashes on-chain | ERC-8004 contracts (via viem in Node.js action) |
 | **convex/prompts/** | Stores and versions evaluation rubrics, system prompts, IPE City values context | Read by convex/evaluation/ actions |
 | **contracts/** (Foundry) | Minimal ERC-8004 interaction — register project identity, post evaluation feedback | Deployed to Sepolia/Base Sepolia |
@@ -105,7 +105,7 @@ internal.evaluation.orchestrate (mutation):
 internal.evaluation.evaluateDimension (action, "use node"):
   → Loads proposal data via ctx.runQuery
   → Loads rubric + system prompt via ctx.runQuery(internal.prompts.getForDimension)
-  → Calls OpenAI GPT-4o with structured output (Zod schema):
+  → Calls Mastra agent with Anthropic via structured output (Zod schema):
       { score: number (0-100), justification: string, recommendation: string, keyFindings: string[] }
   → Saves result via ctx.runMutation(internal.evaluation.saveDimensionScore)
   → saveDimensionScore checks if all 4 dimensions complete
@@ -162,7 +162,7 @@ convex/
 ├── evaluation/
 │   ├── mutations.ts             # saveDimensionScore, aggregate, orchestrate
 │   ├── queries.ts               # getByProposal, getScoreBreakdown, getDimensionScores
-│   ├── actions.ts               # evaluateDimension ("use node" — calls OpenAI)
+│   ├── actions.ts               # evaluateDimension ("use node" — calls Mastra agent)
 │   └── types.ts                 # Zod schemas for evaluation output
 │
 ├── reputation/
@@ -177,7 +177,7 @@ convex/
 │   └── seed.ts                  # Initial rubric + prompt data
 │
 └── lib/
-    ├── openai.ts                # OpenAI client factory + structured output helpers
+    ├── agents.ts                # Mastra agent definitions + structured output helpers
     ├── chain.ts                 # viem client factory for Sepolia, contract ABIs
     └── scoring.ts               # Weight constants, aggregation logic
 ```
@@ -219,7 +219,7 @@ defineTable({
   justification: v.string(),
   recommendation: v.string(),
   keyFindings: v.array(v.string()),
-  modelId: v.string(),        // "gpt-4o" — for reproducibility
+  modelId: v.string(),        // "claude-sonnet-4-20250514" — for reproducibility
   promptVersion: v.string(),  // rubric version used
   evaluatedAt: v.number(),
 }).index("by_proposal", ["proposalId"])
@@ -267,7 +267,7 @@ defineTable({
 
 **What:** Mutations capture intent and schedule actions for side effects. Never call external APIs from mutations.
 
-**When:** Any operation that needs both database writes and external API calls (OpenAI, blockchain).
+**When:** Any operation that needs both database writes and external API calls (Mastra/LLM, blockchain).
 
 **Why:** Mutations are transactional and retryable. Actions have side effects and are not. Keeping them separate ensures the scheduling itself is atomic — if the mutation fails, no action is scheduled.
 
@@ -318,17 +318,17 @@ export const saveDimensionScore = internalMutation({
 
 ### Pattern 3: Node.js Actions for External Libraries
 
-**What:** Use `"use node"` directive for actions that need npm packages not available in Convex's default runtime (OpenAI SDK, viem).
+**What:** Use `"use node"` directive for actions that need npm packages not available in Convex's default runtime (Mastra/AI SDK, viem).
 
-**When:** Calling OpenAI API or interacting with blockchain via viem.
+**When:** Calling Mastra agents or interacting with blockchain via viem.
 
 ```typescript
 // convex/evaluation/actions.ts
 "use node";
 
 import { internalAction } from "../_generated/server";
-import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
+import { Agent } from "@mastra/core/agent";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export const evaluateDimension = internalAction({
   args: { proposalId: v.id("proposals"), dimension: v.string() },
@@ -336,22 +336,23 @@ export const evaluateDimension = internalAction({
     const proposal = await ctx.runQuery(internal.proposals.queries.getById, { id: args.proposalId });
     const prompt = await ctx.runQuery(internal.prompts.queries.getForDimension, { dimension: args.dimension });
 
-    const client = new OpenAI();
-    const response = await client.beta.chat.completions.parse({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: prompt.systemPrompt },
-        { role: "user", content: buildEvaluationPrompt(proposal, prompt.rubric) },
-      ],
-      response_format: zodResponseFormat(EvaluationOutputSchema, "evaluation"),
+    const judgeAgent = new Agent({
+      name: `${args.dimension}-judge`,
+      instructions: prompt.systemPrompt,
+      model: anthropic("claude-sonnet-4-20250514"),
     });
 
-    const result = response.choices[0].message.parsed;
+    const response = await judgeAgent.generate(
+      buildEvaluationPrompt(proposal, prompt.rubric),
+      { output: EvaluationOutputSchema },
+    );
+
+    const result = response.object;
     await ctx.runMutation(internal.evaluation.mutations.saveDimensionScore, {
       proposalId: args.proposalId,
       dimension: args.dimension,
       ...result,
-      modelId: "gpt-4o",
+      modelId: "claude-sonnet-4-20250514",
       promptVersion: prompt.version,
     });
   },
@@ -414,11 +415,11 @@ const proposal = useQuery(api.proposals.getById, { id: proposalId });
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Calling OpenAI from Mutations
+### Anti-Pattern 1: Calling LLM APIs from Mutations
 
-**What:** Using `fetch` or the OpenAI SDK inside a Convex mutation.
+**What:** Using `fetch` or Mastra/AI SDK inside a Convex mutation.
 
-**Why bad:** Mutations must be deterministic and short-lived. OpenAI calls take 3-15 seconds and have side effects. If the mutation retries (which Convex does automatically on conflicts), you pay for duplicate API calls.
+**Why bad:** Mutations must be deterministic and short-lived. LLM calls take 3-15 seconds and have side effects. If the mutation retries (which Convex does automatically on conflicts), you pay for duplicate API calls.
 
 **Instead:** Use the mutation-schedules-action pattern. Mutation writes intent, schedules an action.
 
@@ -442,7 +443,7 @@ const proposal = useQuery(api.proposals.getById, { id: proposalId });
 
 **What:** Evaluating all 4 dimensions in a single action, one after another.
 
-**Why bad:** Total time = sum of all 4 OpenAI calls (12-60 seconds). Also, if the 3rd call fails, you lose the first 2 results.
+**Why bad:** Total time = sum of all 4 LLM calls (12-60 seconds). Also, if the 3rd call fails, you lose the first 2 results.
 
 **Instead:** Schedule 4 independent actions. Each succeeds or fails independently. Use the completion gate pattern to aggregate only when all 4 finish.
 
@@ -450,7 +451,7 @@ const proposal = useQuery(api.proposals.getById, { id: proposalId });
 
 **What:** Publishing to blockchain inside the evaluation action.
 
-**Why bad:** Blockchain transactions can fail independently of evaluations. Coupling them means a failed tx requires re-running the expensive OpenAI calls.
+**Why bad:** Blockchain transactions can fail independently of evaluations. Coupling them means a failed tx requires re-running the expensive LLM calls.
 
 **Instead:** Separate concerns. Evaluation writes scores to Convex. A separate action reads scores and publishes on-chain. If the chain tx fails, retry only the publication.
 
@@ -510,11 +511,11 @@ The `IPEReputationPublisher.sol` is optional for v1. A Convex Node.js action cal
 
 | Concern | At 10 proposals | At 100 proposals | At 1K proposals |
 |---------|-----------------|-------------------|-----------------|
-| OpenAI rate limits | No issue | May hit RPM limits — add retry with backoff in action | Use Convex workpool component for queue management |
+| Anthropic rate limits | No issue | May hit RPM limits — add retry with backoff in action | Use Convex workpool component for queue management |
 | Convex scheduler | No issue (40 scheduled functions) | No issue (400 functions) | Approach 1000/function limit — batch scheduling |
 | On-chain gas | Negligible on Sepolia | Negligible on Sepolia | Consider batching feedback calls or switching to Base Sepolia for lower costs |
 | Real-time subscriptions | Instant | Fast | May need pagination on proposal list queries |
-| Evaluation cost | ~$0.10-0.40/proposal (4x GPT-4o calls) | ~$10-40 | ~$100-400 — consider GPT-4o-mini for non-critical dimensions |
+| Evaluation cost | ~$0.10-0.40/proposal (4x Anthropic calls) | ~$10-40 | ~$100-400 — consider Claude Haiku for non-critical dimensions |
 
 ## Build Order (Dependencies)
 
@@ -529,7 +530,7 @@ Phase 1: Foundation
 
 Phase 2: AI Evaluation Pipeline
   ├── Prompt/rubric storage + seeding
-  ├── evaluateDimension action (OpenAI integration)
+  ├── evaluateDimension action (Mastra agent integration)
   ├── orchestrate mutation (scheduler pattern)
   ├── Completion gate + aggregation
   ├── Evaluation dashboard (frontend)
@@ -564,7 +565,8 @@ Phase 4: Polish
 - [Convex AI Agents](https://docs.convex.dev/agents) — Convex agent framework patterns
 - [ERC-8004 specification](https://eips.ethereum.org/EIPS/eip-8004) — IdentityRegistry, ReputationRegistry interfaces
 - [ERC-8004 contracts repo](https://github.com/erc-8004/erc-8004-contracts) — deployed addresses, ABIs
-- [OpenAI Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs) — zodResponseFormat pattern
+- [Mastra agents documentation](https://mastra.ai/docs/agents/overview) — agent framework and structured output
+- [Vercel AI SDK Structured Output](https://sdk.vercel.ai/docs/ai-sdk-core/generating-structured-data) — generateObject pattern
 - [Viem documentation](https://viem.sh/) — TypeScript Ethereum client
 - [Convex opinionated guidelines](https://gist.github.com/srizvi/966e583693271d874bf65c2a95466339) — domain-driven server structure
 - ARWF reference architecture (`docs/big-reference-architecture/`) — judge pipeline, scoring engine, blockchain service patterns

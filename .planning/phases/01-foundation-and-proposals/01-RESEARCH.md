@@ -68,7 +68,7 @@ The core technical challenge involves: Foundry smart contract development (Ident
 |---------|---------|---------|--------------|
 | next | 15.5.15 | Web framework (App Router) | Project decision. Latest stable 15.x. App Router for RSC + Server Components. [VERIFIED: npm registry] |
 | typescript | 5.7.x | Language | Project specifies strict mode + 5.7+. [VERIFIED: npm registry -- 5.7.3 latest in 5.7 line] |
-| zod | 4.3.6 | Schema validation | Project decision. Client-side form validation + future OpenAI structured output. [VERIFIED: npm registry] |
+| zod | 4.3.6 | Schema validation | Project decision. Client-side form validation + future Mastra/AI SDK structured output. [VERIFIED: npm registry] |
 | tailwindcss | 4.2.2 | Styling | Project decision. v4 with new @theme directive. [VERIFIED: npm registry] |
 | viem | 2.47.x | TypeScript Ethereum client | Type-safe, tree-shakeable. Server-side chain interactions via Next.js API routes. [VERIFIED: npm registry] |
 
@@ -238,7 +238,7 @@ const address = addressSchema.parse(envVar); // Zod refine with isAddress
 | Problem | Don't Build | Use Instead | Why |
 |---------|-------------|-------------|-----|
 | Form UI components | Custom inputs, buttons, cards | shadcn/ui (Input, Textarea, Button, Card, Badge) | Accessible, consistent, Tailwind-native |
-| Form validation | Manual if/else validation | Zod schemas | Type inference, composable, reusable in Phase 2 for OpenAI structured output |
+| Form validation | Manual if/else validation | Zod schemas | Type inference, composable, reusable in Phase 2 for Mastra/AI SDK structured output |
 | Chain interactions | Raw fetch to RPC | viem (createPublicClient, createWalletClient) | Type-safe, handles encoding/decoding |
 | Event decoding | Raw topics/data parsing | viem decodeEventLog | Reliable ABI-based decoding |
 | CSS utility merging | Manual className concatenation | `cn()` from shadcn/ui (clsx + tailwind-merge) | Handles Tailwind class conflicts correctly |
