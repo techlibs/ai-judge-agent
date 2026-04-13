@@ -38,20 +38,32 @@ export default async function ProposalDetailPage({
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          {sanitizeDisplayText(proposal.title)}
-        </h1>
-        <div className="mt-3 flex items-center gap-3">
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-            {proposal.category}
-          </span>
-          <span className="text-sm text-gray-500">
-            {proposal.budgetCurrency}{" "}
-            {proposal.budgetAmount.toLocaleString()}
-          </span>
-          <span className="text-sm text-gray-500">
-            Team size: {proposal.teamSize}
-          </span>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              {sanitizeDisplayText(proposal.title)}
+            </h1>
+            <div className="mt-3 flex items-center gap-3">
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                {proposal.category}
+              </span>
+              <span className="text-sm text-gray-500">
+                {proposal.budgetCurrency}{" "}
+                {proposal.budgetAmount.toLocaleString()}
+              </span>
+              <span className="text-sm text-gray-500">
+                Team size: {proposal.teamSize}
+              </span>
+            </div>
+          </div>
+          {proposal.finalScore !== null && (
+            <Link
+              href={`/grants/${id}/chat`}
+              className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100"
+            >
+              Chat with Assistant
+            </Link>
+          )}
         </div>
       </div>
 
