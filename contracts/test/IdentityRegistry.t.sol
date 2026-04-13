@@ -178,7 +178,8 @@ contract IdentityRegistryTest is Test {
         vm.prank(alice);
         registry.unsetAgentWallet(1);
 
-        assertEq(registry.getAgentWallet(1), address(0));
+        // After unsetting, getAgentWallet falls back to owner
+        assertEq(registry.getAgentWallet(1), alice);
     }
 
     function test_unsetAgentWallet_revertsForNonOwner() public {
