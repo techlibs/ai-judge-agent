@@ -9,7 +9,9 @@ import type { EvaluationContent, ProposalContent } from "@/ipfs/schemas";
 import {
   computeProposalId,
   prepareSubmitScore,
+  scaleScoreToChain,
 } from "@/chain/evaluation-registry";
+import { prepareReleaseMilestone } from "@/chain/milestone-manager";
 import {
   createEvaluationJob,
   updateEvaluationJobStatus,
@@ -51,6 +53,7 @@ interface OrchestrationResult {
   readonly reputationMultiplier: number;
   readonly anomalyFlags: ReadonlyArray<AnomalyFlag>;
   readonly encodedChainData: Hex;
+  readonly encodedFundReleaseData: Hex | null;
 }
 
 export async function orchestrateEvaluation(
@@ -150,6 +153,17 @@ export async function orchestrateEvaluation(
         evaluationContent,
       });
 
+    const chainScore = scaleScoreToChain(adjustedScore);
+    const milestoneIndex = 0;
+    const recipientPlaceholder = "0x0000000000000000000000000000000000000000" as Hex;
+
+    const encodedFundReleaseData = prepareReleaseMilestone(
+      proposalId,
+      milestoneIndex,
+      chainScore,
+      recipientPlaceholder
+    );
+
     await updateEvaluationJobStatus(jobId, "complete");
 
     return {
@@ -161,6 +175,7 @@ export async function orchestrateEvaluation(
       reputationMultiplier,
       anomalyFlags,
       encodedChainData: encodedData,
+      encodedFundReleaseData,
     };
   } catch (error) {
     const errorMessage =

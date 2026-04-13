@@ -45,3 +45,26 @@ dataSources:
         - event: MetadataSet(indexed uint256,indexed string,string,bytes)
           handler: handleMetadataSet
       file: ./src/mappings.ts
+  - kind: ethereum
+    name: MilestoneManager
+    network: base-sepolia
+    source:
+      abi: MilestoneManager
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - FundRelease
+      abis:
+        - name: MilestoneManager
+          file: ../out/MilestoneManager.sol/MilestoneManager.json
+      eventHandlers:
+        - event: FundReleased(indexed bytes32,uint8,uint256,uint16)
+          handler: handleFundReleased
+        - event: FundsForwarded(indexed bytes32,uint256,address)
+          handler: handleFundsForwarded
+        - event: BonusDistributed(indexed bytes32,uint256,uint16)
+          handler: handleBonusDistributed
+      file: ./src/mappings.ts

@@ -162,6 +162,42 @@ export default async function ProposalDetailPage({
             ))}
           </div>
         )}
+        {proposal.fundRelease && (
+          <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Fund Release
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm text-gray-600">Release Percentage</span>
+                <p className="text-lg font-semibold text-gray-900">
+                  {proposal.fundRelease.releasePercentage.toFixed(1)}%
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Amount (Wei)</span>
+                <p className="text-lg font-semibold text-gray-900">
+                  {proposal.fundRelease.amount}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Transaction</span>
+                <a
+                  href={`${chainExplorerBase}/tx/${proposal.fundRelease.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {proposal.fundRelease.txHash.slice(0, 16)}...
+                </a>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Status</span>
+                <p className="text-sm font-medium text-green-600">Confirmed</p>
+              </div>
+            </div>
+          </div>
+        )}
       </ChainErrorBoundary>
 
       <div className="rounded-lg border border-gray-200 bg-white p-6">

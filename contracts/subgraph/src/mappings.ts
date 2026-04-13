@@ -7,7 +7,12 @@ import {
   URIUpdated as URIUpdatedEvent,
   MetadataSet as MetadataSetEvent,
 } from "../../generated/IdentityRegistry/IdentityRegistry";
-import { Evaluation, Agent, AgentMetadata } from "../../generated/schema";
+import {
+  FundReleased as FundReleasedEvent,
+  FundsForwarded as FundsForwardedEvent,
+  BonusDistributed as BonusDistributedEvent,
+} from "../../generated/MilestoneManager/MilestoneManager";
+import { Evaluation, Agent, AgentMetadata, FundRelease } from "../../generated/schema";
 
 export function handleEvaluationSubmitted(
   event: EvaluationSubmittedEvent
@@ -70,4 +75,32 @@ export function handleMetadataSet(event: MetadataSetEvent): void {
   metadata.updatedAt = event.block.timestamp;
 
   metadata.save();
+}
+
+export function handleFundReleased(event: FundReleasedEvent): void {
+  const id = event.params.projectId.concat(
+    Bytes.fromI32(event.params.milestoneIndex)
+  );
+  let release = new FundRelease(id);
+
+  release.projectId = event.params.projectId;
+  release.milestoneIndex = event.params.milestoneIndex;
+  release.amount = event.params.amount;
+  release.releasePercentage = event.params.releasePercentage;
+  release.timestamp = event.block.timestamp;
+
+  let evaluation = Evaluation.load(event.params.projectId);
+  if (evaluation != null) {
+    release.evaluation = evaluation.id;
+  }
+
+  release.save();
+}
+
+export function handleFundsForwarded(event: FundsForwardedEvent): void {
+  // Logged for indexing — no separate entity needed
+}
+
+export function handleBonusDistributed(event: BonusDistributedEvent): void {
+  // Logged for indexing — no separate entity needed
 }

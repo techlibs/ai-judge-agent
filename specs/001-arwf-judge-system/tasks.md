@@ -129,13 +129,13 @@
 
 **Independent Test**: After a proposal scores above threshold, verify MilestoneManager releases correct fund percentage on-chain, unreleased funds appear in MatchingPool, and cache reflects the release
 
-- [ ] T045 [P] [US3] Implement MilestoneManager Solidity contract in contracts/src/MilestoneManager.sol (inherit AccessControl + Pausable + ReentrancyGuard, define RELEASE_MANAGER_ROLE, apply onlyRole(RELEASE_MANAGER_ROLE) whenNotPaused nonReentrant to releaseMilestone(), projectId, milestones, releasePercentage = score/10, FundReleased event, FundsForwarded event, BonusDistributed event per data-model.md). Include withdrawUnreleasedFunds and emergencyWithdraw functions (onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant, callable when paused). Use gas cap of 10000 on .call{value:} invocations. Use custom errors instead of require strings. Monitor contract size with `forge build --sizes`.
-- [ ] T046 [P] [US3] Write Foundry tests for MilestoneManager in contracts/test/MilestoneManager.t.sol (include access control tests, ReentrancyGuard tests with reentrancy attack contract, fund recovery function tests, gas cap verification, paused state tests)
-- [ ] T047 [US3] Add Graph subgraph entities and mappings for FundRelease, FundsForwarded, BonusDistributed in contracts/subgraph/
-- [ ] T048 [US3] Implement MilestoneManager chain interaction in src/chain/milestone-manager.ts (submitScore triggers fund release, forward to MatchingPool, bonus distribution)
-- [ ] T049 [US3] Integrate fund release into evaluation orchestrator in src/evaluation/orchestrate.ts (after chain score submission, trigger MilestoneManager)
-- [ ] T050 [US3] Add fund release data to cache sync in src/cache/sync.ts (process FundReleased events, populate fund_releases table)
-- [ ] T051 [US3] Add fund release section to proposal detail page in src/app/grants/[id]/page.tsx (release percentage, amount, tx hash, status)
+- [X] T045 [P] [US3] Implement MilestoneManager Solidity contract in contracts/src/MilestoneManager.sol (inherit AccessControl + Pausable + ReentrancyGuard, define RELEASE_MANAGER_ROLE, apply onlyRole(RELEASE_MANAGER_ROLE) whenNotPaused nonReentrant to releaseMilestone(), projectId, milestones, releasePercentage = score/10, FundReleased event, FundsForwarded event, BonusDistributed event per data-model.md). Include withdrawUnreleasedFunds and emergencyWithdraw functions (onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant, callable when paused). Use gas cap of 10000 on .call{value:} invocations. Use custom errors instead of require strings. Monitor contract size with `forge build --sizes`.
+- [X] T046 [P] [US3] Write Foundry tests for MilestoneManager in contracts/test/MilestoneManager.t.sol (include access control tests, ReentrancyGuard tests with reentrancy attack contract, fund recovery function tests, gas cap verification, paused state tests)
+- [X] T047 [US3] Add Graph subgraph entities and mappings for FundRelease, FundsForwarded, BonusDistributed in contracts/subgraph/
+- [X] T048 [US3] Implement MilestoneManager chain interaction in src/chain/milestone-manager.ts (submitScore triggers fund release, forward to MatchingPool, bonus distribution)
+- [X] T049 [US3] Integrate fund release into evaluation orchestrator in src/evaluation/orchestrate.ts (after chain score submission, trigger MilestoneManager)
+- [X] T050 [US3] Add fund release data to cache sync in src/cache/sync.ts (process FundReleased events, populate fund_releases table)
+- [X] T051 [US3] Add fund release section to proposal detail page in src/app/grants/[id]/page.tsx (release percentage, amount, tx hash, status)
 
 **Checkpoint**: Score submission triggers proportional fund release on-chain, visible on dashboard with tx confirmation
 

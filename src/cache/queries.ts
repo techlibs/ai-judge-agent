@@ -4,6 +4,7 @@ import {
   evaluationJobs,
   proposals,
   dimensionScores,
+  fundReleases,
   fundingRoundStats,
 } from "./schema";
 
@@ -168,7 +169,7 @@ export async function listProposals(params: ListProposalsParams) {
 export async function getProposalById(proposalId: string) {
   const db = getDb();
 
-  const [proposalResults, dimensionResults] = await Promise.all([
+  const [proposalResults, dimensionResults, fundReleaseResults] = await Promise.all([
     db
       .select()
       .from(proposals)
@@ -178,6 +179,11 @@ export async function getProposalById(proposalId: string) {
       .select()
       .from(dimensionScores)
       .where(eq(dimensionScores.proposalId, proposalId)),
+    db
+      .select()
+      .from(fundReleases)
+      .where(eq(fundReleases.projectId, proposalId))
+      .limit(1),
   ]);
 
   const proposal = proposalResults[0];
@@ -188,6 +194,7 @@ export async function getProposalById(proposalId: string) {
   return {
     ...proposal,
     dimensions: dimensionResults,
+    fundRelease: fundReleaseResults[0] ?? null,
   };
 }
 
