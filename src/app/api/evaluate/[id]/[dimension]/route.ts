@@ -65,6 +65,57 @@ export async function GET(
   }
   const dim = dimension as JudgeDimension;
 
+  // E2E test mock — return canned judge evaluation without calling LLM
+  if (process.env.E2E_MOCK_JUDGES === "true") {
+    const db = getDb();
+    const proposal = await db.query.proposals.findFirst({
+      where: eq(proposals.id, id),
+    });
+    if (!proposal) {
+      return new Response("Proposal not found", { status: 404 });
+    }
+
+    const mockScores: Record<string, number> = {
+      tech: 8000, impact: 7500, cost: 6000, team: 8500,
+    };
+    const mockOutput = {
+      score: mockScores[dim] ?? 7500,
+      confidence: "high" as const,
+      recommendation: "fund" as const,
+      justification: `Mock ${dim} evaluation for E2E testing. Strong proposal with clear objectives.`,
+      keyFindings: [`${dim} approach is well-structured`, `Clear implementation plan`],
+      risks: [`Standard ${dim} risks apply`],
+      ipeAlignment: { proTechnology: 80, proFreedom: 75, proHumanProgress: 85 },
+    };
+
+    const evalId = crypto.randomUUID();
+    await db.insert(evaluations).values({
+      id: evalId,
+      proposalId: id,
+      dimension: dim,
+      score: mockOutput.score,
+      scoreDecimals: 2,
+      confidence: mockOutput.confidence,
+      recommendation: mockOutput.recommendation,
+      justification: mockOutput.justification,
+      keyFindings: mockOutput.keyFindings,
+      risks: mockOutput.risks,
+      ipeAlignmentTech: mockOutput.ipeAlignment.proTechnology,
+      ipeAlignmentFreedom: mockOutput.ipeAlignment.proFreedom,
+      ipeAlignmentProgress: mockOutput.ipeAlignment.proHumanProgress,
+      status: "complete",
+      model: "mock-e2e",
+      promptVersion: `judge-${dim}-v1`,
+      startedAt: new Date(),
+      completedAt: new Date(),
+    });
+
+    return new Response(JSON.stringify(mockOutput), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
   const { success } = await evaluationTriggerLimiter.limit(ip);
   if (!success) {

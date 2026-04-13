@@ -40,5 +40,9 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    env: {
+      ...process.env as Record<string, string>,
+      E2E_MOCK_JUDGES: "true",
+    },
   },
 });
