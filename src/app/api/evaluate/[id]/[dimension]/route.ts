@@ -7,6 +7,7 @@ import { uploadJson } from "@/lib/ipfs/client";
 import { eq, and } from "drizzle-orm";
 import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
 import { evaluationTriggerLimiter } from "@/lib/rate-limit";
+import { runQualityScorers } from "@/lib/evaluation/scorers";
 
 export const maxDuration = 120;
 
@@ -104,6 +105,18 @@ export async function GET(
   try {
     const { output, attempts } = await runJudgeWithRetry(dim, proposalContext);
 
+    // Run meta-evaluation quality scorers (non-blocking)
+    let qualityScores: Awaited<ReturnType<typeof runQualityScorers>> | undefined;
+    try {
+      qualityScores = await runQualityScorers({
+        proposalContext,
+        justification: output.justification,
+        promptText: promptText,
+      });
+    } catch {
+      console.warn(`Quality scoring failed for ${dim}/${id}`);
+    }
+
     // Build IPFS payload including prompt transparency metadata (EVAL-08)
     const evaluatedAt = new Date().toISOString();
     const ipfsPayload = {
@@ -115,6 +128,7 @@ export async function GET(
       model: "claude-sonnet-4-20250514",
       promptVersion: `judge-${dim}-v1`,
       evaluatedAt,
+      qualityScores: qualityScores ?? null,
       promptTransparency: {
         systemPrompt: promptText,
         userMessage: proposalContext,
@@ -152,6 +166,12 @@ export async function GET(
         status: "complete",
         ipfsCid: ipfsResult.cid,
         completedAt: new Date(),
+        qualityFlag: qualityScores?.qualityFlag ?? false,
+        qualityScores: qualityScores ? {
+          faithfulness: qualityScores.faithfulness,
+          hallucination: qualityScores.hallucination,
+          promptAlignment: qualityScores.promptAlignment,
+        } : null,
       })
       .where(eq(evaluations.id, evalId));
 

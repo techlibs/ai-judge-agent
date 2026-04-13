@@ -56,6 +56,12 @@ export const evaluations = sqliteTable("evaluations", {
   promptVersion: text("prompt_version"),
   startedAt: integer("started_at", { mode: "timestamp" }),
   completedAt: integer("completed_at", { mode: "timestamp" }),
+  qualityFlag: integer("quality_flag", { mode: "boolean" }).default(false),
+  qualityScores: text("quality_scores", { mode: "json" }).$type<{
+    faithfulness: number;
+    hallucination: number;
+    promptAlignment: number;
+  }>(),
 });
 
 export const aggregateScores = sqliteTable("aggregate_scores", {
