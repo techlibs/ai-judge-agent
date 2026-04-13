@@ -21,8 +21,33 @@ env:
   GAR_REPO: agent-reviewer
 
 jobs:
-  deploy-gsd:
+  test-gsd:
     if: ${{ inputs.worktree == 'all' || inputs.worktree == 'gsd' }}
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/full-vision-roadmap
+      test-command: bun test
+      solidity-tests: true
+
+  test-speckit:
+    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'speckit' }}
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/speckit
+      test-command: bun run test
+      solidity-tests: true
+
+  test-superpower:
+    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'superpower' }}
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/superpower
+      test-command: bun test
+      solidity-tests: true
+
+  deploy-gsd:
+    needs: [test-gsd]
+    if: ${{ always() && (inputs.worktree == 'all' || inputs.worktree == 'gsd') && (!needs.test-gsd.result || needs.test-gsd.result == 'success') }}
     name: Deploy GSD (full-vision-roadmap)
     runs-on: ubuntu-latest
     permissions:
@@ -75,7 +100,8 @@ jobs:
             --format="value(status.url)"
 
   deploy-speckit:
-    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'speckit' }}
+    needs: [test-speckit]
+    if: ${{ always() && (inputs.worktree == 'all' || inputs.worktree == 'speckit') && (!needs.test-speckit.result || needs.test-speckit.result == 'success') }}
     name: Deploy Speckit
     runs-on: ubuntu-latest
     permissions:
@@ -128,7 +154,8 @@ jobs:
             --format="value(status.url)"
 
   deploy-superpower:
-    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'superpower' }}
+    needs: [test-superpower]
+    if: ${{ always() && (inputs.worktree == 'all' || inputs.worktree == 'superpower') && (!needs.test-superpower.result || needs.test-superpower.result == 'success') }}
     name: Deploy Superpower
     runs-on: ubuntu-latest
     permissions:

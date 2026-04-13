@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-gsd:
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/full-vision-roadmap
+      test-command: bun test
+      solidity-tests: true
+
+  test-speckit:
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/speckit
+      test-command: bun run test
+      solidity-tests: true
+
+  test-superpower:
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/superpower
+      test-command: bun test
+      solidity-tests: true

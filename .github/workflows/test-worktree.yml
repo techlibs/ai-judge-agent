@@ -1,0 +1,43 @@
+name: Test Worktree
+
+on:
+  workflow_call:
+    inputs:
+      worktree-path:
+        required: true
+        type: string
+      test-command:
+        required: true
+        type: string
+      solidity-tests:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    name: Test (${{ inputs.worktree-path }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: cd ${{ inputs.worktree-path }} && bun install --frozen-lockfile
+
+      - name: TypeScript check
+        run: cd ${{ inputs.worktree-path }} && bun run typecheck
+
+      - name: Run tests
+        run: cd ${{ inputs.worktree-path }} && ${{ inputs.test-command }}
+
+      - name: Setup Foundry
+        if: inputs.solidity-tests
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run Solidity tests
+        if: inputs.solidity-tests
+        run: cd ${{ inputs.worktree-path }}/contracts && forge test -vvv
