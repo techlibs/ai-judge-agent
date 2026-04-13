@@ -48,3 +48,13 @@ export const proposalSchema = z.object({
 });
 
 export type ProposalInput = z.infer<typeof proposalSchema>;
+
+export const submitErrorResponseSchema = z.object({
+  error: z.string(),
+});
+
+export const submitSuccessResponseSchema = z.object({
+  tokenId: z.string(),
+  ipfsCID: z.string(),
+  txHash: z.string(),
+});

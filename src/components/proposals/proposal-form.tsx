@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { proposalSchema } from "@/lib/schemas/proposal";
+import {
+  proposalSchema,
+  submitErrorResponseSchema,
+  submitSuccessResponseSchema,
+} from "@/lib/schemas/proposal";
 import { FIELD_LIMITS } from "@/lib/constants/proposal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,13 +85,9 @@ export function ProposalForm() {
 
       if (!response.ok) {
         const errorData: unknown = await response.json();
-        if (
-          errorData &&
-          typeof errorData === "object" &&
-          "error" in errorData
-        ) {
-          const typed = errorData as { error: string };
-          setFormError(typed.error);
+        const errorParsed = submitErrorResponseSchema.safeParse(errorData);
+        if (errorParsed.success) {
+          setFormError(errorParsed.data.error);
         } else {
           setFormError(
             "Failed to submit proposal. Check your connection and try again."
@@ -97,9 +97,9 @@ export function ProposalForm() {
       }
 
       const result: unknown = await response.json();
-      if (result && typeof result === "object" && "tokenId" in result) {
-        const typed = result as { tokenId: string };
-        router.push(`/proposals/${typed.tokenId}`);
+      const successParsed = submitSuccessResponseSchema.safeParse(result);
+      if (successParsed.success) {
+        router.push(`/proposals/${successParsed.data.tokenId}`);
       }
     } catch {
       setFormError(
