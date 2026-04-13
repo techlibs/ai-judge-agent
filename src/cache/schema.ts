@@ -121,6 +121,25 @@ export const platformIntegrations = sqliteTable("platform_integrations", {
   createdAt: text("created_at").notNull(),
 });
 
+export const marketResearch = sqliteTable("market_research", {
+  id: text("id").primaryKey(),
+  proposalId: text("proposal_id")
+    .notNull()
+    .references(() => proposals.id),
+  domainHash: text("domain_hash").notNull(),
+  gapType: text("gap_type").notNull(),
+  competitorCount: integer("competitor_count").notNull().default(0),
+  marketMaturity: text("market_maturity").notNull(),
+  rawResponse: text("raw_response").notNull(),
+  ipfsCid: text("ipfs_cid"),
+  researchedAt: text("researched_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+}, (table) => [
+  index("idx_market_research_domain").on(table.domainHash),
+  index("idx_market_research_expires").on(table.expiresAt),
+  index("idx_market_research_proposal").on(table.proposalId),
+]);
+
 export const evaluationJobs = sqliteTable("evaluation_jobs", {
   id: text("id").primaryKey(),
   proposalId: text("proposal_id").notNull(),

@@ -1,4 +1,5 @@
 import type { ScoringDimension } from "../schemas";
+import type { MarketContext } from "@/lib/colosseum/schemas";
 
 const SHARED_PREAMBLE = `You are an AI Judge Agent for the ARWF (Adaptive Reputation-Weighted Funding) system. You evaluate grant proposals on a specific dimension using a structured rubric.
 
@@ -171,5 +172,47 @@ export const DIMENSION_CONFIGS: Record<ScoringDimension, DimensionConfig> = {
 
 export const PROMPT_VERSION = "v1.0.0";
 export const MODEL_ID = "gpt-5.4";
+
+const MARKET_CONTEXT_INSTRUCTIONS: Record<ScoringDimension, string> = {
+  technical_feasibility: `Focus on: similar builds and their technical outcomes, tech stacks used by competitors, known failure modes in this space.`,
+  impact_potential: `Focus on: gap classification (full/partial/false), total addressable market, market maturity, how many competitors exist.`,
+  cost_efficiency: `Focus on: competitor pricing models, typical budget ranges in this space, cost structures of similar projects.`,
+  team_capability: `Focus on: founder-market fit signals, ideal team composition patterns for this domain, what successful teams in this space look like.`,
+};
+
+export function buildMarketContextBlock(
+  dimension: ScoringDimension,
+  context: MarketContext
+): string {
+  const dimensionGuidance = MARKET_CONTEXT_INSTRUCTIONS[dimension];
+
+  const projectList = context.similarProjects
+    .map(
+      (p) =>
+        `- ${p.name} (${p.status}, ${p.relevance}): ${p.description}`
+    )
+    .join("\n");
+
+  return `
+
+## Market Context (from Colosseum Copilot — informational only, does not dictate scores)
+
+Gap Classification: ${context.gapClassification.type.toUpperCase()} — ${context.gapClassification.rationale}
+${context.gapClassification.uncoveredSegment ? `Uncovered Segment: ${context.gapClassification.uncoveredSegment}` : ""}
+Competitor Count: ${context.competitorCount}
+Market Maturity: ${context.marketMaturity}
+${context.estimatedTAM ? `Estimated TAM: ${context.estimatedTAM}` : ""}
+
+Similar Projects:
+${projectList || "No similar projects found."}
+
+Key Insights:
+${context.keyInsights.map((i) => `- ${i}`).join("\n") || "None available."}
+
+DIMENSION-SPECIFIC GUIDANCE:
+${dimensionGuidance}
+
+IMPORTANT: This market data is supplementary context. Use it to ground your evaluation in market reality, but score based on the proposal's own merits. Market data informs — it does not dictate.`;
+}
 
 export type { DimensionConfig };

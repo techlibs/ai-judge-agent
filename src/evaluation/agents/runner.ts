@@ -1,7 +1,8 @@
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { DimensionScoreSchema, type SanitizedProposal, type DimensionScore, type ScoringDimension, SCORING_DIMENSIONS } from "../schemas";
-import { DIMENSION_CONFIGS, MODEL_ID, PROMPT_VERSION } from "./prompts";
+import { DIMENSION_CONFIGS, MODEL_ID, PROMPT_VERSION, buildMarketContextBlock } from "./prompts";
+import type { MarketContext } from "@/lib/colosseum/schemas";
 
 export const maxDuration = 60;
 
@@ -28,11 +29,16 @@ class ConcurrentEvaluationLimitError extends Error {
 
 async function evaluateDimension(
   proposal: SanitizedProposal,
-  dimension: ScoringDimension
+  dimension: ScoringDimension,
+  marketContext: MarketContext | null = null
 ): Promise<DimensionScore> {
   const config = DIMENSION_CONFIGS[dimension];
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AGENT_TIMEOUT_MS);
+
+  const marketBlock = marketContext
+    ? buildMarketContextBlock(dimension, marketContext)
+    : "";
 
   try {
     const result = await generateObject({
@@ -43,7 +49,7 @@ async function evaluateDimension(
 
 PROPOSAL DATA:
 ${JSON.stringify(proposal, null, 2)}
-
+${marketBlock}
 Produce a structured evaluation with:
 - dimension: "${config.dimension}"
 - score: 0-10
@@ -71,7 +77,8 @@ interface EvaluationResult {
 }
 
 async function runAllDimensions(
-  proposal: SanitizedProposal
+  proposal: SanitizedProposal,
+  marketContext: MarketContext | null = null
 ): Promise<EvaluationResult> {
   if (activeEvaluationCount >= MAX_CONCURRENT_EVALUATIONS) {
     throw new ConcurrentEvaluationLimitError();
@@ -81,7 +88,7 @@ async function runAllDimensions(
 
   try {
     const dimensionPromises = SCORING_DIMENSIONS.map((dimension) =>
-      evaluateDimension(proposal, dimension)
+      evaluateDimension(proposal, dimension, marketContext)
     );
 
     const scores = await Promise.all(dimensionPromises);

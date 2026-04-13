@@ -318,6 +318,8 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 ## Active Technologies
 - TypeScript 5.7+ (strict mode) + Playwright (e2e), Next.js 15 App Router, Zod, drizzle-orm (002-security-audit-tests)
 - SQLite via Turso (local `file:./test.db` in test env) (002-security-audit-tests)
+- TypeScript 5.8+ (strict mode) + Next.js 15 (App Router, Server Actions), React 19 (useActionState), Zod 3.x, Tailwind CSS (003-proposal-submission-form)
+- SQLite via drizzle-orm (existing cache DB) (003-proposal-submission-form)
 
 ## Recent Changes
 - 002-security-audit-tests: Added TypeScript 5.7+ (strict mode) + Playwright (e2e), Next.js 15 App Router, Zod, drizzle-orm

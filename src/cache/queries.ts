@@ -7,6 +7,7 @@ import {
   fundReleases,
   fundingRoundStats,
   disputes,
+  marketResearch,
 } from "./schema";
 
 const MAX_RETRY_COUNT = 3;
@@ -204,12 +205,163 @@ export async function getProposalById(proposalId: string) {
   };
 }
 
+interface SaveEvaluationParams {
+  readonly proposalId: string;
+  readonly externalId: string;
+  readonly platformSource: string;
+  readonly fundingRoundId: string;
+  readonly title: string;
+  readonly description: string;
+  readonly budgetAmount: number;
+  readonly budgetCurrency: string;
+  readonly technicalDescription: string;
+  readonly teamProfileHash: string;
+  readonly teamSize: number;
+  readonly category: string;
+  readonly submittedAt: string;
+  readonly proposalContentCid: string;
+  readonly evaluationContentCid: string;
+  readonly finalScore: number;
+  readonly adjustedScore: number;
+  readonly reputationMultiplier: number;
+  readonly dimensions: ReadonlyArray<{
+    readonly dimension: string;
+    readonly weight: number;
+    readonly score: number;
+    readonly reasoningChain: string;
+    readonly inputDataConsidered: ReadonlyArray<string>;
+    readonly rubricApplied: { readonly criteria: ReadonlyArray<string> };
+    readonly modelId: string;
+    readonly promptVersion: string;
+  }>;
+}
+
+export async function saveEvaluationToCache(
+  params: SaveEvaluationParams
+): Promise<void> {
+  const db = getDb();
+  const now = new Date().toISOString();
+
+  await db
+    .insert(proposals)
+    .values({
+      id: params.proposalId,
+      externalId: params.externalId,
+      platformSource: params.platformSource,
+      fundingRoundId: params.fundingRoundId,
+      title: params.title,
+      description: params.description,
+      budgetAmount: params.budgetAmount,
+      budgetCurrency: params.budgetCurrency,
+      technicalDescription: params.technicalDescription,
+      teamProfileHash: params.teamProfileHash,
+      teamSize: params.teamSize,
+      category: params.category,
+      submittedAt: params.submittedAt,
+      proposalContentCid: params.proposalContentCid,
+      evaluationContentCid: params.evaluationContentCid,
+      finalScore: params.finalScore,
+      adjustedScore: params.adjustedScore,
+      reputationMultiplier: params.reputationMultiplier,
+      status: "evaluated",
+      evaluatedAt: now,
+      chainTimestamp: Math.floor(Date.now() / 1000),
+    })
+    .onConflictDoNothing();
+
+  for (const dim of params.dimensions) {
+    await db
+      .insert(dimensionScores)
+      .values({
+        id: `${params.proposalId}-${dim.dimension}`,
+        proposalId: params.proposalId,
+        dimension: dim.dimension,
+        weight: dim.weight,
+        score: dim.score,
+        reasoningChain: dim.reasoningChain,
+        inputDataConsidered: JSON.stringify(dim.inputDataConsidered),
+        rubricApplied: JSON.stringify(dim.rubricApplied),
+        modelId: dim.modelId,
+        promptVersion: dim.promptVersion,
+      })
+      .onConflictDoNothing();
+  }
+}
+
 export async function getFundingRoundStats(fundingRoundId: string) {
   const db = getDb();
   const results = await db
     .select()
     .from(fundingRoundStats)
     .where(eq(fundingRoundStats.fundingRoundId, fundingRoundId))
+    .limit(1);
+
+  return results[0] ?? null;
+}
+
+const RESEARCH_TTL_HOURS = 24;
+
+interface SaveMarketResearchParams {
+  readonly id: string;
+  readonly proposalId: string;
+  readonly domainHash: string;
+  readonly gapType: string;
+  readonly competitorCount: number;
+  readonly marketMaturity: string;
+  readonly rawResponse: string;
+  readonly ipfsCid: string | null;
+}
+
+export async function saveMarketResearch(
+  params: SaveMarketResearchParams
+): Promise<void> {
+  const db = getDb();
+  const now = new Date();
+  const expiresAt = new Date(
+    now.getTime() + RESEARCH_TTL_HOURS * 60 * 60 * 1000
+  );
+
+  await db
+    .insert(marketResearch)
+    .values({
+      id: params.id,
+      proposalId: params.proposalId,
+      domainHash: params.domainHash,
+      gapType: params.gapType,
+      competitorCount: params.competitorCount,
+      marketMaturity: params.marketMaturity,
+      rawResponse: params.rawResponse,
+      ipfsCid: params.ipfsCid,
+      researchedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    })
+    .onConflictDoNothing();
+}
+
+export async function getMarketResearchByProposalId(proposalId: string) {
+  const db = getDb();
+  const results = await db
+    .select()
+    .from(marketResearch)
+    .where(eq(marketResearch.proposalId, proposalId))
+    .limit(1);
+
+  return results[0] ?? null;
+}
+
+export async function getCachedResearchByDomain(domainHash: string) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const results = await db
+    .select()
+    .from(marketResearch)
+    .where(
+      and(
+        eq(marketResearch.domainHash, domainHash),
+        sql`${marketResearch.expiresAt} > ${now}`
+      )
+    )
+    .orderBy(desc(marketResearch.researchedAt))
     .limit(1);
 
   return results[0] ?? null;

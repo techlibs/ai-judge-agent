@@ -1,7 +1,7 @@
 import { type Hex, keccak256, toHex } from "viem";
 import { sanitizeProposal } from "./sanitization";
 import { runAllDimensions } from "./agents/runner";
-import { computeWeightedScore } from "./scoring";
+import { computeWeightedScore, computeMarketCoherenceScore } from "./scoring";
 import { detectAnomalies } from "./anomaly";
 import { pinJsonToIpfs } from "@/ipfs/pin";
 import { ProposalContentSchema } from "@/ipfs/schemas";
@@ -18,10 +18,14 @@ import {
   updateEvaluationJobStatus,
   findExistingEvaluationJob,
   getProposalById,
+  saveEvaluationToCache,
 } from "@/cache/queries";
 import { DIMENSION_WEIGHTS, type ScoringDimension } from "./schemas";
 import { PROMPT_VERSION, MODEL_ID } from "./agents/prompts";
 import type { AnomalyFlag } from "./anomaly";
+import { performMarketResearch } from "./agents/market-intelligence";
+import type { MarketContext } from "@/lib/colosseum/schemas";
+import type { ColosseumResponse } from "@/lib/colosseum/schemas";
 
 interface RawProposalInput {
   readonly externalId: string;
@@ -45,6 +49,17 @@ interface RawProposalInput {
   readonly platformSource: string;
 }
 
+interface OrchestrationOptions {
+  readonly skipResearch?: boolean;
+}
+
+interface MarketResearchResult {
+  readonly marketContext: MarketContext | null;
+  readonly rawResponse: ColosseumResponse | null;
+  readonly researchFailureReason: string | null;
+  readonly marketCoherenceScore: number | null;
+}
+
 interface OrchestrationResult {
   readonly proposalId: Hex;
   readonly proposalContentCid: string;
@@ -55,10 +70,12 @@ interface OrchestrationResult {
   readonly anomalyFlags: ReadonlyArray<AnomalyFlag>;
   readonly encodedChainData: Hex;
   readonly encodedFundReleaseData: Hex | null;
+  readonly marketResearch: MarketResearchResult;
 }
 
 export async function orchestrateEvaluation(
-  rawProposal: RawProposalInput
+  rawProposal: RawProposalInput,
+  options: OrchestrationOptions = {}
 ): Promise<OrchestrationResult> {
   const proposalId = computeProposalId(
     rawProposal.platformSource,
@@ -110,14 +127,33 @@ export async function orchestrateEvaluation(
       proposalContent
     );
 
-    const evaluationResult = await runAllDimensions(sanitizedProposal);
+    // Step: Market research (before judges)
+    let marketContext: MarketContext | null = null;
+    let rawResearchResponse: ColosseumResponse | null = null;
+    let researchFailureReason: string | null = null;
+
+    if (!options.skipResearch) {
+      const researchOutcome = await performMarketResearch(sanitizedProposal);
+      if (researchOutcome.status === "success") {
+        marketContext = researchOutcome.marketContext;
+        rawResearchResponse = researchOutcome.rawResponse;
+      } else {
+        researchFailureReason = researchOutcome.reason;
+      }
+    }
+
+    const evaluationResult = await runAllDimensions(sanitizedProposal, marketContext);
 
     // Look up reputation from on-chain ReputationRegistry (agent 0 as default judge)
     const reputationIndex = await lookupReputationIndex(0n);
     const { finalScore, reputationMultiplier, adjustedScore } =
       computeWeightedScore(evaluationResult.scores, reputationIndex);
 
-    const anomalyFlags = detectAnomalies(evaluationResult.scores);
+    const anomalyFlags = detectAnomalies(evaluationResult.scores, marketContext);
+
+    const marketCoherenceScore = marketContext
+      ? computeMarketCoherenceScore(evaluationResult.scores, marketContext)
+      : null;
 
     const evaluationContent: EvaluationContent = {
       version: 1,
@@ -168,6 +204,37 @@ export async function orchestrateEvaluation(
 
     await updateEvaluationJobStatus(jobId, "complete");
 
+    await saveEvaluationToCache({
+      proposalId,
+      externalId: rawProposal.externalId,
+      platformSource: rawProposal.platformSource,
+      fundingRoundId: rawProposal.fundingRoundId,
+      title: sanitizedProposal.title,
+      description: sanitizedProposal.description,
+      budgetAmount: sanitizedProposal.budgetAmount,
+      budgetCurrency: rawProposal.budgetCurrency,
+      technicalDescription: sanitizedProposal.technicalDescription,
+      teamProfileHash: sanitizedProposal.teamProfileHash,
+      teamSize: sanitizedProposal.teamSize,
+      category: sanitizedProposal.category,
+      submittedAt: rawProposal.submittedAt,
+      proposalContentCid,
+      evaluationContentCid,
+      finalScore,
+      adjustedScore,
+      reputationMultiplier,
+      dimensions: evaluationResult.scores.map((score) => ({
+        dimension: score.dimension,
+        weight: DIMENSION_WEIGHTS[score.dimension as ScoringDimension],
+        score: score.score,
+        reasoningChain: score.reasoningChain,
+        inputDataConsidered: [...score.inputDataConsidered],
+        rubricApplied: { criteria: [...score.rubricApplied.criteria] },
+        modelId: MODEL_ID,
+        promptVersion: PROMPT_VERSION,
+      })),
+    });
+
     return {
       proposalId,
       proposalContentCid,
@@ -178,6 +245,12 @@ export async function orchestrateEvaluation(
       anomalyFlags,
       encodedChainData: encodedData,
       encodedFundReleaseData,
+      marketResearch: {
+        marketContext,
+        rawResponse: rawResearchResponse,
+        researchFailureReason,
+        marketCoherenceScore,
+      },
     };
   } catch (error) {
     const errorMessage =
@@ -202,3 +275,4 @@ class AlreadyPublishedError extends Error {
 }
 
 export { DuplicateEvaluationError, AlreadyPublishedError };
+export type { OrchestrationResult, OrchestrationOptions, MarketResearchResult };
