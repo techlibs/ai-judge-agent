@@ -12,14 +12,14 @@ export const getProposalData = createTool({
   inputSchema: z.object({
     proposalId: z.string().describe("The unique ID of the proposal to retrieve"),
   }),
-  execute: async ({ context }) => {
+  execute: async (inputData) => {
     const db = getDb();
     const proposal = await db.query.proposals.findFirst({
-      where: eq(proposals.id, context.proposalId),
+      where: eq(proposals.id, inputData.proposalId),
     });
 
     if (!proposal) {
-      return { found: false, message: `No proposal found with ID ${context.proposalId}` };
+      return { found: false, message: `No proposal found with ID ${inputData.proposalId}` };
     }
 
     return {
@@ -53,20 +53,20 @@ export const getEvaluationScores = createTool({
   inputSchema: z.object({
     proposalId: z.string().describe("The unique ID of the proposal to get evaluations for"),
   }),
-  execute: async ({ context }) => {
+  execute: async (inputData) => {
     const db = getDb();
     const evals = await db.query.evaluations.findMany({
-      where: eq(evaluations.proposalId, context.proposalId),
+      where: eq(evaluations.proposalId, inputData.proposalId),
     });
 
     const aggregate = await db.query.aggregateScores.findFirst({
-      where: eq(aggregateScores.proposalId, context.proposalId),
+      where: eq(aggregateScores.proposalId, inputData.proposalId),
     });
 
     if (evals.length === 0) {
       return {
         found: false,
-        message: `No evaluations found for proposal ${context.proposalId}. The proposal may not have been evaluated yet.`,
+        message: `No evaluations found for proposal ${inputData.proposalId}. The proposal may not have been evaluated yet.`,
       };
     }
 
@@ -107,12 +107,12 @@ export const searchProposals = createTool({
       .optional()
       .describe("Filter by proposal status. Omit to return all proposals."),
   }),
-  execute: async ({ context }) => {
+  execute: async (inputData) => {
     const db = getDb();
 
-    const allProposals = context.status
+    const allProposals = inputData.status
       ? await db.query.proposals.findMany({
-          where: eq(proposals.status, context.status),
+          where: eq(proposals.status, inputData.status),
         })
       : await db.query.proposals.findMany();
 
