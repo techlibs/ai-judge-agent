@@ -22,11 +22,25 @@ export async function GET(
       );
     }
 
-    const [history, summary] = await Promise.all([
+    const [historyResult, summaryResult] = await Promise.all([
       getReputationHistory(tokenId),
       getReputationSummary(tokenId),
     ]);
 
+    if (!historyResult.ok) {
+      return NextResponse.json(
+        { error: historyResult.error },
+        { status: 502 },
+      );
+    }
+    if (!summaryResult.ok) {
+      return NextResponse.json(
+        { error: summaryResult.error },
+        { status: 502 },
+      );
+    }
+
+    const history = historyResult.data;
     const blockNumbers = history.map((entry) => entry.blockNumber);
     const txHashMap = await getTxHashesForBlocks(tokenId, blockNumbers);
 
@@ -37,12 +51,13 @@ export async function GET(
 
     const responseData = {
       tokenId,
-      summary,
+      summary: summaryResult.data,
       history: enrichedHistory,
     };
 
     const validated = reputationResponseSchema.parse(responseData);
     const response = NextResponse.json(validated);
+    // Safe: reputation data is public on-chain
     response.headers.set(
       "Cache-Control",
       "public, s-maxage=30, stale-while-revalidate=60",

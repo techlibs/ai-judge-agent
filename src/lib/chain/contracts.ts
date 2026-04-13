@@ -108,11 +108,23 @@ export function getContractAddresses(): {
   reputationRegistry: Address;
 } {
   const env = getClientEnv();
+
+  if (!env.NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS env var",
+    );
+  }
+  if (!env.NEXT_PUBLIC_REPUTATION_REGISTRY_ADDRESS) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_REPUTATION_REGISTRY_ADDRESS env var",
+    );
+  }
+
   const identity = addressSchema.parse(
-    env.NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS
+    env.NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS,
   );
   const reputation = addressSchema.parse(
-    env.NEXT_PUBLIC_REPUTATION_REGISTRY_ADDRESS
+    env.NEXT_PUBLIC_REPUTATION_REGISTRY_ADDRESS,
   );
   return {
     identityRegistry: identity,
