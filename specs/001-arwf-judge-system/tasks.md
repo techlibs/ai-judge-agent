@@ -166,14 +166,14 @@
 
 **Independent Test**: Submit a dispute for an evaluated proposal, cast validator votes, verify verdict updates score on-chain and in cache
 
-- [ ] T060 [P] [US5] Implement DisputeRegistry Solidity contract in contracts/src/DisputeRegistry.sol (disputeId, staking, voting, time window, DisputeOpened/DisputeVoteCast/DisputeResolved events per data-model.md)
-- [ ] T061 [P] [US5] Write Foundry tests for DisputeRegistry in contracts/test/DisputeRegistry.t.sol
-- [ ] T062 [US5] Add Graph subgraph entities and mappings for Dispute, DisputeVote in contracts/subgraph/
-- [ ] T063 [US5] Implement DisputeRegistry chain interaction in src/chain/dispute-registry.ts (openDispute, castVote, resolveDispute, getDisputeStatus)
-- [ ] T064 [US5] Implement dispute webhook handler in src/app/api/webhooks/disputes/route.ts (validate API key, parse body, register dispute on-chain per webhook-api.md)
-- [ ] T065 [US5] Add dispute data to cache sync in src/cache/sync.ts (process DisputeOpened, DisputeVoteCast, DisputeResolved events)
-- [ ] T066 [US5] Implement score override logic on dispute overturn (archive old score, insert new score, recalculate fund releases)
-- [ ] T067 [US5] Add dispute status and voting UI to proposal detail page in src/app/grants/[id]/page.tsx
+- [X] T060 [P] [US5] Implement DisputeRegistry Solidity contract in contracts/src/DisputeRegistry.sol (disputeId, staking, voting, time window, DisputeOpened/DisputeVoteCast/DisputeResolved events per data-model.md)
+- [X] T061 [P] [US5] Write Foundry tests for DisputeRegistry in contracts/test/DisputeRegistry.t.sol
+- [X] T062 [US5] Add Graph subgraph entities and mappings for Dispute, DisputeVote in contracts/subgraph/
+- [X] T063 [US5] Implement DisputeRegistry chain interaction in src/chain/dispute-registry.ts (openDispute, castVote, resolveDispute, getDisputeStatus)
+- [X] T064 [US5] Implement dispute webhook handler in src/app/api/webhooks/disputes/route.ts (validate API key, parse body, register dispute on-chain per webhook-api.md)
+- [X] T065 [US5] Add dispute data to cache sync in src/cache/sync.ts (process DisputeOpened, DisputeVoteCast, DisputeResolved events)
+- [X] T066 [US5] Implement score override logic on dispute overturn (archive old score, insert new score, recalculate fund releases)
+- [X] T067 [US5] Add dispute status and voting UI to proposal detail page in src/app/grants/[id]/page.tsx
 
 **Checkpoint**: Dispute lifecycle works end-to-end: open, vote, resolve (uphold/overturn), score updates reflected everywhere
 
@@ -185,18 +185,18 @@
 
 **Independent Test**: Complete an evaluation cycle, verify reputation feedback written on-chain for judge agents, confirm multiplier applies correctly on a subsequent proposal evaluation
 
-- [ ] T068 [P] [US6] Implement ReputationRegistry Solidity contract (ERC-8004) in contracts/src/ReputationRegistry.sol (inherit AccessControl + Pausable, define EVALUATOR_ROLE, apply onlyRole(EVALUATOR_ROLE) whenNotPaused to giveFeedback() and appendResponse(), receive identityRegistry address via constructor parameter NOT initialize(), cross-contract validation via ownerOf(agentId), enforce valueDecimals=2 for v1, tag1/tag2 max 64 bytes, MAX_FEEDBACK_PER_AGENT=10000, add exists flag to Feedback struct, paginate readAllFeedback with limit max 100, cap getSummary clientAddresses at 50, use basis point scaling for averages, giveFeedback, revokeFeedback, appendResponse, getSummary, anti-Sybil rules per data-model.md). Use custom errors. Monitor contract size with `forge build --sizes`.
-- [ ] T069 [P] [US6] Implement ValidationRegistry Solidity contract (ERC-8004) in contracts/src/ValidationRegistry.sol (receive identityRegistry address via constructor parameter NOT initialize(), validationRequest, validationResponse, getSummary per data-model.md)
-- [ ] T070 [P] [US6] Write Foundry tests for ReputationRegistry in contracts/test/ReputationRegistry.t.sol
-- [ ] T071 [P] [US6] Write Foundry tests for ValidationRegistry in contracts/test/ValidationRegistry.t.sol
-- [ ] T072 [US6] Add Graph subgraph entities and mappings for AgentFeedback, FeedbackResponse, Validation in contracts/subgraph/
-- [ ] T073 [US6] Implement ReputationRegistry chain interaction in src/chain/reputation-registry.ts (giveFeedback, revokeFeedback, getSummary)
-- [ ] T074 [US6] Implement ValidationRegistry chain interaction in src/chain/validation-registry.ts (validationRequest, validationResponse, getSummary)
-- [ ] T075 [US6] Implement reputation feedback writer in src/reputation/feedback.ts (post feedback after evaluation, link to agent's ERC-8004 identity, tag with dimension + round)
-- [ ] T076 [US6] Implement reputation multiplier lookup in src/reputation/multiplier.ts (read from ReputationRegistry getSummary, calculate min(1 + index/10000, 1.05))
-- [ ] T077 [US6] Integrate reputation multiplier into evaluation scoring in src/evaluation/scoring.ts (lookup prior reputation before computing adjustedScore)
-- [ ] T078 [US6] Add reputation and agent feedback data to cache sync in src/cache/sync.ts (process NewFeedback, FeedbackRevoked, ValidationResponse events)
-- [ ] T079 [US6] Add reputation badges and agent feedback display to dashboard in src/app/grants/[id]/page.tsx
+- [X] T068 [P] [US6] Implement ReputationRegistry Solidity contract (ERC-8004) in contracts/src/ReputationRegistry.sol (inherit AccessControl + Pausable, define EVALUATOR_ROLE, apply onlyRole(EVALUATOR_ROLE) whenNotPaused to giveFeedback() and appendResponse(), receive identityRegistry address via constructor parameter NOT initialize(), cross-contract validation via ownerOf(agentId), enforce valueDecimals=2 for v1, tag1/tag2 max 64 bytes, MAX_FEEDBACK_PER_AGENT=10000, add exists flag to Feedback struct, paginate readAllFeedback with limit max 100, cap getSummary clientAddresses at 50, use basis point scaling for averages, giveFeedback, revokeFeedback, appendResponse, getSummary, anti-Sybil rules per data-model.md). Use custom errors. Monitor contract size with `forge build --sizes`.
+- [X] T069 [P] [US6] Implement ValidationRegistry Solidity contract (ERC-8004) in contracts/src/ValidationRegistry.sol (receive identityRegistry address via constructor parameter NOT initialize(), validationRequest, validationResponse, getSummary per data-model.md)
+- [X] T070 [P] [US6] Write Foundry tests for ReputationRegistry in contracts/test/ReputationRegistry.t.sol
+- [X] T071 [P] [US6] Write Foundry tests for ValidationRegistry in contracts/test/ValidationRegistry.t.sol
+- [X] T072 [US6] Add Graph subgraph entities and mappings for AgentFeedback, FeedbackResponse, Validation in contracts/subgraph/
+- [X] T073 [US6] Implement ReputationRegistry chain interaction in src/chain/reputation-registry.ts (giveFeedback, revokeFeedback, getSummary)
+- [X] T074 [US6] Implement ValidationRegistry chain interaction in src/chain/validation-registry.ts (validationRequest, validationResponse, getSummary)
+- [X] T075 [US6] Implement reputation feedback writer in src/reputation/feedback.ts (post feedback after evaluation, link to agent's ERC-8004 identity, tag with dimension + round)
+- [X] T076 [US6] Implement reputation multiplier lookup in src/reputation/multiplier.ts (read from ReputationRegistry getSummary, calculate min(1 + index/10000, 1.05))
+- [X] T077 [US6] Integrate reputation multiplier into evaluation scoring in src/evaluation/scoring.ts (lookup prior reputation before computing adjustedScore)
+- [X] T078 [US6] Add reputation and agent feedback data to cache sync in src/cache/sync.ts (process NewFeedback, FeedbackRevoked, ValidationResponse events)
+- [X] T079 [US6] Add reputation badges and agent feedback display to dashboard in src/app/grants/[id]/page.tsx
 
 **Checkpoint**: Reputation feedback written on-chain after evaluation, multiplier applied on subsequent evaluations, badges visible on dashboard
 
@@ -206,15 +206,15 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T080 [P] Pin ERC-8004 agent registration JSON documents to IPFS for all 5 agents (4 Judge + 1 Monitor) per ipfs-schemas.md AgentRegistrationSchema
-- [ ] T081 [P] Implement cache:rebuild and cache:sync CLI scripts referenced in quickstart.md
-- [ ] T082 [P] Implement cache:migrate script for Drizzle schema push to Turso
-- [ ] T083 Security audit: verify PII never reaches IPFS or chain (sanitization review across all write paths)
-- [ ] T084 Performance optimization: ensure dashboard loads within 2-3 seconds (SC-005), add SQLite indexes per data-model.md
-- [ ] T085 Run quickstart.md validation end-to-end
-- [ ] T083a [P] Implement structured security event logging in src/lib/security-log.ts (log rate_limited, auth_failed, score_anomaly, pii_detected, injection_attempt events as JSON with timestamp and level: "SECURITY")
-- [ ] T085a [P] Add GET /api/health endpoint checking db, IPFS, and chain connectivity. Return { healthy: boolean, checks: { db, ipfs, chain } } with 200 or 503.
-- [ ] T086 [P] Add error handling for failed evaluations (FR-016: retry up to 3 times) and failed chain transactions (FR-017: exponential backoff with parameters: initial 1s, multiplier 2x, max 30s, 5 attempts)
+- [X] T080 [P] Pin ERC-8004 agent registration JSON documents to IPFS for all 5 agents (4 Judge + 1 Monitor) per ipfs-schemas.md AgentRegistrationSchema
+- [X] T081 [P] Implement cache:rebuild and cache:sync CLI scripts referenced in quickstart.md
+- [X] T082 [P] Implement cache:migrate script for Drizzle schema push to Turso
+- [X] T083 Security audit: verify PII never reaches IPFS or chain (sanitization review across all write paths)
+- [X] T084 Performance optimization: ensure dashboard loads within 2-3 seconds (SC-005), add SQLite indexes per data-model.md
+- [X] T085 Run quickstart.md validation end-to-end
+- [X] T083a [P] Implement structured security event logging in src/lib/security-log.ts (log rate_limited, auth_failed, score_anomaly, pii_detected, injection_attempt events as JSON with timestamp and level: "SECURITY")
+- [X] T085a [P] Add GET /api/health endpoint checking db, IPFS, and chain connectivity. Return { healthy: boolean, checks: { db, ipfs, chain } } with 200 or 503.
+- [X] T086 [P] Add error handling for failed evaluations (FR-016: retry up to 3 times) and failed chain transactions (FR-017: exponential backoff with parameters: initial 1s, multiplier 2x, max 30s, 5 attempts)
 
 ---
 
