@@ -52,13 +52,21 @@ export default async function GrantsPage({ searchParams }: GrantsPageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Grant Proposals
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          AI-evaluated grant proposals with transparent scoring
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Grant Proposals
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            AI-evaluated grant proposals with transparent scoring
+          </p>
+        </div>
+        <Link
+          href="/grants/submit"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Submit Proposal
+        </Link>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-4">

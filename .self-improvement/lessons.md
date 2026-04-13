@@ -49,3 +49,15 @@ Lessons learned from user corrections. All rules below are incorporated into CLA
 - **Pattern**: Foundry test `vm.prank(unauthorized)` was consumed by a `registry.SCORER_ROLE()` staticcall inside `vm.expectRevert()` arguments. The prank is single-use — any external call consumes it, including view functions in argument evaluation.
 - **Rule**: Always cache role/constant values BEFORE `vm.prank`. Place `vm.expectRevert` before `vm.prank`, and `vm.prank` immediately before the target call with nothing between them.
 - **Why**: Solidity evaluates function arguments before calling the outer function. `vm.expectRevert(... registry.ROLE() ...)` calls `ROLE()` first, consuming the prank.
+
+## Communication
+- **Date**: 2026-04-13
+- **Pattern**: User repeatedly asked "what is this wallet?", "why this address?", "can I use my wallet?", "do I need to share my private key?". Had to explain the deployer wallet concept 4+ times because I introduced it without explaining the architecture upfront.
+- **Rule**: When creating infrastructure (wallets, keys, accounts), explain the full architecture FIRST — what it is, why it exists, how it relates to the user's existing setup. Don't create things silently and explain later.
+- **Why**: Users need to understand what they're agreeing to before it's created. A throwaway deployer wallet is a good pattern, but only if the user understands why they have two wallets.
+
+## Tool Usage
+- **Date**: 2026-04-13
+- **Pattern**: User said "use speckit to full cycle" — should have immediately invoked /speckit-specify → /speckit-plan → /speckit-tasks → /speckit-implement as a pipeline without pausing between each step.
+- **Rule**: When user asks for "full cycle" or "end to end" with a framework, chain the commands automatically. Don't pause to report between phases unless there are blocking clarifications.
+- **Why**: Each pause costs context and user attention. The speckit pipeline is designed to flow sequentially.

@@ -9,13 +9,19 @@ export default function HomePage() {
       </p>
       <div className="mt-8 flex gap-4">
         <Link
-          href="/grants"
+          href="/grants/submit"
           className="rounded-md bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          Submit Proposal
+        </Link>
+        <Link
+          href="/grants"
+          className="rounded-md border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           View Proposals
         </Link>
         <Link
-          href="/grants/operator"
+          href="/dashboard/operator"
           className="rounded-md border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Operator Dashboard

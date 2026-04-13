@@ -28,7 +28,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://gateway.pinata.cloud https://*.ipfs.io",
-      "connect-src 'self' https://gateway.pinata.cloud https://sepolia.base.org https://*.upstash.io",
+      "connect-src 'self' https://gateway.pinata.cloud https://sepolia.base.org https://mainnet.base.org https://*.upstash.io",
       "frame-ancestors 'none'",
     ].join("; "),
   },
