@@ -5,8 +5,21 @@ libs = ["lib"]
 solc = "0.8.24"
 optimizer = true
 optimizer_runs = 200
+gas_reports = ["*"]
 
 remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
   "forge-std/=lib/forge-std/src/",
 ]
+
+[fuzz]
+runs = 1000
+
+[rpc_endpoints]
+base_sepolia = "https://sepolia.base.org"
+base = "https://mainnet.base.org"
+local = "http://127.0.0.1:8546"
+
+[etherscan]
+base = { key = "${BASESCAN_API_KEY}", url = "https://api.basescan.org/api" }
+base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }

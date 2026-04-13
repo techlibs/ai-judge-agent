@@ -71,14 +71,15 @@ contract EvaluationRegistryTest is Test {
     }
 
     function test_submitScore_revertsForUnauthorized() public {
-        vm.prank(unauthorized);
+        bytes32 scorerRole = registry.SCORER_ROLE();
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 unauthorized,
-                registry.SCORER_ROLE()
+                scorerRole
             )
         );
+        vm.prank(unauthorized);
         registry.submitScore(
             PROPOSAL_ID,
             FUNDING_ROUND_ID,

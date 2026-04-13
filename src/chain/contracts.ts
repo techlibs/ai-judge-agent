@@ -1,11 +1,34 @@
-import { createPublicClient, http, type Address } from "viem";
-import { baseSepolia } from "viem/chains";
+import { createPublicClient, http, isAddress, type Address } from "viem";
+import { base, baseSepolia } from "viem/chains";
 
-const RPC_URL =
-  process.env.BASE_SEPOLIA_RPC_URL ?? "https://sepolia.base.org";
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "84532");
+
+const SUPPORTED_CHAINS = {
+  [baseSepolia.id]: {
+    chain: baseSepolia,
+    defaultRpc: "https://sepolia.base.org",
+  },
+  [base.id]: {
+    chain: base,
+    defaultRpc: "https://mainnet.base.org",
+  },
+} as const;
+
+function getChainConfig() {
+  const config = SUPPORTED_CHAINS[CHAIN_ID as keyof typeof SUPPORTED_CHAINS];
+  if (!config) {
+    throw new Error(
+      `Unsupported NEXT_PUBLIC_CHAIN_ID: ${CHAIN_ID}. Supported: ${Object.keys(SUPPORTED_CHAINS).join(", ")}`,
+    );
+  }
+  return config;
+}
+
+const chainConfig = getChainConfig();
+const RPC_URL = process.env.BASE_SEPOLIA_RPC_URL ?? chainConfig.defaultRpc;
 
 export const publicClient = createPublicClient({
-  chain: baseSepolia,
+  chain: chainConfig.chain,
   transport: http(RPC_URL),
 });
 
@@ -14,7 +37,10 @@ function getAddressFromEnv(envVar: string): Address {
   if (!value) {
     throw new Error(`${envVar} environment variable is required`);
   }
-  return value as Address;
+  if (!isAddress(value)) {
+    throw new Error(`${envVar} is not a valid address: ${value}`);
+  }
+  return value;
 }
 
 export function getEvaluationRegistryAddress(): Address {

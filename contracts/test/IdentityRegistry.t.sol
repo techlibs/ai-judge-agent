@@ -73,14 +73,15 @@ contract IdentityRegistryTest is Test {
     }
 
     function test_register_revertsForUnauthorized() public {
-        vm.prank(unauthorized);
+        bytes32 registrarRole = registry.REGISTRAR_ROLE();
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 unauthorized,
-                registry.REGISTRAR_ROLE()
+                registrarRole
             )
         );
+        vm.prank(unauthorized);
         registry.register(AGENT_URI);
     }
 

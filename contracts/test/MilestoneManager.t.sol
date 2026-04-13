@@ -95,14 +95,15 @@ contract MilestoneManagerTest is Test {
     function test_releaseMilestone_revertsUnauthorized() public {
         manager.fundMilestone{value: 1 ether}(PROJECT_ID, MILESTONE_INDEX);
 
-        vm.prank(unauthorized);
+        bytes32 releaseManagerRole = manager.RELEASE_MANAGER_ROLE();
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 unauthorized,
-                manager.RELEASE_MANAGER_ROLE()
+                releaseManagerRole
             )
         );
+        vm.prank(unauthorized);
         manager.releaseMilestone(PROJECT_ID, MILESTONE_INDEX, SCORE, recipient);
     }
 
