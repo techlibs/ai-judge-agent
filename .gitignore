@@ -42,5 +42,10 @@ bun.lockb
 # Vercel
 .vercel
 
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/lib/
+
 # Note: .planning/ is NOT ignored — GSD artifacts are version-controlled
 # Note: .self-improvement/ is NOT ignored — lessons persist across sessions
