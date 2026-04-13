@@ -7,6 +7,6 @@ contracts/
 e2e/
 .worktrees/
 *.md
-.env*
+.env.local
 playwright-report/
 local.db
