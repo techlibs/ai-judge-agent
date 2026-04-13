@@ -25,6 +25,8 @@ contract ReputationRegistry is AccessControl, Pausable {
     }
 
     mapping(uint256 => Feedback[]) private _feedbacks;
+    mapping(uint256 => uint256) private _totalScore;
+    mapping(uint256 => uint256) private _feedbackCount;
 
     event FeedbackGiven(
         uint256 indexed tokenId,
@@ -37,6 +39,7 @@ contract ReputationRegistry is AccessControl, Pausable {
     error FeedbackIndexOutOfBounds(uint256 index, uint256 length);
     error InvalidIdentityRegistry();
     error ProjectNotRegistered(uint256 tokenId);
+    error ContentHashTooLong(uint256 length);
 
     constructor(address identityRegistry_) {
         if (identityRegistry_ == address(0)) revert InvalidIdentityRegistry();
@@ -56,6 +59,7 @@ contract ReputationRegistry is AccessControl, Pausable {
         whenNotPaused
     {
         if (score > MAX_SCORE) revert InvalidScore(score);
+        if (bytes(contentHash).length > 256) revert ContentHashTooLong(bytes(contentHash).length);
 
         // Verify project exists in IdentityRegistry
         try identityRegistry.ownerOf(tokenId) returns (address) {
@@ -74,6 +78,9 @@ contract ReputationRegistry is AccessControl, Pausable {
             })
         );
 
+        _totalScore[tokenId] += score;
+        _feedbackCount[tokenId]++;
+
         emit FeedbackGiven(tokenId, msg.sender, score, contentHash);
     }
 
@@ -86,18 +93,13 @@ contract ReputationRegistry is AccessControl, Pausable {
         view
         returns (uint256 feedbackCount, uint256 averageScore)
     {
-        Feedback[] storage feedbacks = _feedbacks[tokenId];
-        feedbackCount = feedbacks.length;
+        feedbackCount = _feedbackCount[tokenId];
 
         if (feedbackCount == 0) {
             return (0, 0);
         }
 
-        uint256 totalScore;
-        for (uint256 i; i < feedbackCount; ++i) {
-            totalScore += feedbacks[i].score;
-        }
-        averageScore = totalScore / feedbackCount;
+        averageScore = _totalScore[tokenId] / feedbackCount;
     }
 
     /// @notice Read a single feedback entry

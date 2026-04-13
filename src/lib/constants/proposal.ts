@@ -1,3 +1,4 @@
+// const assertion - not a type cast
 export const PROPOSAL_STATUS = {
   SUBMITTED: "submitted",
   EVALUATING: "evaluating",

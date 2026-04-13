@@ -4,6 +4,12 @@ import { pinataResponseSchema } from "./types";
 
 const PINATA_API_URL = "https://api.pinata.cloud/pinning/pinJSONToIPFS";
 
+const CID_PATTERN = /^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-z2-7]{52,})$/;
+
+function isValidCID(cid: string): boolean {
+  return CID_PATTERN.test(cid);
+}
+
 export async function pinJSON(data: unknown): Promise<string> {
   const env = getServerEnv();
   if (!env.PINATA_API_KEY || !env.PINATA_SECRET_KEY) {
@@ -34,6 +40,10 @@ export async function fetchFromIPFS<T>(
   cid: string,
   schema: z.ZodType<T>
 ): Promise<T> {
+  if (!isValidCID(cid)) {
+    throw new Error(`Invalid IPFS CID format: ${cid}`);
+  }
+
   const env = getServerEnv();
   const gatewayUrl =
     env.PINATA_GATEWAY_URL ?? "https://gateway.pinata.cloud/ipfs";
