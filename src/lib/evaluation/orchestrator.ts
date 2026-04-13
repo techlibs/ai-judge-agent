@@ -1,0 +1,129 @@
+import { getDb } from "@/lib/db/client";
+import { proposals, evaluations, aggregateScores } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { JUDGE_DIMENSIONS, type JudgeDimension } from "@/lib/constants";
+import { computeAggregateScore } from "@/lib/judges/weights";
+import { uploadJson } from "@/lib/ipfs/client";
+import { publishEvaluationOnChain } from "@/lib/evaluation/publish-chain";
+import { logSecurityEvent } from "@/lib/security-log";
+
+const ANOMALY_THRESHOLDS = {
+  ALL_MAX: 9500,
+  ALL_MIN: 500,
+  MAX_DIVERGENCE: 5000,
+} as const;
+
+export async function checkAndFinalizeEvaluation(proposalId: string): Promise<{
+  complete: boolean;
+  aggregateScore?: number;
+}> {
+  const db = getDb();
+
+  const evals = await db.query.evaluations.findMany({
+    where: eq(evaluations.proposalId, proposalId),
+  });
+
+  const completeEvals = evals.filter((e) => e.status === "complete");
+
+  if (completeEvals.length < JUDGE_DIMENSIONS.length) {
+    return { complete: false };
+  }
+
+  // Idempotency check
+  const existingAggregate = await db.query.aggregateScores.findFirst({
+    where: eq(aggregateScores.proposalId, proposalId),
+  });
+  if (existingAggregate) {
+    return { complete: true, aggregateScore: existingAggregate.scoreBps };
+  }
+
+  // Compute aggregate S0
+  const scores: Record<string, number> = {};
+  for (const evaluation of completeEvals) {
+    if (evaluation.score !== null) {
+      scores[evaluation.dimension] = evaluation.score;
+    }
+  }
+
+  // Score anomaly detection
+  const scoreValues = Object.values(scores);
+  const anomalyFlags: string[] = [];
+  if (scoreValues.every(s => s >= ANOMALY_THRESHOLDS.ALL_MAX)) {
+    anomalyFlags.push("ALL_SCORES_SUSPICIOUSLY_HIGH");
+  }
+  if (scoreValues.every(s => s <= ANOMALY_THRESHOLDS.ALL_MIN)) {
+    anomalyFlags.push("ALL_SCORES_SUSPICIOUSLY_LOW");
+  }
+  const scoreRange = Math.max(...scoreValues) - Math.min(...scoreValues);
+  if (scoreRange > ANOMALY_THRESHOLDS.MAX_DIVERGENCE) {
+    anomalyFlags.push("EXTREME_SCORE_DIVERGENCE");
+  }
+  if (anomalyFlags.length > 0) {
+    logSecurityEvent({ type: "score_anomaly", proposalId, flags: anomalyFlags });
+  }
+
+  const aggregateBps = computeAggregateScore(
+    scores as Record<JudgeDimension, number>
+  );
+
+  // Upload aggregate to IPFS
+  const aggregateData = {
+    type: "https://ipe.city/schemas/aggregate-evaluation-v1",
+    proposalId,
+    aggregateScoreBps: aggregateBps,
+    dimensions: completeEvals.map((e) => ({
+      dimension: e.dimension,
+      score: e.score,
+      ipfsCid: e.ipfsCid,
+    })),
+    computedAt: new Date().toISOString(),
+  };
+
+  const ipfsResult = await uploadJson(aggregateData, `aggregate-${proposalId}.json`);
+
+  // Save aggregate score
+  await db.insert(aggregateScores).values({
+    id: crypto.randomUUID(),
+    proposalId,
+    scoreBps: aggregateBps,
+    ipfsCid: ipfsResult.cid,
+    computedAt: new Date(),
+  });
+
+  // Update proposal status
+  await db
+    .update(proposals)
+    .set({ status: "publishing" })
+    .where(eq(proposals.id, proposalId));
+
+  // Publish on-chain
+  try {
+    const proposal = await db.query.proposals.findFirst({
+      where: eq(proposals.id, proposalId),
+    });
+
+    const txHash = await publishEvaluationOnChain({
+      proposalId,
+      proposalIpfsCid: proposal?.ipfsCid ?? "",
+      evaluations: completeEvals.map((e) => ({
+        dimension: e.dimension as JudgeDimension,
+        score: e.score ?? 0,
+        ipfsCid: e.ipfsCid ?? "",
+      })),
+      aggregateIpfsCid: ipfsResult.cid,
+    });
+
+    await db
+      .update(proposals)
+      .set({ status: "published", chainTxHash: txHash })
+      .where(eq(proposals.id, proposalId));
+
+    return { complete: true, aggregateScore: aggregateBps };
+  } catch {
+    await db
+      .update(proposals)
+      .set({ status: "failed" })
+      .where(eq(proposals.id, proposalId));
+    throw new Error("On-chain publishing failed");
+  }
+}
