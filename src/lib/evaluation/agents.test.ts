@@ -1,11 +1,10 @@
 import { describe, test, expect, mock, beforeEach } from "bun:test";
 import {
   evaluationOutputSchema,
-  DIMENSIONS,
   type EvaluationOutput,
 } from "./schemas";
 import { buildSystemPrompt, NAIVE_PROMPT } from "./prompts";
-import { DIMENSION_WEIGHTS, SCORE_BANDS } from "./constants";
+import { DIMENSIONS, DIMENSION_WEIGHTS, SCORE_BANDS } from "./constants";
 
 // --- Schema tests ---
 
@@ -97,7 +96,7 @@ describe("DIMENSION_WEIGHTS", () => {
 
   test("all dimensions have weights", () => {
     for (const dim of DIMENSIONS) {
-      expect(DIMENSION_WEIGHTS[dim]).toBeGreaterThan(0);
+      expect(DIMENSION_WEIGHTS[dim.key]).toBeGreaterThan(0);
     }
   });
 });
@@ -154,14 +153,14 @@ describe("buildSystemPrompt", () => {
   });
 
   test("each dimension prompt is unique", () => {
-    const prompts = DIMENSIONS.map((dim) => buildSystemPrompt(dim));
+    const prompts = DIMENSIONS.map((dim) => buildSystemPrompt(dim.key));
     const uniquePrompts = new Set(prompts);
     expect(uniquePrompts.size).toBe(4);
   });
 
   test("all prompts include anti-injection instructions", () => {
     for (const dim of DIMENSIONS) {
-      const prompt = buildSystemPrompt(dim);
+      const prompt = buildSystemPrompt(dim.key);
       expect(prompt).toContain("ANTI-INJECTION");
     }
   });

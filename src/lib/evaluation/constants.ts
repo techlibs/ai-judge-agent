@@ -1,6 +1,13 @@
-import type { EvaluationDimension } from "./schemas";
+export const DIMENSIONS = [
+  { key: "technical" as const, label: "Technical Feasibility", weight: 0.25 },
+  { key: "impact" as const, label: "Impact Potential", weight: 0.3 },
+  { key: "cost" as const, label: "Cost Efficiency", weight: 0.2 },
+  { key: "team" as const, label: "Team Capability", weight: 0.25 },
+] as const; // const assertion
 
-export const DIMENSION_WEIGHTS: Record<EvaluationDimension, number> = {
+type DimensionKey = (typeof DIMENSIONS)[number]["key"];
+
+export const DIMENSION_WEIGHTS: Record<DimensionKey, number> = {
   technical: 0.25,
   impact: 0.3,
   cost: 0.2,
@@ -13,14 +20,7 @@ export const SCORE_BANDS = {
   adequate: { min: 41, max: 60, label: "Adequate" },
   weak: { min: 21, max: 40, label: "Weak" },
   insufficient: { min: 0, max: 20, label: "Insufficient" },
-} as const;
-
-export const DIMENSIONS = [
-  { key: "technical" as const, label: "Technical Feasibility", weight: 0.25 },
-  { key: "impact" as const, label: "Impact Potential", weight: 0.3 },
-  { key: "cost" as const, label: "Cost Efficiency", weight: 0.2 },
-  { key: "team" as const, label: "Team Capability", weight: 0.25 },
-] as const;
+} as const; // const assertion
 
 export const IPE_CITY_VALUES = `IPE City core values that should inform your evaluation:
 1. Pro-technological innovation: Favor proposals that advance technology and push boundaries
@@ -34,9 +34,8 @@ export const MODEL_CONFIG = {
 } as const;
 
 export function getScoreBand(score: number): string {
-  if (score >= 81) return "Exceptional";
-  if (score >= 61) return "Strong";
-  if (score >= 41) return "Adequate";
-  if (score >= 21) return "Weak";
-  return "Insufficient";
+  for (const band of Object.values(SCORE_BANDS)) {
+    if (score >= band.min && score <= band.max) return band.label;
+  }
+  return SCORE_BANDS.insufficient.label;
 }

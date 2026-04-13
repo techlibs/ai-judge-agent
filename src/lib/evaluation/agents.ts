@@ -4,10 +4,9 @@ import {
   evaluationOutputSchema,
   type EvaluationDimension,
   type DimensionEvaluation,
-  DIMENSIONS,
 } from "./schemas";
 import { buildSystemPrompt, NAIVE_PROMPT } from "./prompts";
-import { MODEL_CONFIG } from "./constants";
+import { MODEL_CONFIG, DIMENSIONS } from "./constants";
 
 export async function evaluateDimension(
   dimension: EvaluationDimension,
@@ -40,19 +39,19 @@ export async function evaluateAllDimensions(
   proposalText: string,
 ): Promise<DimensionEvaluation[]> {
   const results = await Promise.all(
-    DIMENSIONS.map((dim) => evaluateDimension(dim, proposalText)),
+    DIMENSIONS.map((dim) => evaluateDimension(dim.key, proposalText)),
   );
   return results;
 }
 
-export async function evaluateNaive(proposalText: string): Promise<string> {
+export async function evaluateNaive(
+  proposalText: string,
+): Promise<string> {
   const result = await generateText({
     model: anthropic(MODEL_CONFIG.model),
-    system: NAIVE_PROMPT,
-    prompt: proposalText,
+    prompt: `${NAIVE_PROMPT}\n\n${proposalText}`,
     temperature: MODEL_CONFIG.temperature,
     maxOutputTokens: MODEL_CONFIG.maxTokens,
   });
-
   return result.text;
 }

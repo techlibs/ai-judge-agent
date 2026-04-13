@@ -86,6 +86,10 @@ export async function publishScoreOnChain(
   const walletClient = getWalletClient();
   const publicClient = getPublicClient();
 
+  const numericValue = Number(proposalId);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    throw new Error(`Invalid proposalId for BigInt conversion: ${proposalId}`);
+  }
   const tokenId = BigInt(proposalId);
   const scoreInBasisPoints = BigInt(Math.round(score * 100));
   const contentHash = `ipfs://${ipfsCid}`;
