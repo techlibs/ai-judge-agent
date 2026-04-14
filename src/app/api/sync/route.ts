@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { syncCache } from "@/cache/sync";
 
 export async function POST() {
   let session;
   try {
+    const { auth } = await import("@/lib/auth");
     session = await auth();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
