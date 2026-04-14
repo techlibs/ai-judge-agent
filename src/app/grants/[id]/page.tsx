@@ -106,7 +106,6 @@ export default async function ProposalDetailPage({
                   dimension={dim}
                   evaluation={evaluation ? {
                     score: evaluation.score ?? undefined,
-                    scoreDecimals: 2,
                     confidence: evaluation.confidence ?? undefined,
                     recommendation: evaluation.recommendation ?? undefined,
                     justification: evaluation.justification ?? undefined,

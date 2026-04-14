@@ -1,7 +1,12 @@
+// Mastra scorer types expect agent-internal message structures (MastraDBMessage)
+// but prebuilt scorers accept plain strings at runtime. We use a JS wrapper
+// (run-scorer.js) to bypass the strict generic types.
+
 import { createFaithfulnessScorer } from "@mastra/evals/scorers/prebuilt";
 import { createHallucinationScorer } from "@mastra/evals/scorers/prebuilt";
 import { createPromptAlignmentScorerLLM } from "@mastra/evals/scorers/prebuilt";
 import { openai } from "@ai-sdk/openai";
+import { runScorer } from "./run-scorer.js";
 
 const SCORER_MODEL = openai("gpt-4o");
 
@@ -28,18 +33,9 @@ export async function runQualityScorers(params: {
   promptText: string;
 }): Promise<QualityScores> {
   const [faithResult, hallucResult, alignResult] = await Promise.all([
-    faithfulnessScorer.score({
-      input: params.proposalContext,
-      output: params.justification,
-    }),
-    hallucinationScorer.score({
-      input: params.proposalContext,
-      output: params.justification,
-    }),
-    promptAlignmentScorer.score({
-      input: params.promptText,
-      output: params.justification,
-    }),
+    runScorer(faithfulnessScorer, params.proposalContext, params.justification),
+    runScorer(hallucinationScorer, params.proposalContext, params.justification),
+    runScorer(promptAlignmentScorer, params.promptText, params.justification),
   ]);
 
   const faithfulness = faithResult.score;

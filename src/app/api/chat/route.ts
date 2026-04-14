@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages, stepCountIs } from "ai";
+import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/chat/prompts";
@@ -10,23 +10,12 @@ import { DIMENSION_LABELS, type JudgeDimension } from "@/lib/constants";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const uiMessagePartSchema = z.union([
-  z.object({ type: z.literal("text"), text: z.string() }),
-  z.object({ type: z.literal("tool-invocation") }).passthrough(),
-  z.object({ type: z.literal("source") }).passthrough(),
-  z.object({ type: z.literal("reasoning") }).passthrough(),
-  z.object({ type: z.literal("file") }).passthrough(),
-  z.object({ type: z.string() }).passthrough(),
-]);
-
-const uiMessageSchema = z.object({
-  id: z.string(),
-  role: z.enum(["user", "assistant", "system"]),
-  parts: z.array(uiMessagePartSchema),
-});
-
 const chatRequestSchema = z.object({
-  messages: z.array(uiMessageSchema),
+  messages: z.array(z.object({
+    id: z.string(),
+    role: z.enum(["user", "assistant", "system"]),
+    parts: z.array(z.record(z.string(), z.unknown())),
+  })),
   proposalId: z.string().min(1),
 });
 
@@ -61,27 +50,30 @@ export async function POST(request: Request): Promise<Response> {
 
   const contextPrefix = `[Context: The user is discussing proposal ID "${proposalId}". Use the getProposalData and getEvaluationScores tools with this ID to retrieve relevant data when needed.]\n\n`;
 
-  const augmentedMessages = messages.map((msg, idx) => {
-    if (idx === 0 && msg.role === "user") {
-      return {
-        ...msg,
-        parts: [
-          {
-            type: "text" as const,
-            text:
-              contextPrefix +
-              msg.parts
-                .filter((p) => p.type === "text")
-                .map((p) => p.text)
-                .join(""),
-          },
-        ],
-      };
-    }
-    return msg;
-  });
+  const uiMessages: Array<UIMessage> = messages.map((msg) => ({
+    id: msg.id,
+    role: msg.role,
+    parts: msg.parts.map((p) => {
+      if (p.type === "text" && typeof p.text === "string") {
+        return { type: "text" as const, text: p.text };
+      }
+      return { type: "text" as const, text: "" };
+    }),
+  }));
 
-  const modelMessages = await convertToModelMessages(augmentedMessages);
+  if (uiMessages.length > 0 && uiMessages[0].role === "user") {
+    const firstMsg = uiMessages[0];
+    const existingText = firstMsg.parts
+      .filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .map((p) => p.text)
+      .join("");
+    uiMessages[0] = {
+      ...firstMsg,
+      parts: [{ type: "text" as const, text: contextPrefix + existingText }],
+    };
+  }
+
+  const modelMessages = await convertToModelMessages(uiMessages);
 
   const result = streamText({
     model: openai("gpt-4o"),
