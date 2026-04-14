@@ -1,23 +1,16 @@
-import { describe, it, expect, mock, beforeAll } from "bun:test";
+import { describe, it, expect, mock } from "bun:test";
 
-// Mock the pinata module BEFORE importing the module under test
+// Mock the pinata module BEFORE importing the module under test.
+// mock.module() must be called synchronously at module scope so Bun's module
+// linker sees the replacement before client.ts is evaluated.
 // The upload chain is: pinata.upload.public.json(data).name(name) → Promise<{cid}>
 // The gateway chain is: pinata.gateways.public.get(cid) → Promise<{data}>
 
 const MOCK_CID = "QmTestCid123";
-const MOCK_GATEWAY = "https://gateway.pinata.cloud";
 
-// We use a factory function so we can control behavior per-test via closures
-let uploadJsonMock: ReturnType<typeof mock>;
-let gatewayGetMock: ReturnType<typeof mock>;
-
-uploadJsonMock = mock(() =>
-  Promise.resolve({ cid: MOCK_CID })
-);
-
-gatewayGetMock = mock(() =>
-  Promise.resolve({ data: { hello: "world" } })
-);
+// We use mutable mock references so per-test mockImplementation() calls work.
+const uploadJsonMock = mock(() => Promise.resolve({ cid: MOCK_CID }));
+const gatewayGetMock = mock(() => Promise.resolve({ data: { hello: "world" } }));
 
 // Build the mock PinataSDK class
 class MockPinataSDK {
@@ -39,18 +32,10 @@ mock.module("pinata", () => ({
   PinataSDK: MockPinataSDK,
 }));
 
-// Module under test — loaded after mock.module so it sees our mock PinataSDK.
-// We use beforeAll + module-level lets instead of top-level await import
-// to ensure compatibility across Bun versions.
-type IpfsClient = typeof import("@/lib/ipfs/client");
-let uploadJson: IpfsClient["uploadJson"];
-let verifyContentIntegrity: IpfsClient["verifyContentIntegrity"];
-
-beforeAll(async () => {
-  const mod = await import("@/lib/ipfs/client");
-  uploadJson = mod.uploadJson;
-  verifyContentIntegrity = mod.verifyContentIntegrity;
-});
+// Top-level await import AFTER mock.module so client.ts sees our MockPinataSDK.
+// This pattern works reliably across Bun 1.3.1 and 1.3.12 — unlike beforeAll
+// lazy imports, which can race with the module linker in newer Bun versions.
+const { uploadJson, verifyContentIntegrity } = await import("@/lib/ipfs/client");
 
 describe("uploadJson", () => {
   it("succeeds on first attempt and returns cid and uri", async () => {
@@ -82,11 +67,12 @@ describe("uploadJson", () => {
   it("throws after all 3 attempts fail", async () => {
     // Override uploadJsonMock to always fail
     uploadJsonMock.mockImplementation(() => Promise.reject(new Error("upload error")));
-    // Speed up by making setTimeout instant — replace global setTimeout temporarily
+    // Speed up by making setTimeout instant — replace global setTimeout temporarily.
+    // We cast through `unknown` rather than using @ts-ignore so strict mode is preserved.
     const originalSetTimeout = globalThis.setTimeout;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore — intentionally replacing for test speed
-    globalThis.setTimeout = (fn: () => void, _delay: number) => originalSetTimeout(fn, 0);
+    const fastSetTimeout = (fn: () => void, _delay: number): ReturnType<typeof setTimeout> =>
+      originalSetTimeout(fn, 0);
+    globalThis.setTimeout = fastSetTimeout as unknown as typeof globalThis.setTimeout;
 
     try {
       await expect(
