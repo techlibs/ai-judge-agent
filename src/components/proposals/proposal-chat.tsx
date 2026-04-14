@@ -1,0 +1,283 @@
+"use client";
+
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import type { UIMessage } from "ai";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import type { ProposalInput } from "@/lib/schemas/proposal";
+
+interface ExtractedProposal {
+  title: string;
+  description: string;
+  teamInfo: string;
+  budget: number;
+  externalLinks: string[];
+}
+
+function extractProposalFromMessages(
+  messages: UIMessage[]
+): ExtractedProposal | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== "assistant") continue;
+
+    for (const part of message.parts) {
+      if (!part.type.startsWith("tool-")) continue;
+
+      const toolPart = part as Record<string, unknown>;
+      if (
+        toolPart.type !== "tool-submit_proposal" &&
+        toolPart.type !== "dynamic-tool"
+      )
+        continue;
+
+      // For dynamic-tool parts, check the toolName
+      if (
+        toolPart.type === "dynamic-tool" &&
+        toolPart.toolName !== "submit_proposal"
+      )
+        continue;
+
+      if (toolPart.state !== "output-available") continue;
+
+      const output = toolPart.output as Record<string, unknown> | undefined;
+      if (output?.success && output.proposal) {
+        return output.proposal as ExtractedProposal;
+      }
+    }
+  }
+  return null;
+}
+
+export function ProposalChat() {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{
+    tokenId: string;
+  } | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/proposals/chat" }),
+    []
+  );
+
+  const {
+    messages,
+    sendMessage,
+    status,
+    error: chatError,
+  } = useChat({ transport });
+
+  const isStreaming = status === "streaming" || status === "submitted";
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const extractedProposal = extractProposalFromMessages(messages);
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const trimmed = inputValue.trim();
+    if (!trimmed || isStreaming) return;
+    sendMessage({ text: trimmed });
+    setInputValue("");
+  }
+
+  const handleProposalSubmit = useCallback(async () => {
+    if (!extractedProposal || submitting) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const proposalData: ProposalInput = {
+        title: extractedProposal.title,
+        description: extractedProposal.description,
+        teamInfo: extractedProposal.teamInfo,
+        budget: extractedProposal.budget,
+        externalLinks: extractedProposal.externalLinks,
+      };
+
+      const response = await fetch("/api/proposals/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(proposalData),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as Record<string, unknown>;
+        const errorMessage =
+          typeof errorData.error === "string"
+            ? errorData.error
+            : "Failed to submit proposal";
+        setSubmitError(errorMessage);
+        return;
+      }
+
+      const result = (await response.json()) as Record<string, unknown>;
+      if (typeof result.tokenId === "string") {
+        setSubmitResult({ tokenId: result.tokenId });
+      }
+    } catch {
+      setSubmitError("Failed to submit. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [extractedProposal, submitting]);
+
+  return (
+    <div className="flex flex-col" style={{ height: "calc(100vh - 280px)" }}>
+      <div className="flex-1 overflow-y-auto rounded-lg border bg-muted/30 p-4">
+        {messages.length === 0 && (
+          <div className="flex h-full flex-col items-center justify-center gap-3">
+            <p className="text-center text-sm text-muted-foreground">
+              Tell me about your project idea and I will help you put together a
+              grant proposal. We will work through it step by step.
+            </p>
+          </div>
+        )}
+
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`mb-4 flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <Card
+              className={`max-w-[85%] ${
+                message.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background"
+              }`}
+            >
+              <CardContent className="p-3">
+                <p className="text-xs font-medium opacity-70">
+                  {message.role === "user" ? "You" : "Proposal Assistant"}
+                </p>
+                <div className="mt-1 whitespace-pre-wrap text-sm">
+                  {message.parts
+                    .filter(
+                      (part): part is { type: "text"; text: string } =>
+                        part.type === "text"
+                    )
+                    .map((part, i) => (
+                      <span key={i}>{part.text}</span>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ))}
+
+        {isStreaming &&
+          messages.length > 0 &&
+          messages[messages.length - 1].role === "user" && (
+            <div className="mb-4 flex justify-start">
+              <Card className="max-w-[85%] bg-background">
+                <CardContent className="p-3">
+                  <p className="text-xs font-medium opacity-70">
+                    Proposal Assistant
+                  </p>
+                  <div className="mt-1 flex gap-1">
+                    <span className="animate-pulse">Thinking</span>
+                    <span className="animate-bounce">...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {extractedProposal && !submitResult && (
+        <Card className="mt-3">
+          <CardHeader>
+            <CardTitle>Proposal Ready</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div>
+              <span className="font-medium">Title:</span>{" "}
+              {extractedProposal.title}
+            </div>
+            <div>
+              <span className="font-medium">Budget:</span> $
+              {extractedProposal.budget.toLocaleString()}
+            </div>
+            <div>
+              <span className="font-medium">Description:</span>{" "}
+              {extractedProposal.description.length > 200
+                ? `${extractedProposal.description.slice(0, 200)}...`
+                : extractedProposal.description}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button
+              onClick={handleProposalSubmit}
+              disabled={submitting}
+              className="w-full"
+            >
+              {submitting ? "Submitting..." : "Submit Proposal On-Chain"}
+            </Button>
+          </CardFooter>
+          {submitError && (
+            <div className="px-4 pb-3">
+              <p className="text-sm text-destructive">{submitError}</p>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {submitResult && (
+        <Card className="mt-3 border-green-500/50 bg-green-50 dark:bg-green-950/20">
+          <CardContent className="p-4 text-center">
+            <p className="font-medium text-green-700 dark:text-green-400">
+              Proposal submitted successfully!
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Token ID: {submitResult.tokenId}
+            </p>
+            <a
+              href={`/proposals/${submitResult.tokenId}`}
+              className="mt-2 inline-block text-sm underline underline-offset-4"
+            >
+              View your proposal
+            </a>
+          </CardContent>
+        </Card>
+      )}
+
+      {chatError && (
+        <p className="mt-2 text-sm text-destructive">
+          Error: {chatError.message}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
+        <Input
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Tell me about your project idea..."
+          disabled={isStreaming || !!submitResult}
+        />
+        <Button
+          type="submit"
+          disabled={isStreaming || !inputValue.trim() || !!submitResult}
+        >
+          {isStreaming ? "..." : "Send"}
+        </Button>
+      </form>
+    </div>
+  );
+}
