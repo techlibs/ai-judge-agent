@@ -4,6 +4,7 @@ import { ProposalSubmissionSchema } from "@/lib/evaluation/proposal-schema";
 import { runEvaluationWorkflow } from "@/lib/evaluation/workflow";
 import { logSecurityEvent } from "@/lib/security-log";
 import { validateOrigin } from "@/lib/validate-origin";
+import { requireApiKey } from "@/lib/api-auth";
 import { checkEvaluationTriggerLimit } from "@/lib/rate-limit";
 
 const EvaluateRequestSchema = z.object({
@@ -11,6 +12,13 @@ const EvaluateRequestSchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // API key authentication
+  const authError = requireApiKey(request);
+  if (authError) {
+    logSecurityEvent({ type: "auth_failed", reason: "invalid_api_key" });
+    return authError;
+  }
+
   // Origin validation
   const originError = validateOrigin(request);
   if (originError) {
