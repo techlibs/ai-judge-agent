@@ -27,6 +27,9 @@ jobs:
       - name: Generate keypair
         run: solana-keygen new --no-passphrase
 
+      - name: Sync Anchor keys
+        run: anchor keys sync
+
       - name: Build Anchor programs
         run: anchor build
 

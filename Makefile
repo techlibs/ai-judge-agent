@@ -1,6 +1,7 @@
 .PHONY: build test lint fmt dev-solana dev-ethereum clean
 
 build:
+	anchor keys sync
 	anchor build
 	cd contracts && forge build
 
