@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/proposals/proposal-status-badge";
 import { ProposalDetailSkeleton } from "@/components/proposals/proposal-detail-skeleton";
+import { ScoreSummaryCard } from "@/components/evaluation/score-summary-card";
+import { DIMENSIONS } from "@/lib/evaluation/constants";
 import { z } from "zod";
 
 const proposalDetailSchema = z.object({
@@ -44,6 +46,13 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 function truncateHash(hash: string): string {
   if (hash.length <= 16) return hash;
   return `${hash.slice(0, 12)}...${hash.slice(-4)}`;
+}
+
+function buildDimensionScores(averageScore: number): ReadonlyArray<{ dimension: string; score: number }> {
+  return DIMENSIONS.map((dim) => ({
+    dimension: dim.key,
+    score: averageScore,
+  }));
 }
 
 function isValidUrl(url: string): boolean {
@@ -174,6 +183,11 @@ export default function ProposalDetailPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <StatusBadge status={proposal.status} />
           <span className="text-sm text-muted-foreground">{submittedDate}</span>
+          <Link href={`/proposals/${id}/evaluation`}>
+            <Button variant="outline" size="sm">
+              Evaluate Proposal
+            </Button>
+          </Link>
           <Link href={`/proposals/${id}/chat`}>
             <Button variant="outline" size="sm">
               Chat with Judge
@@ -181,6 +195,13 @@ export default function ProposalDetailPage() {
           </Link>
         </div>
       </div>
+
+      {proposal.status === "evaluated" && (
+        <ScoreSummaryCard
+          scores={buildDimensionScores(proposal.averageScore)}
+          aggregateScore={proposal.averageScore}
+        />
+      )}
 
       <Card>
         <CardHeader>

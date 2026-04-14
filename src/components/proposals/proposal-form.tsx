@@ -28,6 +28,25 @@ interface FieldErrors {
   externalLinks?: string[];
 }
 
+const POST_SUBMIT_POLL_ATTEMPTS = 5;
+const POST_SUBMIT_POLL_INTERVAL_MS = 1000;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForProposalReady(tokenId: string): Promise<void> {
+  for (let attempt = 0; attempt < POST_SUBMIT_POLL_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(`/api/proposals/${tokenId}`);
+      if (response.ok) return;
+    } catch {
+      // Ignore fetch errors during polling
+    }
+    await delay(POST_SUBMIT_POLL_INTERVAL_MS);
+  }
+}
+
 export function ProposalForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -99,7 +118,9 @@ export function ProposalForm() {
       const result: unknown = await response.json();
       const successParsed = submitSuccessResponseSchema.safeParse(result);
       if (successParsed.success) {
-        router.push(`/proposals/${successParsed.data.tokenId}`);
+        const tokenId = successParsed.data.tokenId;
+        await waitForProposalReady(tokenId);
+        router.push(`/proposals/${tokenId}`);
       }
     } catch {
       setFormError(
