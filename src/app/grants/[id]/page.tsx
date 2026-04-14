@@ -1,4 +1,4 @@
-import { getProposalById } from "@/cache/queries";
+import { getProposalById, findExistingEvaluationJob } from "@/cache/queries";
 import { sanitizeDisplayText } from "@/lib/sanitize-html";
 import { ChainErrorBoundary } from "@/components/error-boundary";
 import { notFound } from "next/navigation";
@@ -22,6 +22,36 @@ export default async function ProposalDetailPage({
   const proposal = await getProposalById(id);
 
   if (!proposal) {
+    const existingJob = await findExistingEvaluationJob(id);
+    if (existingJob) {
+      const statusLabel =
+        existingJob.status === "failed" ? "failed" : "in progress";
+      return (
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <Link
+            href="/grants"
+            className="mb-6 inline-flex items-center text-sm text-blue-600 hover:text-blue-500"
+          >
+            &larr; Back to proposals
+          </Link>
+          <div className="mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-8 text-center">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Evaluation {statusLabel}
+            </h1>
+            <p className="mt-3 text-sm text-gray-600">
+              {existingJob.status === "failed"
+                ? "The evaluation encountered an error. It may be retried automatically."
+                : "This proposal is currently being evaluated by our AI judges. Please check back shortly."}
+            </p>
+            {existingJob.status === "failed" && existingJob.error && (
+              <p className="mt-2 text-xs text-red-600">
+                {existingJob.error}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
     notFound();
   }
 

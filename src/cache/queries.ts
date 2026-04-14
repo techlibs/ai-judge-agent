@@ -205,6 +205,51 @@ export async function getProposalById(proposalId: string) {
   };
 }
 
+interface InsertPendingProposalParams {
+  readonly proposalId: string;
+  readonly externalId: string;
+  readonly platformSource: string;
+  readonly fundingRoundId: string;
+  readonly title: string;
+  readonly description: string;
+  readonly budgetAmount: number;
+  readonly budgetCurrency: string;
+  readonly technicalDescription: string;
+  readonly teamMembers: ReadonlyArray<{
+    readonly role: string;
+    readonly experience: string;
+  }>;
+  readonly category: string;
+  readonly submittedAt: string;
+}
+
+export async function insertPendingProposal(
+  params: InsertPendingProposalParams
+): Promise<void> {
+  const db = getDb();
+  const teamProfileHash = `team-${params.teamMembers.length}`;
+  await db
+    .insert(proposals)
+    .values({
+      id: params.proposalId,
+      externalId: params.externalId,
+      platformSource: params.platformSource,
+      fundingRoundId: params.fundingRoundId,
+      title: params.title,
+      description: params.description,
+      budgetAmount: params.budgetAmount,
+      budgetCurrency: params.budgetCurrency,
+      technicalDescription: params.technicalDescription,
+      teamProfileHash,
+      teamSize: params.teamMembers.length,
+      category: params.category,
+      submittedAt: params.submittedAt,
+      status: "pending",
+      chainTimestamp: Math.floor(Date.now() / 1000),
+    })
+    .onConflictDoNothing();
+}
+
 interface SaveEvaluationParams {
   readonly proposalId: string;
   readonly externalId: string;
@@ -267,7 +312,26 @@ export async function saveEvaluationToCache(
       evaluatedAt: now,
       chainTimestamp: Math.floor(Date.now() / 1000),
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: proposals.id,
+      set: {
+        title: params.title,
+        description: params.description,
+        budgetAmount: params.budgetAmount,
+        budgetCurrency: params.budgetCurrency,
+        technicalDescription: params.technicalDescription,
+        teamProfileHash: params.teamProfileHash,
+        teamSize: params.teamSize,
+        proposalContentCid: params.proposalContentCid,
+        evaluationContentCid: params.evaluationContentCid,
+        finalScore: params.finalScore,
+        adjustedScore: params.adjustedScore,
+        reputationMultiplier: params.reputationMultiplier,
+        status: "evaluated",
+        evaluatedAt: now,
+        chainTimestamp: Math.floor(Date.now() / 1000),
+      },
+    });
 
   for (const dim of params.dimensions) {
     await db

@@ -19,6 +19,7 @@ import {
   findExistingEvaluationJob,
   getProposalById,
   saveEvaluationToCache,
+  insertPendingProposal,
 } from "@/cache/queries";
 import { DIMENSION_WEIGHTS, type ScoringDimension } from "./schemas";
 import { PROMPT_VERSION, MODEL_ID } from "./agents/prompts";
@@ -93,6 +94,22 @@ export async function orchestrateEvaluation(
   const jobId = crypto.randomUUID();
   await createEvaluationJob({ id: jobId, proposalId });
   await updateEvaluationJobStatus(jobId, "in_progress");
+
+  // Insert a preliminary proposal record so it appears in listings immediately
+  await insertPendingProposal({
+    proposalId,
+    externalId: rawProposal.externalId,
+    platformSource: rawProposal.platformSource,
+    fundingRoundId: rawProposal.fundingRoundId,
+    title: rawProposal.title,
+    description: rawProposal.description,
+    budgetAmount: rawProposal.budgetAmount,
+    budgetCurrency: rawProposal.budgetCurrency,
+    technicalDescription: rawProposal.technicalDescription,
+    teamMembers: rawProposal.teamMembers,
+    category: rawProposal.category,
+    submittedAt: rawProposal.submittedAt,
+  });
 
   try {
     const sanitizedProposal = sanitizeProposal({
