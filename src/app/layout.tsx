@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
+import { ErrorTracker } from "@/components/error-tracker";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.className} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <ErrorTracker />
         <AppShell>
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             {children}
