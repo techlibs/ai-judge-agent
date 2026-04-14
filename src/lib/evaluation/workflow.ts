@@ -137,40 +137,32 @@ function detectAnomalies(scores: number[]): string[] {
   return flags;
 }
 
-export async function runEvaluationWorkflow(
-  proposal: ProposalInput
-): Promise<EvaluationResult> {
-  const proposalContext = buildProposalContext(proposal);
+export type ProgressEventType =
+  | "evaluation:start"
+  | "judge:start"
+  | "judge:complete"
+  | "judge:error"
+  | "evaluation:complete"
+  | "evaluation:error";
 
-  // Run all 4 judges in parallel (wave-based execution)
-  const judgeResults = await Promise.allSettled(
-    JUDGE_DIMENSIONS.map((dim) => evaluateDimension(dim, proposalContext))
-  );
+export interface ProgressEvent {
+  type: ProgressEventType;
+  dimension?: JudgeDimension;
+  score?: number;
+  confidence?: string;
+  totalDimensions?: number;
+  completedDimensions?: number;
+  aggregateScore?: number;
+  error?: string;
+  timestamp: string;
+}
 
-  // Collect results, track failures
-  const dimensionResults: DimensionResult[] = [];
-  const failures: Array<{ dimension: JudgeDimension; reason: string }> = [];
+export type OnProgress = (event: ProgressEvent) => void;
 
-  judgeResults.forEach((result, i) => {
-    const dim = JUDGE_DIMENSIONS[i];
-    if (!dim) return;
-    if (result.status === "fulfilled") {
-      dimensionResults.push(result.value);
-    } else {
-      failures.push({
-        dimension: dim,
-        reason: result.reason instanceof Error ? result.reason.message : String(result.reason),
-      });
-    }
-  });
-
-  if (failures.length > 0) {
-    throw new Error(
-      `Evaluation failed for dimensions: ${failures.map((f) => `${f.dimension} (${f.reason})`).join(", ")}`
-    );
-  }
-
-  // Compute weighted aggregate score
+function buildResult(
+  proposalId: string,
+  dimensionResults: DimensionResult[]
+): EvaluationResult {
   const scores: Record<JudgeDimension, number> = {
     tech: 0,
     impact: 0,
@@ -183,22 +175,99 @@ export async function runEvaluationWorkflow(
 
   const aggregateScoreBps = computeAggregateScore(scores);
 
-  // Anomaly detection
   const scoreValues = dimensionResults.map((r) => r.evaluation.score);
   const anomalyFlags = detectAnomalies(scoreValues);
   if (anomalyFlags.length > 0) {
     logSecurityEvent({
       type: "score_anomaly",
-      proposalId: proposal.id,
+      proposalId,
       flags: anomalyFlags,
     });
   }
 
   return {
-    proposalId: proposal.id,
+    proposalId,
     aggregateScoreBps,
     dimensions: dimensionResults,
     anomalyFlags,
     evaluatedAt: new Date().toISOString(),
   };
+}
+
+export async function runEvaluationWorkflow(
+  proposal: ProposalInput,
+  onProgress?: OnProgress
+): Promise<EvaluationResult> {
+  const proposalContext = buildProposalContext(proposal);
+  const now = () => new Date().toISOString();
+
+  onProgress?.({
+    type: "evaluation:start",
+    totalDimensions: JUDGE_DIMENSIONS.length,
+    completedDimensions: 0,
+    timestamp: now(),
+  });
+
+  // Emit judge:start for all dimensions, then run in parallel
+  for (const dim of JUDGE_DIMENSIONS) {
+    onProgress?.({ type: "judge:start", dimension: dim, timestamp: now() });
+  }
+
+  const judgeResults = await Promise.allSettled(
+    JUDGE_DIMENSIONS.map((dim) => evaluateDimension(dim, proposalContext))
+  );
+
+  // Collect results, track failures, emit progress
+  const dimensionResults: DimensionResult[] = [];
+  const failures: Array<{ dimension: JudgeDimension; reason: string }> = [];
+  let completed = 0;
+
+  judgeResults.forEach((result, i) => {
+    const dim = JUDGE_DIMENSIONS[i];
+    if (!dim) return;
+    if (result.status === "fulfilled") {
+      dimensionResults.push(result.value);
+      completed++;
+      onProgress?.({
+        type: "judge:complete",
+        dimension: dim,
+        score: result.value.evaluation.score,
+        confidence: result.value.evaluation.confidence,
+        completedDimensions: completed,
+        totalDimensions: JUDGE_DIMENSIONS.length,
+        timestamp: now(),
+      });
+    } else {
+      const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      failures.push({ dimension: dim, reason });
+      onProgress?.({
+        type: "judge:error",
+        dimension: dim,
+        error: reason,
+        timestamp: now(),
+      });
+    }
+  });
+
+  if (failures.length > 0) {
+    const errorMsg = `Evaluation failed for dimensions: ${failures.map((f) => `${f.dimension} (${f.reason})`).join(", ")}`;
+    onProgress?.({
+      type: "evaluation:error",
+      error: errorMsg,
+      timestamp: now(),
+    });
+    throw new Error(errorMsg);
+  }
+
+  const evaluationResult = buildResult(proposal.id, dimensionResults);
+
+  onProgress?.({
+    type: "evaluation:complete",
+    aggregateScore: evaluationResult.aggregateScoreBps,
+    completedDimensions: JUDGE_DIMENSIONS.length,
+    totalDimensions: JUDGE_DIMENSIONS.length,
+    timestamp: now(),
+  });
+
+  return evaluationResult;
 }
