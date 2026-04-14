@@ -42,5 +42,11 @@ bun.lockb
 # Vercel
 .vercel
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Note: .planning/ is NOT ignored — GSD artifacts are version-controlled
 # Note: .self-improvement/ is NOT ignored — lessons persist across sessions
