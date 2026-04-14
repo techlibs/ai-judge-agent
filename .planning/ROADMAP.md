@@ -47,9 +47,9 @@ Plans:
   5. Submitting a proposal emits an event that triggers the evaluation pipeline
 **Plans:** 3 plans
 Plans:
-- [ ] 02-01-PLAN.md — Refactor Ethereum ProposalRegistry.sol for IPFS CID model with unit tests
-- [ ] 02-02-PLAN.md — Implement Solana Anchor proposal submission program with tests
-- [ ] 02-03-PLAN.md — Fuzz tests and GrantRouter integration lifecycle tests
+- [x] 02-01-PLAN.md — Refactor Ethereum ProposalRegistry.sol for IPFS CID model with unit tests
+- [x] 02-02-PLAN.md — Implement Solana Anchor proposal submission program with tests
+- [x] 02-03-PLAN.md — Fuzz tests and GrantRouter integration lifecycle tests
 **UI hint**: yes
 
 ### Phase 3: AI Evaluation Engine
