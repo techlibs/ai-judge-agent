@@ -1,18 +1,20 @@
-import { PinataSDK } from "pinata";
 import { z } from "zod";
 
-function createPinataClient() {
+// Dynamic import to avoid Bun 1.3.12 module linker crash in test contexts.
+// PinataSDK is only instantiated lazily when getPinata() is first called.
+let pinataInstance: Awaited<ReturnType<typeof createPinataClient>> | undefined;
+
+async function createPinataClient() {
+  const { PinataSDK } = await import("pinata");
   return new PinataSDK({
     pinataJwt: process.env.PINATA_JWT,
     pinataGateway: process.env.PINATA_GATEWAY_URL,
   });
 }
 
-let pinataInstance: PinataSDK | undefined;
-
-function getPinata(): PinataSDK {
+async function getPinata() {
   if (!pinataInstance) {
-    pinataInstance = createPinataClient();
+    pinataInstance = await createPinataClient();
   }
   return pinataInstance;
 }
@@ -24,7 +26,7 @@ export async function uploadJson(
   data: Record<string, unknown>,
   name: string
 ): Promise<{ cid: string; uri: string }> {
-  const pinata = getPinata();
+  const pinata = await getPinata();
   const gateway = process.env.PINATA_GATEWAY_URL ?? "https://gateway.pinata.cloud";
 
   let lastError: unknown;
@@ -62,7 +64,7 @@ async function verifyUploadedContent(
   originalData: Record<string, unknown>
 ): Promise<boolean> {
   try {
-    const pinata = getPinata();
+    const pinata = await getPinata();
     const response = await pinata.gateways.public.get(cid);
     const fetched = response.data;
 
@@ -79,7 +81,7 @@ async function verifyUploadedContent(
 }
 
 export async function fetchJson<T>(cid: string, schema: z.ZodType<T>): Promise<T> {
-  const pinata = getPinata();
+  const pinata = await getPinata();
   const response = await pinata.gateways.public.get(cid);
   return schema.parse(response.data);
 }
@@ -93,7 +95,7 @@ export async function verifyContentIntegrity(
   expectedData: Record<string, unknown>
 ): Promise<{ valid: boolean; reason?: string }> {
   try {
-    const pinata = getPinata();
+    const pinata = await getPinata();
     const response = await pinata.gateways.public.get(cid);
     const fetched = response.data;
 
