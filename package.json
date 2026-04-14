@@ -1,0 +1,18 @@
+{
+  "name": "ipe-city-evaluator",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "build": "anchor build && cd contracts && forge build",
+    "lint": "cd contracts && forge fmt --check"
+  },
+  "devDependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/web3.js": "^1.98.4",
+    "typescript": "^5.7.0"
+  }
+}

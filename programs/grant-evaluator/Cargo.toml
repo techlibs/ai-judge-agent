@@ -1,0 +1,20 @@
+[package]
+name = "grant-evaluator"
+version = "0.1.0"
+description = "IPE City Grant Evaluator - Solana Program"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "grant_evaluator"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = { workspace = true }

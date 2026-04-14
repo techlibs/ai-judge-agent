@@ -1,1 +1,43 @@
-.worktrees/
+# Dependencies
+node_modules/
+.yarn/
+
+# Build artifacts
+dist/
+target/
+contracts/out/
+contracts/cache/
+
+# Anchor
+.anchor/
+programs/**/keypairs/
+
+# Foundry
+contracts/lib/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Solana keypairs (NEVER commit)
+*.json
+!package.json
+!tsconfig.json
+!Cargo.toml
+!Anchor.toml
+!foundry.toml
+!.solhint.json
+!.prettierrc
+!remappings.txt
+!contracts/foundry.toml
+!programs/grant-evaluator/Cargo.toml
+!packages/common/package.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
