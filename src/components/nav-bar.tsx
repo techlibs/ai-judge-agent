@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
   { href: "/grants", label: "Grants" },
@@ -8,20 +9,16 @@ const NAV_LINKS = [
 
 export function NavBar() {
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header className="border-b bg-background">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-lg font-bold text-gray-900">
+        <Link href="/" className="text-lg font-bold">
           IPE City Grants
         </Link>
-        <nav className="flex gap-4 text-sm">
+        <nav className="flex gap-1">
           {NAV_LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              {label}
-            </Link>
+            <Button key={href} variant="ghost" size="sm" asChild>
+              <Link href={href}>{label}</Link>
+            </Button>
           ))}
         </nav>
       </div>
