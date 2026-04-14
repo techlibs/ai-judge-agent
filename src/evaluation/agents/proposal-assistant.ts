@@ -4,6 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { proposalFormSchema } from "@/app/grants/submit/schema";
 import { extractGithubRepo } from "./tools/extract-github";
+import { extractVideoContext } from "./tools/extract-video";
 
 const PROPOSAL_CATEGORIES = ["infrastructure", "education", "community", "research", "governance"] as const;
 const BUDGET_CURRENCIES = ["USD", "ETH"] as const;
@@ -35,6 +36,12 @@ GITHUB INTEGRATION:
 - Use the extracted data (README, description, languages, topics) to help pre-fill proposal fields.
 - Always confirm extracted data with the user before using it in the proposal.
 - The README often contains the best project description — use it to draft the Description and Technical Description fields.
+
+VIDEO CONTEXT:
+- When a user shares a YouTube, Loom, or Vimeo URL, use the extractVideoContext tool.
+- YouTube videos include a transcript — use it to understand the project and draft proposal fields.
+- For Loom/Vimeo, only metadata is available (title, description) — use what's there.
+- Always confirm extracted information with the user before incorporating it.
 
 IMPORTANT:
 - Never fabricate proposal data. Only use information the user explicitly provides.
@@ -165,6 +172,7 @@ export const proposalAssistant = new Agent({
     validatePartialProposal,
     extractCompleteProposal,
     extractGithubRepo,
+    extractVideoContext,
   },
 });
 

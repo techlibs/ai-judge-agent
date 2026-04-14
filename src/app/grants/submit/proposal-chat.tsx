@@ -4,6 +4,7 @@ import { useChat } from "ai/react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ProposalFormData } from "./schema";
 import type { GithubRepoData } from "@/evaluation/agents/tools/extract-github";
+import type { VideoData } from "@/evaluation/agents/tools/extract-video";
 
 const INITIAL_MESSAGE = "Hi! I'm here to help you create a grant proposal for IPE City. Tell me about your project -- what are you building and why does it matter?";
 
@@ -110,6 +111,62 @@ function GithubRepoCard({ repo }: GithubRepoCardProps) {
   );
 }
 
+const PLATFORM_LABELS: Record<string, string> = {
+  youtube: "YouTube",
+  loom: "Loom",
+  vimeo: "Vimeo",
+  unknown: "Video",
+};
+
+const PLATFORM_COLORS: Record<string, string> = {
+  youtube: "red",
+  loom: "purple",
+  vimeo: "cyan",
+  unknown: "gray",
+};
+
+interface VideoCardProps {
+  readonly video: VideoData;
+}
+
+function VideoCard({ video }: VideoCardProps) {
+  const label = PLATFORM_LABELS[video.platform] ?? "Video";
+  const color = PLATFORM_COLORS[video.platform] ?? "gray";
+
+  return (
+    <div className={`rounded-lg border border-${color}-200 bg-${color}-50 p-4 mt-2 text-sm`}>
+      <div className="flex items-start gap-3">
+        {video.thumbnailUrl && (
+          <img
+            src={video.thumbnailUrl}
+            alt={video.title ?? "Video thumbnail"}
+            className="w-24 h-16 object-cover rounded shrink-0"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`inline-flex items-center rounded-full bg-${color}-100 px-2 py-0.5 text-xs font-medium text-${color}-800`}>
+              {label}
+            </span>
+            <span className={`text-xs ${video.transcript ? "text-green-600" : "text-gray-500"}`}>
+              {video.transcript ? "Transcript available" : "Metadata only"}
+            </span>
+          </div>
+          {video.title && (
+            <p className={`font-semibold text-${color}-900 truncate`}>{video.title}</p>
+          )}
+          {video.author && (
+            <p className={`text-${color}-700 text-xs mt-0.5`}>{video.author}</p>
+          )}
+        </div>
+      </div>
+      <p className={`text-xs text-${color}-500 mt-2`}>
+        Video data extracted — the assistant will use this to pre-fill your proposal.
+      </p>
+    </div>
+  );
+}
+
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 px-4 py-2">
@@ -138,6 +195,7 @@ export function ProposalChat() {
 
   const [extractedProposal, setExtractedProposal] = useState<ProposalFormData | null>(null);
   const [extractedRepos, setExtractedRepos] = useState<GithubRepoData[]>([]);
+  const [extractedVideos, setExtractedVideos] = useState<VideoData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ proposalId: string; detailUrl: string } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -150,6 +208,7 @@ export function ProposalChat() {
   // Watch for tool calls that extract a complete proposal or GitHub repo data
   useEffect(() => {
     const newRepos: GithubRepoData[] = [];
+    const newVideos: VideoData[] = [];
 
     for (const message of messages) {
       if (message.role !== "assistant") {
@@ -174,11 +233,21 @@ export function ProposalChat() {
         ) {
           newRepos.push(part.toolInvocation.result as GithubRepoData);
         }
+        if (
+          part.toolInvocation.toolName === "extractVideoContext" &&
+          part.toolInvocation.state === "result" &&
+          part.toolInvocation.result?.platform
+        ) {
+          newVideos.push(part.toolInvocation.result as VideoData);
+        }
       }
     }
 
     if (newRepos.length > 0) {
       setExtractedRepos(newRepos);
+    }
+    if (newVideos.length > 0) {
+      setExtractedVideos(newVideos);
     }
   }, [messages]);
 
@@ -288,6 +357,15 @@ export function ProposalChat() {
         <div className="px-4 space-y-2">
           {extractedRepos.map((repo) => (
             <GithubRepoCard key={repo.url} repo={repo} />
+          ))}
+        </div>
+      )}
+
+      {/* Video cards */}
+      {extractedVideos.length > 0 && (
+        <div className="px-4 space-y-2">
+          {extractedVideos.map((video) => (
+            <VideoCard key={video.url} video={video} />
           ))}
         </div>
       )}
