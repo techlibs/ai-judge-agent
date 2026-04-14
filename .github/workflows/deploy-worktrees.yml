@@ -1,6 +1,11 @@
 name: Deploy Worktrees to Cloud Run
 
 on:
+  push:
+    branches:
+      - full-vision-roadmap
+      - speckit
+      - superpower
   workflow_dispatch:
     inputs:
       worktree:
