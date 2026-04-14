@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 export default async function OperatorDashboard() {
   const session = await auth();
   if (!session) {
-    redirect("/api/auth/signin");
+    redirect("/dashboard/operator/login");
   }
 
   return (
