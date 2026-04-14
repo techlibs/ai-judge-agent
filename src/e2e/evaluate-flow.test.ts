@@ -30,7 +30,7 @@ vi.mock("@/lib/evaluation/scorers", () => ({
     faithfulness: 0.92,
     hallucination: 0.08,
     promptAlignment: 0.88,
-    meetsQuality: true,
+    qualityFlag: false,
   }),
 }));
 
@@ -166,7 +166,7 @@ describe("E2E: Submit → Evaluate → Publish", () => {
     // Each dimension has quality scores from scorer pipeline
     for (const dim of result.dimensions) {
       expect(dim.qualityScores).not.toBeNull();
-      expect(dim.qualityScores?.meetsQuality).toBe(true);
+      expect(dim.qualityScores?.qualityFlag).toBe(false);
     }
 
     // Timestamp is valid ISO string
