@@ -4,7 +4,7 @@ export async function POST() {
   try {
     const { auth } = await import("@/lib/auth");
     const session = await auth();
-    if (!session?.user) {
+    if (!session?.user?.email && !session?.user?.name) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   } catch {
