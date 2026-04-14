@@ -8,6 +8,85 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
+// ─── GitHub Repo Preview ─────────────────────────────────────────────
+
+interface GitHubRepoPreview {
+  name: string;
+  description: string | null;
+  stars: number;
+  language: string | null;
+  topics: string[];
+  languages: Record<string, number>;
+}
+
+function extractGitHubRepoFromParts(
+  parts: Array<{ type: string; [key: string]: unknown }>,
+): GitHubRepoPreview | null {
+  for (const part of parts) {
+    if (part.type !== "tool-invocation") continue;
+    const toolName = part.toolName as string | undefined;
+    const state = part.state as string | undefined;
+    if (toolName !== "extractGithubRepo" || state !== "result") continue;
+
+    const result = part.result as Record<string, unknown> | undefined;
+    if (!result) continue;
+
+    const name = result.name as string | undefined;
+    if (!name) continue;
+
+    return {
+      name,
+      description: (result.description as string | null) ?? null,
+      stars: (result.stars as number) ?? 0,
+      language: (result.language as string | null) ?? null,
+      topics: (result.topics as string[]) ?? [],
+      languages: (result.languages as Record<string, number>) ?? {},
+    };
+  }
+  return null;
+}
+
+function GitHubRepoCard({ repo }: { repo: GitHubRepoPreview }) {
+  const topLanguages = Object.keys(repo.languages).slice(0, 3);
+
+  return (
+    <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <span>{repo.name}</span>
+          <Badge variant="secondary">{repo.stars} stars</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {repo.description && (
+          <p className="text-muted-foreground">{repo.description}</p>
+        )}
+        <div className="flex flex-wrap gap-1">
+          {repo.language && (
+            <Badge variant="outline">{repo.language}</Badge>
+          )}
+          {topLanguages.map((lang) => (
+            <Badge key={lang} variant="outline">
+              {lang}
+            </Badge>
+          ))}
+        </div>
+        {repo.topics.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {repo.topics.slice(0, 5).map((topic) => (
+              <Badge key={topic} variant="secondary" className="text-xs">
+                {topic}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Proposal Preview ────────────────────────────────────────────────
+
 interface ProposalPreview {
   title: string;
   description: string;
@@ -106,6 +185,18 @@ export function ProposalChat() {
     return null;
   }, [messages]);
 
+  const extractedRepos = useMemo(() => {
+    const repos: GitHubRepoPreview[] = [];
+    for (const message of messages) {
+      if (message.role !== "assistant") continue;
+      const repo = extractGitHubRepoFromParts(
+        message.parts as Array<{ type: string; [key: string]: unknown }>,
+      );
+      if (repo) repos.push(repo);
+    }
+    return repos;
+  }, [messages]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -185,6 +276,14 @@ export function ProposalChat() {
           </div>
         )}
       </div>
+
+      {extractedRepos.length > 0 && (
+        <div className="px-4 pb-2 space-y-2">
+          {extractedRepos.map((repo) => (
+            <GitHubRepoCard key={repo.name} repo={repo} />
+          ))}
+        </div>
+      )}
 
       {submittedProposal && (
         <div className="px-4 pb-2">

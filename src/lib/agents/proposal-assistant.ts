@@ -10,6 +10,7 @@ import {
   PROPOSAL_CATEGORIES,
   RESIDENCY_DURATIONS,
 } from "@/lib/constants";
+import { extractGithubRepo } from "@/lib/agents/tools/extract-github";
 
 // ─── Injection Guard (matches judge agent pattern) ──────────────────
 
@@ -115,6 +116,14 @@ YOUR ROLE:
 - Ask about each section conversationally, not like a form
 - Validate inputs and provide helpful feedback
 - When all required fields are collected, use the submitProposal tool
+- When the user shares a GitHub URL, use the extractGithubRepo tool immediately to fetch repo data, then use the README and description to suggest values for: Description, Problem Statement, Proposed Solution, and Technical approach
+
+GITHUB URL HANDLING:
+- Detect GitHub URLs anywhere in the user message (e.g. "here is my repo: https://github.com/...")
+- Call extractGithubRepo with the URL as soon as you see one
+- After extraction, present the data you found and ask the user to confirm or refine suggested field values
+- Use repo topics and languages to inform the category suggestion
+- Use stars and activity to acknowledge credibility without inflating scores
 
 PROPOSAL FIELDS TO COLLECT:
 1. **Title** — A concise project name (min 5 chars)
@@ -161,6 +170,7 @@ export const proposalAssistantAgent = new Agent({
   instructions: PROPOSAL_ASSISTANT_PROMPT,
   inputProcessors: [injectionGuard],
   tools: {
+    extractGithubRepo,
     validateProposal: {
       description:
         "Validates a partial proposal and returns which fields are complete and which are missing or invalid",
