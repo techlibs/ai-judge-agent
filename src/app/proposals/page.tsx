@@ -110,6 +110,11 @@ export default function ProposalsPage() {
           Submit Proposal
         </Link>
       </div>
+      {process.env.NEXT_PUBLIC_CHAIN_ID === "84532" && (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Base Sepolia Testnet — includes test proposals
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
         {proposals.map((proposal) => (
           <ProposalCard
