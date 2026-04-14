@@ -1,0 +1,13 @@
+{
+  "name": "ipe-grant-evaluator",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "bun test packages/",
+    "test:contracts": "cd contracts && forge test -vvv",
+    "build": "cd contracts && forge build"
+  }
+}
