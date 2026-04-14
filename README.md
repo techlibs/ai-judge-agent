@@ -4,46 +4,163 @@ AI Judge system for evaluating grant proposals and surfacing community consensus
 
 The system evaluates grant proposals using AI-powered Judge Agents that score across four dimensions: Technical Feasibility (25%), Impact Potential (30%), Cost Efficiency (20%), and Team Capability (25%). Scores and justifications are pinned to IPFS and recorded on-chain (Base L2), making every evaluation publicly verifiable.
 
-## Branch Strategy
+## Getting Started
 
-Main holds shared project foundation (CLAUDE.md, reference architecture, framework analysis). Each development methodology gets its own long-lived branch, worked on in isolated git worktrees. All three branches have progressed from planning through to working implementations with deployed live instances.
+### Prerequisites
 
-| Branch | Framework | Files | Status | Live URL |
-|--------|-----------|-------|--------|----------|
-| `main` | — | — | Shared foundation | — |
-| `speckit` | [Spec Kit](https://github.com/gallium-ai/speckit) | 258 | Implemented | [Live](https://agent-reviewer-speckit-1010906320334.us-central1.run.app) |
-| `full-vision-roadmap` | [GSD](https://github.com/gallium-ai/gsd) | 1103 | Implemented | [Live](https://agent-reviewer-gsd-1010906320334.us-central1.run.app) |
-| `superpower` | [Superpowers](https://github.com/gallium-ai/superpowers) | 992 | Implemented | [Live](https://agent-reviewer-superpower-1010906320334.us-central1.run.app) |
+- [Bun](https://bun.sh/) 1.3+
+- Node.js 22+ (for Next.js compatibility)
+- [Foundry](https://getfoundry.sh/) 1.6+ (for smart contract interactions)
 
-Each branch represents a parallel exploration of the same product using different AI-assisted development frameworks. The goal is to compare how each approach handles the same problem space — from requirements gathering through working software.
+### Quick Start
 
-### What each branch implements
+```bash
+# Clone and install
+git clone https://github.com/techlibs/ai-judge-agent.git
+cd ai-judge-agent
+bun install
 
-All three branches deliver the same core product — a grant proposal evaluation system with AI judges — but arrived there through different framework workflows:
+# Set up environment
+cp .env.example .env.local
+# Edit .env.local with your API keys (see Environment Variables below)
 
-- **speckit** — Spec Kit's specification-first approach. Proposal submission form, 4-agent judge pipeline (GPT-5.4), conversational chatbot for evaluation discussion, Colosseum Copilot market intelligence agent, on-chain score publishing, Cloud Run deployment.
-- **full-vision-roadmap** — GSD's milestone-driven approach. Full evaluation pipeline with multi-turn chat, Colosseum Copilot competitive intelligence integration, E2E test suite with chain and mobile coverage, GPT-5.4 judge agents, Cloud Run deployment.
-- **superpower** — Superpowers' brainstorming-first approach. 3-agent Colosseum Copilot research team with 4-layer injection defense, conversational chatbot, AI SDK v6 compatibility, GPT-5.4 judges, E2E evaluation tests, Cloud Run deployment.
+# Start development
+bun run dev
+# Open http://localhost:3000
+```
 
-## Documentation
+### Scripts
 
-| Document | Description |
-|----------|-------------|
-| [Audit Skills Toolkit](docs/audit-skills-toolkit.md) | Curated Claude Code skills for auditing across all layers: Solidity contracts, Next.js web app, TypeScript quality, dependency supply chain, and secrets management |
-| [Agent Team Audit Launch Guide](docs/agent-team-audit-launch.md) | Run all audit skills across 3 worktrees in parallel using Claude Code Agent Teams |
-| [Design Security Audit Report](docs/DESIGN-AUDIT-REPORT.md) | Pre-implementation security review of all plans, specs, and architecture docs across 3 worktrees |
+```bash
+bun run dev          # Development server
+bun run build        # Production build
+bun run start        # Start production server
+bun run lint         # Lint check
+bun run lint:fix     # Lint and auto-fix
+bun run typecheck    # TypeScript type checking
+bun run test         # Run tests
+bun run test:watch   # Run tests in watch mode
+```
 
-## Deployments
+## Environment Variables
 
-All three worktrees are deployed as Cloud Run services on GCP (`ipe-city` project, `us-central1`):
+Create `.env.local` with the following:
 
-| Service | Worktree | URL |
-|---------|----------|-----|
-| `agent-reviewer-gsd` | full-vision-roadmap | https://agent-reviewer-gsd-1010906320334.us-central1.run.app |
-| `agent-reviewer-speckit` | speckit | https://agent-reviewer-speckit-1010906320334.us-central1.run.app |
-| `agent-reviewer-superpower` | superpower | https://agent-reviewer-superpower-1010906320334.us-central1.run.app |
+```bash
+# AI Providers (required for evaluation)
+ANTHROPIC_API_KEY=sk-ant-...          # Claude Sonnet for judge agents
+OPENAI_API_KEY=sk-...                 # Failover provider
 
-Smart contracts are deployed on **Base Mainnet** and **Base Sepolia** at identical addresses:
+# API Authentication
+API_SECRET_KEY=your-secret-key        # Required for POST /api/evaluate
+
+# IPFS Storage (Pinata)
+PINATA_JWT=eyJ...                     # Pinata API JWT token
+PINATA_GATEWAY=your-gateway.mypinata.cloud
+
+# On-Chain Configuration
+NEXT_PUBLIC_CHAIN_ID=84532            # 84532 = Base Sepolia, 8453 = Base Mainnet
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+
+# Contract Addresses (same on testnet and mainnet)
+NEXT_PUBLIC_IDENTITY_REGISTRY_ADDRESS=0xDf1ebEe392e6B6AFEE89Fb83CDBF97dA9f8b7B6a
+NEXT_PUBLIC_EVALUATION_REGISTRY_ADDRESS=0xa86D6684De7878C36F03697657702A86D13028d8
+NEXT_PUBLIC_REPUTATION_REGISTRY_ADDRESS=0x0DB2eef99d1Efb3313c6Fe314D137914eCc6FB1f
+NEXT_PUBLIC_VALIDATION_REGISTRY_ADDRESS=0x5A0Bf56694c8448F681c909C1F61849c1A183f17
+NEXT_PUBLIC_MILESTONE_MANAGER_ADDRESS=0xb4161cB90f2664A0d4485265ee150A7f3a7d536b
+NEXT_PUBLIC_DISPUTE_REGISTRY_ADDRESS=0x78f8688c1a3e4ec762E7351996B7b3c275f32b0e
+
+# Optional
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+GITHUB_TOKEN=ghp_...                  # For monitoring agent GitHub integration
+DEPLOYMENT_BLOCK=0                    # Block number for event scanning start
+```
+
+## Architecture
+
+```
+src/
+├── app/                          # Next.js App Router
+│   ├── api/
+│   │   ├── evaluate/             # POST evaluation trigger + SSE streaming
+│   │   ├── evaluations/[id]/     # GET evaluation results from chain
+│   │   └── health/               # Health check
+│   ├── dashboard/operator/       # Operator dashboard
+│   ├── grants/                   # Proposal listing, detail, and submission
+│   └── page.tsx                  # Landing page
+├── chain/                        # On-chain interactions (viem)
+│   ├── contracts.ts              # Client setup, ABI definitions
+│   ├── evaluation-registry.ts    # Score submission and retrieval
+│   ├── identity-registry.ts      # Agent identity management
+│   ├── reputation-registry.ts    # Feedback and reputation
+│   ├── dispute-registry.ts       # Dispute resolution
+│   ├── milestone-manager.ts      # Milestone-based fund release
+│   └── validation-registry.ts    # Validator scoring
+├── components/                   # React components
+│   ├── ui/                       # shadcn/ui primitives
+│   ├── nav-bar.tsx               # Global navigation
+│   └── error-boundary.tsx        # Error handling
+├── evaluation/                   # Scoring and sanitization
+│   ├── scoring.ts                # Score normalization
+│   ├── sanitization.ts           # PII removal
+│   └── schemas.ts                # Evaluation data schemas
+├── ipfs/                         # IPFS pinning (Pinata)
+│   ├── client.ts                 # Pinata client setup
+│   └── pin.ts                    # Pin JSON to IPFS
+├── lib/
+│   ├── evaluation/               # Evaluation pipeline
+│   │   ├── workflow.ts           # Orchestrator: parallel judges + scoring
+│   │   ├── scorers.ts            # @mastra/evals quality scoring
+│   │   └── proposal-schema.ts    # Proposal validation schema
+│   ├── judges/                   # Judge agent definitions
+│   │   ├── agents.ts             # 4 judge agents + injection detection
+│   │   ├── prompts.ts            # Judge system prompts
+│   │   ├── schemas.ts            # Structured output schemas
+│   │   └── scoring.ts            # Weighted aggregate scoring
+│   ├── mastra/                   # Mastra framework setup
+│   │   └── index.ts              # Agent registration
+│   ├── api-auth.ts               # API key auth + HMAC signing
+│   ├── rate-limit.ts             # In-memory rate limiting
+│   ├── sanitize-html.ts          # DOMPurify for content display
+│   ├── security-log.ts           # Security event logging
+│   └── validate-origin.ts        # Origin validation
+└── monitoring/                   # Funded project monitoring
+    ├── agent-config.ts           # Monitor agent definitions
+    ├── github.ts                 # GitHub activity tracker
+    ├── onchain.ts                # On-chain activity tracker
+    ├── social.ts                 # Social signal tracker
+    ├── runner.ts                 # Individual agent runner
+    └── orchestrate.ts            # Multi-agent orchestrator
+```
+
+## API Endpoints
+
+### POST /api/evaluate
+Trigger evaluation of a grant proposal. Requires `x-api-key` header.
+
+### POST /api/evaluate/stream
+Same as above but returns SSE stream with real-time progress events.
+
+### GET /api/evaluations/[id]
+Retrieve evaluation results from the on-chain registry.
+
+### GET /api/health
+Health check endpoint.
+
+## Tech Stack
+
+- **Runtime**: Bun + TypeScript (strict mode)
+- **Framework**: Next.js 15 (App Router) on Vercel
+- **AI**: Mastra 1.x + Vercel AI SDK, Claude Sonnet (primary), GPT-4o (failover)
+- **Quality**: @mastra/evals scorer pipeline (faithfulness, hallucination, prompt alignment)
+- **Storage**: On-chain (Base L2) + IPFS (Pinata)
+- **Contracts**: Solidity 0.8.24 (Foundry), 6 contracts on Base Sepolia + Mainnet
+- **UI**: Tailwind CSS 4 + shadcn/ui
+- **Security**: API key auth, HMAC signing, rate limiting, prompt injection defense, PII sanitization
+
+## On-Chain Contracts
+
+Deployed on both **Base Sepolia** (testnet) and **Base Mainnet** at identical addresses:
 
 | Contract | Address |
 |----------|---------|
@@ -54,15 +171,7 @@ Smart contracts are deployed on **Base Mainnet** and **Base Sepolia** at identic
 | MilestoneManager | [`0xb4161cB90f2664A0d4485265ee150A7f3a7d536b`](https://basescan.org/address/0xb4161cB90f2664A0d4485265ee150A7f3a7d536b) |
 | DisputeRegistry | [`0x78f8688c1a3e4ec762E7351996B7b3c275f32b0e`](https://basescan.org/address/0x78f8688c1a3e4ec762E7351996B7b3c275f32b0e) |
 
-## Tech Stack
-
-- **Runtime**: Bun + TypeScript (strict mode)
-- **Framework**: Next.js (App Router)
-- **AI/LLM**: Mastra agent framework + Vercel AI SDK, GPT-5.4 (primary), Claude Sonnet (fallback)
-- **Storage**: On-chain (Base L2) + IPFS (Pinata) as source of truth
-- **Contracts**: Solidity 0.8.24 (Foundry), ERC-8004 for agent identity/reputation
-- **UI**: Tailwind CSS + shadcn/ui
-- **Deployment**: Cloud Run (GCP) for all worktrees
+Switch between testnet and mainnet by changing `NEXT_PUBLIC_CHAIN_ID` (84532 or 8453) and `BASE_SEPOLIA_RPC_URL` in `.env.local`.
 
 ## License
 
