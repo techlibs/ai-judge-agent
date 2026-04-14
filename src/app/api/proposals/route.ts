@@ -8,6 +8,9 @@ import {
 import { fetchFromIPFS } from "@/lib/ipfs/client";
 import { proposalContentSchema } from "@/lib/ipfs/schemas";
 
+const CACHE_TTL_MS = 60_000;
+const proposalsCache = new Map<string, { data: string; expiry: number }>();
+
 const DEFAULT_PAGE_LIMIT = 20;
 const MAX_PAGE_LIMIT = 100;
 const MAX_PARALLEL_IPFS_FETCHES = 10;
@@ -24,6 +27,15 @@ export async function GET(request: NextRequest) {
       MAX_PAGE_LIMIT,
       Math.max(1, Number(searchParams.get("limit") ?? String(DEFAULT_PAGE_LIMIT)))
     );
+
+    const cacheKey = `${page}:${limit}`;
+    const cached = proposalsCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiry) {
+      return new NextResponse(cached.data, {
+        status: 200,
+        headers: { "Content-Type": "application/json", "X-Cache": "HIT" },
+      });
+    }
 
     const publicClient = getPublicClient();
     const { identityRegistry, reputationRegistry } = getContractAddresses();
@@ -114,7 +126,7 @@ export async function GET(request: NextRequest) {
       proposals.push(...results);
     }
 
-    return NextResponse.json({
+    const responseBody = JSON.stringify({
       proposals,
       pagination: {
         page,
@@ -122,6 +134,11 @@ export async function GET(request: NextRequest) {
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
       },
+    });
+    proposalsCache.set(cacheKey, { data: responseBody, expiry: Date.now() + CACHE_TTL_MS });
+    return new NextResponse(responseBody, {
+      status: 200,
+      headers: { "Content-Type": "application/json", "X-Cache": "MISS" },
     });
   } catch (err) {
     console.error("[/api/proposals] Error:", err);
