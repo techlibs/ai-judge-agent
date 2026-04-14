@@ -12,7 +12,7 @@ This roadmap delivers a trustless grant evaluation agent that runs on both Solan
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Scaffolding** - Monorepo structure, Solana/Ethereum project scaffolds, dev tooling, CI pipeline
+- [x] **Phase 1: Foundation & Scaffolding** - Monorepo structure, Solana/Ethereum project scaffolds, dev tooling, CI pipeline (completed 2026-04-14)
 - [ ] **Phase 2: On-Chain Proposal Submission** - Smart contracts on both chains for proposal submission, IPFS content storage, auto-trigger evaluation
 - [ ] **Phase 3: AI Evaluation Engine** - Four specialized ONNX models for security, fraud, impact, and alignment scoring with adversarial evaluation stance
 - [ ] **Phase 4: Scoring & Reasoning System** - Weighted composite scoring, evidence-backed reasoning, deterministic evaluation, governance-configurable weights
@@ -30,10 +30,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Monorepo builds successfully with Anchor (Solana) and Foundry (Ethereum) projects
   2. Local development environment runs both chain simulators (solana-test-validator, anvil)
   3. CI pipeline runs lint, build, and placeholder tests on push
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 01-01-PLAN.md — Scaffold monorepo with Anchor and Foundry projects
-- [ ] 01-02-PLAN.md — CI pipeline and Makefile for unified build/test/lint
+- [x] 01-01-PLAN.md — Scaffold monorepo with Anchor and Foundry projects
+- [x] 01-02-PLAN.md — CI pipeline and Makefile for unified build/test/lint
 
 ### Phase 2: On-Chain Proposal Submission
 **Goal**: Proposers can submit grant proposals on either Solana or Ethereum and track their evaluation status
@@ -115,7 +115,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Scaffolding | 0/2 | Planning complete | - |
+| 1. Foundation & Scaffolding | 2/2 | Complete    | 2026-04-14 |
 | 2. On-Chain Proposal Submission | 0/TBD | Not started | - |
 | 3. AI Evaluation Engine | 0/TBD | Not started | - |
 | 4. Scoring & Reasoning System | 0/TBD | Not started | - |
