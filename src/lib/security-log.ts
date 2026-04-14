@@ -4,27 +4,22 @@ type SecurityEventType =
   | "score_anomaly"
   | "pii_detected"
   | "injection_attempt"
+  | "external_data_injection"
+  | "coherence_review_recommended"
   | "webhook_signature_invalid"
   | "dispute_opened"
   | "dispute_resolved";
 
 interface SecurityEvent {
   readonly type: SecurityEventType;
-  readonly message: string;
-  readonly metadata?: Record<string, unknown>;
-  readonly requestId?: string;
-  readonly ip?: string;
+  readonly [key: string]: unknown;
 }
 
 export function logSecurityEvent(event: SecurityEvent): void {
   const entry = {
     level: "SECURITY",
     timestamp: new Date().toISOString(),
-    type: event.type,
-    message: event.message,
-    requestId: event.requestId,
-    ip: event.ip,
-    ...event.metadata,
+    ...event,
   };
 
   console.log(JSON.stringify(entry));
