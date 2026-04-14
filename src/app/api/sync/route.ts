@@ -1,26 +1,30 @@
 import { NextResponse } from "next/server";
-import { syncCache } from "@/cache/sync";
 
 export async function POST() {
-  let session;
   try {
     const { auth } = await import("@/lib/auth");
-    session = await auth();
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  try {
+    const { syncCache } = await import("@/cache/sync");
+    const startTime = Date.now();
+    const result = await syncCache();
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    return NextResponse.json({
+      synced: true,
+      eventsProcessed: result.eventsProcessed,
+      ipfsFetched: result.ipfsFetched,
+      duration: `${duration}s`,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Sync failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const startTime = Date.now();
-  const result = await syncCache();
-  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-
-  return NextResponse.json({
-    synced: true,
-    eventsProcessed: result.eventsProcessed,
-    ipfsFetched: result.ipfsFetched,
-    duration: `${duration}s`,
-  });
 }
