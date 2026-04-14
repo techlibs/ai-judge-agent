@@ -4,6 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { proposalSchema } from "@/lib/schemas/proposal";
 import { FIELD_LIMITS } from "@/lib/constants/proposal";
+import { extractGithubRepo } from "@/lib/agents/tools/extract-github";
 
 export const PROPOSAL_ASSISTANT_SYSTEM_PROMPT = `You are a friendly Proposal Assistant for IPE City Grants. Your job is to guide users through creating a grant proposal via natural conversation.
 
@@ -23,7 +24,15 @@ Guidelines:
 - If validation fails, explain what needs to be fixed conversationally
 - Be encouraging and helpful, not bureaucratic
 - You can help users refine their descriptions and team info
-- External links are optional — do not pressure users to provide them`;
+- External links are optional — do not pressure users to provide them
+
+GitHub URL handling:
+- Whenever the user shares a GitHub URL (e.g. https://github.com/owner/repo), immediately call the extractGithubRepo tool with that URL
+- After extracting data, use the README content to draft a Description — summarize the project goals, approach, and technical details from the README
+- Use the repo description and topics to help suggest a concise Title
+- If the repo has contributor information or organization context, use that to draft Team Info
+- Always tell the user what you extracted and ask them to confirm or adjust the drafted fields
+- Add the GitHub URL to External Links automatically`;
 
 const partialProposalSchema = z.object({
   title: z.string().optional().describe("The proposal title"),
@@ -128,10 +137,12 @@ export const proposalAssistant = new Agent({
   tools: {
     validate_proposal: validateProposalTool,
     submit_proposal: submitProposalTool,
+    extractGithubRepo,
   },
 });
 
 export const PROPOSAL_ASSISTANT_TOOLS = {
   validate_proposal: validateProposalTool,
   submit_proposal: submitProposalTool,
+  extractGithubRepo,
 };

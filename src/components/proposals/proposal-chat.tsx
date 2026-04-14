@@ -23,6 +23,53 @@ interface ExtractedProposal {
   externalLinks: string[];
 }
 
+interface GithubRepoData {
+  name: string;
+  description: string | null;
+  stars: number;
+  language: string | null;
+  topics: string[];
+  languages: Record<string, number>;
+  readmeExcerpt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  url: string;
+}
+
+function extractGithubRepoFromMessages(
+  messages: UIMessage[]
+): GithubRepoData | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== "assistant") continue;
+
+    for (const part of message.parts) {
+      if (!part.type.startsWith("tool-")) continue;
+
+      const toolPart = part as Record<string, unknown>;
+      if (
+        toolPart.type !== "tool-extractGithubRepo" &&
+        toolPart.type !== "dynamic-tool"
+      )
+        continue;
+
+      if (
+        toolPart.type === "dynamic-tool" &&
+        toolPart.toolName !== "extractGithubRepo"
+      )
+        continue;
+
+      if (toolPart.state !== "output-available") continue;
+
+      const output = toolPart.output as Record<string, unknown> | undefined;
+      if (output && typeof output.name === "string") {
+        return output as unknown as GithubRepoData;
+      }
+    }
+  }
+  return null;
+}
+
 function extractProposalFromMessages(
   messages: UIMessage[]
 ): ExtractedProposal | null {
@@ -86,6 +133,7 @@ export function ProposalChat() {
   }, [messages]);
 
   const extractedProposal = extractProposalFromMessages(messages);
+  const githubRepo = extractGithubRepoFromMessages(messages);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -200,6 +248,50 @@ export function ProposalChat() {
 
         <div ref={messagesEndRef} />
       </div>
+
+      {githubRepo && !extractedProposal && (
+        <Card className="mt-3 border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">
+              GitHub Repo Extracted:{" "}
+              <a
+                href={githubRepo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4"
+              >
+                {githubRepo.name}
+              </a>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-xs text-muted-foreground">
+            {githubRepo.description && <p>{githubRepo.description}</p>}
+            <div className="flex flex-wrap gap-3">
+              <span>{githubRepo.stars.toLocaleString()} stars</span>
+              {githubRepo.language && <span>{githubRepo.language}</span>}
+              {Object.keys(githubRepo.languages).length > 0 && (
+                <span>
+                  {Object.keys(githubRepo.languages)
+                    .slice(0, 4)
+                    .join(", ")}
+                </span>
+              )}
+            </div>
+            {githubRepo.topics.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {githubRepo.topics.slice(0, 6).map((topic) => (
+                  <span
+                    key={topic}
+                    className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                  >
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {extractedProposal && !submitResult && (
         <Card className="mt-3">
