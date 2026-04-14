@@ -313,6 +313,7 @@ export function ProposalSubmitForm() {
             name="budgetAmount"
             step="0.01"
             min="0"
+            defaultValue={10000}
             className={`mt-1 block w-full rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-1 sm:text-sm ${fieldErrorClass(errors, "budgetAmount")}`}
             placeholder="10000"
           />

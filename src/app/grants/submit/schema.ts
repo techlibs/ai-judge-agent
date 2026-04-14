@@ -17,7 +17,7 @@ export const proposalFormSchema = z.object({
   category: z.enum(["infrastructure", "education", "community", "research", "governance"], {
     errorMap: () => ({ message: "Please select a category" }),
   }),
-  budgetAmount: z.number({ invalid_type_error: "Budget must be a number" }).positive("Budget must be positive").max(100_000_000, "Budget cannot exceed 100,000,000"),
+  budgetAmount: z.coerce.number({ invalid_type_error: "Budget must be a number" }).positive("Budget must be positive").max(100_000_000, "Budget cannot exceed 100,000,000"),
   budgetCurrency: z.enum(["USD", "ETH"], {
     errorMap: () => ({ message: "Please select a currency" }),
   }),
