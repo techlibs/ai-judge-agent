@@ -3,6 +3,7 @@
 import { useChat } from "ai/react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ProposalFormData } from "./schema";
+import type { GithubRepoData } from "@/evaluation/agents/tools/extract-github";
 
 const INITIAL_MESSAGE = "Hi! I'm here to help you create a grant proposal for IPE City. Tell me about your project -- what are you building and why does it matter?";
 
@@ -52,6 +53,63 @@ function ProposalPreview({ proposal, onSubmit, isSubmitting }: ProposalPreviewPr
   );
 }
 
+interface GithubRepoCardProps {
+  readonly repo: GithubRepoData;
+}
+
+function GithubRepoCard({ repo }: GithubRepoCardProps) {
+  const topLanguages = Object.entries(repo.languages)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([lang]) => lang);
+
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 mt-2 text-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h4 className="font-semibold text-blue-900">{repo.name}</h4>
+          {repo.description && (
+            <p className="text-blue-700 mt-1">{repo.description}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 text-blue-600 shrink-0">
+          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          <span>{repo.stars.toLocaleString()}</span>
+        </div>
+      </div>
+      {topLanguages.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {topLanguages.map((lang) => (
+            <span
+              key={lang}
+              className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
+            >
+              {lang}
+            </span>
+          ))}
+        </div>
+      )}
+      {repo.topics.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {repo.topics.slice(0, 5).map((topic) => (
+            <span
+              key={topic}
+              className="inline-flex items-center rounded-full bg-blue-200 px-2 py-0.5 text-xs text-blue-700"
+            >
+              {topic}
+            </span>
+          ))}
+        </div>
+      )}
+      <p className="text-xs text-blue-500 mt-2">
+        GitHub data extracted — the assistant will use this to pre-fill your proposal.
+      </p>
+    </div>
+  );
+}
+
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 px-4 py-2">
@@ -79,6 +137,7 @@ export function ProposalChat() {
   });
 
   const [extractedProposal, setExtractedProposal] = useState<ProposalFormData | null>(null);
+  const [extractedRepos, setExtractedRepos] = useState<GithubRepoData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ proposalId: string; detailUrl: string } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -88,8 +147,10 @@ export function ProposalChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Watch for tool calls that extract a complete proposal
+  // Watch for tool calls that extract a complete proposal or GitHub repo data
   useEffect(() => {
+    const newRepos: GithubRepoData[] = [];
+
     for (const message of messages) {
       if (message.role !== "assistant") {
         continue;
@@ -106,7 +167,18 @@ export function ProposalChat() {
         ) {
           setExtractedProposal(part.toolInvocation.result.proposal);
         }
+        if (
+          part.toolInvocation.toolName === "extractGithubRepo" &&
+          part.toolInvocation.state === "result" &&
+          part.toolInvocation.result?.name
+        ) {
+          newRepos.push(part.toolInvocation.result as GithubRepoData);
+        }
       }
+    }
+
+    if (newRepos.length > 0) {
+      setExtractedRepos(newRepos);
     }
   }, [messages]);
 
@@ -210,6 +282,15 @@ export function ProposalChat() {
         {isLoading && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* GitHub repo cards */}
+      {extractedRepos.length > 0 && (
+        <div className="px-4 space-y-2">
+          {extractedRepos.map((repo) => (
+            <GithubRepoCard key={repo.url} repo={repo} />
+          ))}
+        </div>
+      )}
 
       {/* Extracted proposal preview */}
       {extractedProposal && !submitResult && (

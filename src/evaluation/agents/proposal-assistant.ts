@@ -3,6 +3,7 @@ import { createTool } from "@mastra/core/tools";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { proposalFormSchema } from "@/app/grants/submit/schema";
+import { extractGithubRepo } from "./tools/extract-github";
 
 const PROPOSAL_CATEGORIES = ["infrastructure", "education", "community", "research", "governance"] as const;
 const BUDGET_CURRENCIES = ["USD", "ETH"] as const;
@@ -28,6 +29,12 @@ CONVERSATION GUIDELINES:
 - Once all required fields are collected, use the extractCompleteProposal tool to produce the final structured data.
 - Be conversational and encouraging. Help users refine their ideas.
 - If a field doesn't meet requirements (e.g., description too short), explain what's needed and help them expand it.
+
+GITHUB INTEGRATION:
+- When a user shares a GitHub URL, use the extractGithubRepo tool to fetch project details.
+- Use the extracted data (README, description, languages, topics) to help pre-fill proposal fields.
+- Always confirm extracted data with the user before using it in the proposal.
+- The README often contains the best project description — use it to draft the Description and Technical Description fields.
 
 IMPORTANT:
 - Never fabricate proposal data. Only use information the user explicitly provides.
@@ -157,6 +164,7 @@ export const proposalAssistant = new Agent({
   tools: {
     validatePartialProposal,
     extractCompleteProposal,
+    extractGithubRepo,
   },
 });
 
