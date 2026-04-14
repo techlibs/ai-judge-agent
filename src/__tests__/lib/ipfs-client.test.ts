@@ -39,8 +39,18 @@ mock.module("pinata", () => ({
   PinataSDK: MockPinataSDK,
 }));
 
-// Dynamic import AFTER mock.module so the module sees our mock
-const { uploadJson, verifyContentIntegrity } = await import("@/lib/ipfs/client");
+// Module under test — loaded after mock.module so it sees our mock PinataSDK.
+// We use beforeAll + module-level lets instead of top-level await import
+// to ensure compatibility across Bun versions.
+type IpfsClient = typeof import("@/lib/ipfs/client");
+let uploadJson: IpfsClient["uploadJson"];
+let verifyContentIntegrity: IpfsClient["verifyContentIntegrity"];
+
+beforeAll(async () => {
+  const mod = await import("@/lib/ipfs/client");
+  uploadJson = mod.uploadJson;
+  verifyContentIntegrity = mod.verifyContentIntegrity;
+});
 
 describe("uploadJson", () => {
   it("succeeds on first attempt and returns cid and uri", async () => {
@@ -74,6 +84,7 @@ describe("uploadJson", () => {
     uploadJsonMock.mockImplementation(() => Promise.reject(new Error("upload error")));
     // Speed up by making setTimeout instant — replace global setTimeout temporarily
     const originalSetTimeout = globalThis.setTimeout;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore — intentionally replacing for test speed
     globalThis.setTimeout = (fn: () => void, _delay: number) => originalSetTimeout(fn, 0);
 
