@@ -1,0 +1,8 @@
+node_modules
+.next
+.ralph
+.planning
+.git
+coverage
+.worktrees
+contracts

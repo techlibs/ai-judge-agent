@@ -1,5 +1,70 @@
-import { describe, it, expect } from "vitest";
-import { verifyWebhookSignature, signPayload } from "./api-auth";
+import { describe, it, expect, afterEach } from "vitest";
+import { verifyWebhookSignature, signPayload, requireApiKey } from "./api-auth";
+import { NextRequest } from "next/server";
+
+describe("requireApiKey", () => {
+  const originalEnv = process.env.API_SECRET_KEY;
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.API_SECRET_KEY;
+    } else {
+      process.env.API_SECRET_KEY = originalEnv;
+    }
+  });
+
+  it("returns null when no API_SECRET_KEY is configured (dev mode)", () => {
+    delete process.env.API_SECRET_KEY;
+    const req = new NextRequest("http://localhost/api/evaluate", {
+      method: "POST",
+    });
+    expect(requireApiKey(req)).toBeNull();
+  });
+
+  it("returns 401 when x-api-key header is missing", async () => {
+    process.env.API_SECRET_KEY = "test-secret-key";
+    const req = new NextRequest("http://localhost/api/evaluate", {
+      method: "POST",
+    });
+    const res = requireApiKey(req);
+    expect(res).not.toBeNull();
+    expect(res?.status).toBe(401);
+    const body = await res?.json();
+    expect(body.error).toBe("MISSING_API_KEY");
+  });
+
+  it("returns 403 when x-api-key is invalid", async () => {
+    process.env.API_SECRET_KEY = "test-secret-key";
+    const req = new NextRequest("http://localhost/api/evaluate", {
+      method: "POST",
+      headers: { "x-api-key": "wrong-key" },
+    });
+    const res = requireApiKey(req);
+    expect(res).not.toBeNull();
+    expect(res?.status).toBe(403);
+    const body = await res?.json();
+    expect(body.error).toBe("INVALID_API_KEY");
+  });
+
+  it("returns null when x-api-key matches", () => {
+    process.env.API_SECRET_KEY = "test-secret-key";
+    const req = new NextRequest("http://localhost/api/evaluate", {
+      method: "POST",
+      headers: { "x-api-key": "test-secret-key" },
+    });
+    expect(requireApiKey(req)).toBeNull();
+  });
+
+  it("rejects keys of different lengths (timing-safe)", async () => {
+    process.env.API_SECRET_KEY = "short";
+    const req = new NextRequest("http://localhost/api/evaluate", {
+      method: "POST",
+      headers: { "x-api-key": "a-much-longer-key-that-differs" },
+    });
+    const res = requireApiKey(req);
+    expect(res?.status).toBe(403);
+  });
+});
 
 describe("verifyWebhookSignature", () => {
   const secret = "test-webhook-secret-key";

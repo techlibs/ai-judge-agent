@@ -94,3 +94,227 @@ describe("proposalFormSchema", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("proposalFormSchema — extended coverage", () => {
+  it("rejects title exceeding 200 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      title: "A".repeat(201),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects title shorter than 5 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      title: "Hey",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects description exceeding 5000 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      description: "A".repeat(5001),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects problemStatement shorter than 20 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      problemStatement: "Too short",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects problemStatement exceeding 3000 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      problemStatement: "A".repeat(3001),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects proposedSolution shorter than 20 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      proposedSolution: "Too short",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects team member with empty name", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      teamMembers: [{ name: "", role: "Lead" }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects team member with empty role", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      teamMembers: [{ name: "Alice", role: "" }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects more than 20 team members", () => {
+    const members = Array.from({ length: 21 }, (_, i) => ({
+      name: `Person ${i}`,
+      role: "Member",
+    }));
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      teamMembers: members,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts exactly 20 team members", () => {
+    const members = Array.from({ length: 20 }, (_, i) => ({
+      name: `Person ${i}`,
+      role: "Member",
+    }));
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      teamMembers: members,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects zero budget", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      budgetAmount: 0,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts budget at exactly 1,000,000", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      budgetAmount: 1_000_000,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects budgetBreakdown shorter than 10 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      budgetBreakdown: "Short",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects timeline shorter than 10 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      timeline: "Week one",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts all valid categories", () => {
+    const categories = [
+      "infrastructure",
+      "research",
+      "community",
+      "education",
+      "creative",
+    ] as const;
+    for (const category of categories) {
+      const result = proposalFormSchema.safeParse({
+        ...validProposal,
+        category,
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it("accepts all valid residency durations", () => {
+    const durations = ["3-weeks", "4-weeks", "5-weeks"] as const;
+    for (const residencyDuration of durations) {
+      const result = proposalFormSchema.safeParse({
+        ...validProposal,
+        residencyDuration,
+      });
+      expect(result.success).toBe(true);
+    }
+  });
+
+  it("rejects invalid residency duration", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      residencyDuration: "2-weeks",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects demoDayDeliverable shorter than 10 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      demoDayDeliverable: "Short",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects communityContribution shorter than 10 characters", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      communityContribution: "Short",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts priorIpeParticipation as true", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      priorIpeParticipation: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects more than 10 links", () => {
+    const links = Array.from(
+      { length: 11 },
+      (_, i) => `https://example.com/${i}`
+    );
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      links,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("defaults links to empty array when omitted", () => {
+    const { links: _links, ...withoutLinks } = validProposal;
+    const result = proposalFormSchema.safeParse(withoutLinks);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.links).toEqual([]);
+    }
+  });
+
+  it("rejects non-number budgetAmount", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      budgetAmount: "not-a-number",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("trims whitespace from title", () => {
+    const result = proposalFormSchema.safeParse({
+      ...validProposal,
+      title: "  Build a community workspace in Florianopolis  ",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.title).toBe(
+        "Build a community workspace in Florianopolis"
+      );
+    }
+  });
+});
