@@ -30,7 +30,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Monorepo builds successfully with Anchor (Solana) and Foundry (Ethereum) projects
   2. Local development environment runs both chain simulators (solana-test-validator, anvil)
   3. CI pipeline runs lint, build, and placeholder tests on push
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold monorepo with Anchor and Foundry projects
+- [ ] 01-02-PLAN.md — CI pipeline and Makefile for unified build/test/lint
 
 ### Phase 2: On-Chain Proposal Submission
 **Goal**: Proposers can submit grant proposals on either Solana or Ethereum and track their evaluation status
@@ -112,7 +115,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Scaffolding | 0/TBD | Not started | - |
+| 1. Foundation & Scaffolding | 0/2 | Planning complete | - |
 | 2. On-Chain Proposal Submission | 0/TBD | Not started | - |
 | 3. AI Evaluation Engine | 0/TBD | Not started | - |
 | 4. Scoring & Reasoning System | 0/TBD | Not started | - |
