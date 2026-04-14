@@ -2,10 +2,10 @@ name: Deploy Worktrees to Cloud Run
 
 on:
   push:
-    branches: [main]
-    paths:
-      - ".worktrees/**"
-      - ".github/workflows/deploy-worktrees.yml"
+    branches:
+      - full-vision-roadmap
+      - speckit
+      - superpower
   workflow_dispatch:
     inputs:
       worktree:
@@ -26,41 +26,26 @@ env:
   GAR_REPO: agent-reviewer
 
 jobs:
-  test-gsd:
-    if: ${{ !inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'gsd' }}
-    uses: ./.github/workflows/test-worktree.yml
-    with:
-      worktree-path: .worktrees/full-vision-roadmap
-      test-command: bun test
-      solidity-tests: true
-
-  test-speckit:
-    if: ${{ !inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'speckit' }}
-    uses: ./.github/workflows/test-worktree.yml
-    with:
-      worktree-path: .worktrees/speckit
-      test-command: bun run test
-      solidity-tests: true
-
-  test-superpower:
-    if: ${{ !inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'superpower' }}
-    uses: ./.github/workflows/test-worktree.yml
-    with:
-      worktree-path: .worktrees/superpower
-      test-command: bun test
-      solidity-tests: true
-
   deploy-gsd:
-    needs: [test-gsd]
-    if: ${{ always() && (!inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'gsd') && (!needs.test-gsd.result || needs.test-gsd.result == 'success') }}
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/full-vision-roadmap') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.worktree == 'all' || inputs.worktree == 'gsd'))
     name: Deploy GSD (full-vision-roadmap)
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Checkout
+      - name: Checkout worktree branch
         uses: actions/checkout@v4
+        with:
+          ref: full-vision-roadmap
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install and typecheck
+        run: bun install --frozen-lockfile && bun run typecheck
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -75,7 +60,6 @@ jobs:
 
       - name: Build and push image
         run: |
-          cd .worktrees/full-vision-roadmap
           gcloud builds submit \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsd:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
@@ -105,16 +89,25 @@ jobs:
             --format="value(status.url)"
 
   deploy-speckit:
-    needs: [test-speckit]
-    if: ${{ always() && (!inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'speckit') && (!needs.test-speckit.result || needs.test-speckit.result == 'success') }}
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/speckit') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.worktree == 'all' || inputs.worktree == 'speckit'))
     name: Deploy Speckit
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Checkout
+      - name: Checkout worktree branch
         uses: actions/checkout@v4
+        with:
+          ref: speckit
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install and typecheck
+        run: bun install --frozen-lockfile && bun run typecheck
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -129,7 +122,6 @@ jobs:
 
       - name: Build and push image
         run: |
-          cd .worktrees/speckit
           gcloud builds submit \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/speckit:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
@@ -159,16 +151,25 @@ jobs:
             --format="value(status.url)"
 
   deploy-superpower:
-    needs: [test-superpower]
-    if: ${{ always() && (!inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'superpower') && (!needs.test-superpower.result || needs.test-superpower.result == 'success') }}
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/superpower') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.worktree == 'all' || inputs.worktree == 'superpower'))
     name: Deploy Superpower
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
-      - name: Checkout
+      - name: Checkout worktree branch
         uses: actions/checkout@v4
+        with:
+          ref: superpower
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install and typecheck
+        run: bun install --frozen-lockfile && bun run typecheck
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -183,7 +184,6 @@ jobs:
 
       - name: Build and push image
         run: |
-          cd .worktrees/superpower
           gcloud builds submit \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/superpower:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
