@@ -6,6 +6,9 @@ on:
       worktree-path:
         required: true
         type: string
+      branch:
+        required: true
+        type: string
       test-command:
         required: true
         type: string
@@ -19,8 +22,11 @@ jobs:
     name: Test (${{ inputs.worktree-path }})
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout worktree branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          path: ${{ inputs.worktree-path }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
