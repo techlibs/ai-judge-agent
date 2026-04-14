@@ -85,6 +85,83 @@ function GitHubRepoCard({ repo }: { repo: GitHubRepoPreview }) {
   );
 }
 
+// ─── Video Context Preview ───────────────────────────────────────────
+
+interface VideoContextPreview {
+  platform: string;
+  title: string | null;
+  author: string | null;
+  thumbnailUrl: string | null;
+  duration: number | null;
+  url: string;
+}
+
+function extractVideoContextFromParts(
+  parts: Array<{ type: string; [key: string]: unknown }>,
+): VideoContextPreview | null {
+  for (const part of parts) {
+    if (part.type !== "tool-invocation") continue;
+    const toolName = part.toolName as string | undefined;
+    const state = part.state as string | undefined;
+    if (toolName !== "extractVideoContext" || state !== "result") continue;
+
+    const result = part.result as Record<string, unknown> | undefined;
+    if (!result) continue;
+
+    const url = result.url as string | undefined;
+    if (!url) continue;
+
+    return {
+      platform: (result.platform as string) ?? "unknown",
+      title: (result.title as string | null) ?? null,
+      author: (result.author as string | null) ?? null,
+      thumbnailUrl: (result.thumbnailUrl as string | null) ?? null,
+      duration: (result.duration as number | null) ?? null,
+      url,
+    };
+  }
+  return null;
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remaining = seconds % 60;
+  return `${minutes}:${String(remaining).padStart(2, "0")}`;
+}
+
+function VideoCard({ video }: { video: VideoContextPreview }) {
+  const platformLabel =
+    video.platform.charAt(0).toUpperCase() + video.platform.slice(1);
+
+  return (
+    <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <span>{video.title ?? video.url}</span>
+          <Badge variant="secondary">{platformLabel}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {video.author && (
+          <p className="text-muted-foreground">By {video.author}</p>
+        )}
+        <div className="flex flex-wrap gap-1">
+          {video.duration !== null && (
+            <Badge variant="outline">{formatDuration(video.duration)}</Badge>
+          )}
+        </div>
+        {video.thumbnailUrl && (
+          <img
+            src={video.thumbnailUrl}
+            alt={video.title ?? "Video thumbnail"}
+            className="rounded w-full max-w-xs object-cover"
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Proposal Preview ────────────────────────────────────────────────
 
 interface ProposalPreview {
@@ -197,6 +274,18 @@ export function ProposalChat() {
     return repos;
   }, [messages]);
 
+  const extractedVideos = useMemo(() => {
+    const videos: VideoContextPreview[] = [];
+    for (const message of messages) {
+      if (message.role !== "assistant") continue;
+      const video = extractVideoContextFromParts(
+        message.parts as Array<{ type: string; [key: string]: unknown }>,
+      );
+      if (video) videos.push(video);
+    }
+    return videos;
+  }, [messages]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -281,6 +370,14 @@ export function ProposalChat() {
         <div className="px-4 pb-2 space-y-2">
           {extractedRepos.map((repo) => (
             <GitHubRepoCard key={repo.name} repo={repo} />
+          ))}
+        </div>
+      )}
+
+      {extractedVideos.length > 0 && (
+        <div className="px-4 pb-2 space-y-2">
+          {extractedVideos.map((video) => (
+            <VideoCard key={video.url} video={video} />
           ))}
         </div>
       )}

@@ -11,6 +11,7 @@ import {
   RESIDENCY_DURATIONS,
 } from "@/lib/constants";
 import { extractGithubRepo } from "@/lib/agents/tools/extract-github";
+import { extractVideoContext } from "@/lib/agents/tools/extract-video";
 
 // ─── Injection Guard (matches judge agent pattern) ──────────────────
 
@@ -117,6 +118,7 @@ YOUR ROLE:
 - Validate inputs and provide helpful feedback
 - When all required fields are collected, use the submitProposal tool
 - When the user shares a GitHub URL, use the extractGithubRepo tool immediately to fetch repo data, then use the README and description to suggest values for: Description, Problem Statement, Proposed Solution, and Technical approach
+- When the user shares a YouTube, Loom, or Vimeo URL, use the extractVideoContext tool immediately to fetch video metadata and transcript, then use the content to suggest proposal field values
 
 GITHUB URL HANDLING:
 - Detect GitHub URLs anywhere in the user message (e.g. "here is my repo: https://github.com/...")
@@ -124,6 +126,13 @@ GITHUB URL HANDLING:
 - After extraction, present the data you found and ask the user to confirm or refine suggested field values
 - Use repo topics and languages to inform the category suggestion
 - Use stars and activity to acknowledge credibility without inflating scores
+
+VIDEO CONTEXT HANDLING:
+- Detect YouTube (youtube.com, youtu.be), Loom (loom.com/share), and Vimeo (vimeo.com) URLs anywhere in the user message
+- Call extractVideoContext with the URL as soon as you see one
+- If a transcript is available, read it to understand the project and suggest values for: Description, Problem Statement, and Proposed Solution
+- If only metadata is available (title, author), use the title to suggest the proposal title and acknowledge you cannot read the content
+- After extraction, present what you found and ask the user to confirm or refine suggested field values
 
 PROPOSAL FIELDS TO COLLECT:
 1. **Title** — A concise project name (min 5 chars)
@@ -171,6 +180,7 @@ export const proposalAssistantAgent = new Agent({
   inputProcessors: [injectionGuard],
   tools: {
     extractGithubRepo,
+    extractVideoContext,
     validateProposal: {
       description:
         "Validates a partial proposal and returns which fields are complete and which are missing or invalid",
