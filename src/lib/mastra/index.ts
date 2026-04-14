@@ -5,6 +5,7 @@ import { chatAgent } from "@/lib/chat/agent";
 import { marketIntelligenceAgent } from "@/lib/judges/market-intelligence";
 import { contextWeaverAgent } from "@/lib/judges/context-weaver";
 import { realityCheckerAgent } from "@/lib/judges/reality-checker";
+import { proposalAssistantAgent } from "@/lib/agents/proposal-assistant";
 
 const logLevel =
   process.env.NODE_ENV === "production" ? LogLevel.WARN : LogLevel.INFO;
@@ -19,6 +20,7 @@ export const mastra = new Mastra({
     "market-intelligence": marketIntelligenceAgent,
     "context-weaver": contextWeaverAgent,
     "reality-checker": realityCheckerAgent,
+    "proposal-assistant": proposalAssistantAgent,
   },
   logger: new ConsoleLogger({ name: "agent-reviewer", level: logLevel }),
 });

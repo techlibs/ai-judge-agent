@@ -1,4 +1,4 @@
-import { ProposalForm } from "@/components/proposal-form";
+import { SubmitPageContent } from "./submit-page-content";
 
 export default function SubmitPage() {
   return (
@@ -6,11 +6,11 @@ export default function SubmitPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Submit a Grant Proposal</h1>
         <p className="text-muted-foreground">
-          Your proposal will be evaluated by 4 AI judges across Technical Feasibility,
-          Impact Potential, Cost Efficiency, and Team Capability.
+          Your proposal will be evaluated by 4 AI judges across Technical
+          Feasibility, Impact Potential, Cost Efficiency, and Team Capability.
         </p>
       </div>
-      <ProposalForm />
+      <SubmitPageContent />
     </div>
   );
 }
