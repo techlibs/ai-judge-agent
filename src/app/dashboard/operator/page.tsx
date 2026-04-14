@@ -1,4 +1,31 @@
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+import { SyncForm } from "./sync-form";
+
+async function triggerSync(): Promise<{ success: boolean; message: string }> {
+  "use server";
+
+  const session = await auth();
+  if (!session?.user?.email && !session?.user?.name) {
+    return { success: false, message: "Unauthorized" };
+  }
+
+  try {
+    const { syncCache } = await import("@/cache/sync");
+    const startTime = Date.now();
+    const result = await syncCache();
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    revalidatePath("/grants");
+    return {
+      success: true,
+      message: `Synced ${result.eventsProcessed} events, ${result.ipfsFetched} IPFS fetches in ${duration}s`,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Sync failed";
+    return { success: false, message: msg };
+  }
+}
 
 export default async function OperatorDashboard() {
   const session = await auth();
@@ -21,7 +48,7 @@ export default async function OperatorDashboard() {
             Trigger an incremental rebuild of the local cache from The Graph and
             IPFS data.
           </p>
-          <SyncButton />
+          <SyncForm triggerSync={triggerSync} />
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -39,29 +66,5 @@ export default async function OperatorDashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-function SyncButton() {
-  return (
-    <form
-      action={async () => {
-        "use server";
-        const session = await auth();
-        if (!session) return;
-
-        await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/sync`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-      }}
-    >
-      <button
-        type="submit"
-        className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-      >
-        Trigger Sync
-      </button>
-    </form>
   );
 }
