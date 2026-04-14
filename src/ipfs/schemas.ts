@@ -84,3 +84,38 @@ export const AgentRegistrationSchema = z.object({
 });
 
 export type AgentRegistration = z.infer<typeof AgentRegistrationSchema>;
+
+export const MonitoringReportSchema = z.object({
+  version: z.literal(1),
+  projectId: z.string(),
+  score: z.number().min(0).max(10),
+  justification: z.string().min(50),
+  githubMetrics: z.object({
+    commitFrequency: z.number(),
+    issueVelocity: z.number(),
+    releases: z.number(),
+  }),
+  onChainMetrics: z.object({
+    transactionCount: z.number(),
+    fundUtilization: z.number().min(0).max(1),
+  }),
+  socialMetrics: z.object({
+    announcements: z.number(),
+    communityEngagement: z.number(),
+  }),
+  riskFlags: z.array(
+    z.object({
+      type: z.enum([
+        "inactivity",
+        "fund_misuse",
+        "scope_drift",
+        "team_change",
+      ]),
+      severity: z.enum(["low", "medium", "high"]),
+      description: z.string(),
+    })
+  ),
+  monitoredAt: z.string(),
+});
+
+export type MonitoringReport = z.infer<typeof MonitoringReportSchema>;

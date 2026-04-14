@@ -75,3 +75,39 @@ export const EvaluationResultSchema = z.object({
 });
 
 export type EvaluationResult = z.infer<typeof EvaluationResultSchema>;
+
+export const MonitoringScoreSchema = z.object({
+  score: z.number().min(0).max(10),
+  justification: z.string().min(50),
+  githubMetrics: z.object({
+    commitFrequency: z.number().describe("Commits per week"),
+    issueVelocity: z.number().describe("Issues closed per week"),
+    releases: z.number().describe("Releases in monitoring period"),
+  }),
+  onChainMetrics: z.object({
+    transactionCount: z.number(),
+    fundUtilization: z
+      .number()
+      .min(0)
+      .max(1)
+      .describe("Percentage of funds used"),
+  }),
+  socialMetrics: z.object({
+    announcements: z.number(),
+    communityEngagement: z.number().describe("Engagement score 0-10"),
+  }),
+  riskFlags: z.array(
+    z.object({
+      type: z.enum([
+        "inactivity",
+        "fund_misuse",
+        "scope_drift",
+        "team_change",
+      ]),
+      severity: z.enum(["low", "medium", "high"]),
+      description: z.string(),
+    })
+  ),
+});
+
+export type MonitoringScore = z.infer<typeof MonitoringScoreSchema>;
