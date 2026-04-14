@@ -27,6 +27,7 @@ jobs:
         with:
           ref: ${{ inputs.branch }}
           path: ${{ inputs.worktree-path }}
+          submodules: recursive
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
