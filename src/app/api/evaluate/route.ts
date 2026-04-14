@@ -4,6 +4,7 @@ import { ProposalSubmissionSchema } from "@/lib/evaluation/proposal-schema";
 import { runEvaluationWorkflow } from "@/lib/evaluation/workflow";
 import { logSecurityEvent } from "@/lib/security-log";
 import { validateOrigin } from "@/lib/validate-origin";
+import { checkEvaluationTriggerLimit } from "@/lib/rate-limit";
 
 const EvaluateRequestSchema = z.object({
   proposal: ProposalSubmissionSchema,
@@ -15,6 +16,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (originError) {
     logSecurityEvent({ type: "auth_failed", reason: "invalid_origin" });
     return originError;
+  }
+
+  // Rate limiting
+  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const rateLimitResult = checkEvaluationTriggerLimit(ip);
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded", retryAfter: rateLimitResult.retryAfter },
+      { status: 429 }
+    );
   }
 
   // Parse and validate request body
