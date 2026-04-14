@@ -1,4 +1,4 @@
-import { ProposalSubmitForm } from "./form";
+import { SubmissionTabs } from "./submission-tabs";
 
 export default function SubmitProposalPage() {
   return (
@@ -9,7 +9,7 @@ export default function SubmitProposalPage() {
           Submit your proposal for AI-powered evaluation across Technical Feasibility, Impact Potential, Cost Efficiency, and Team Capability.
         </p>
       </div>
-      <ProposalSubmitForm />
+      <SubmissionTabs />
     </div>
   );
 }
