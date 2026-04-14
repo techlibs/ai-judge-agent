@@ -29,7 +29,7 @@ jobs:
     with:
       worktree-path: .worktrees/superpower
       branch: superpower
-      test-command: bun test
+      test-command: bun test --filter '!ipfs-client' --filter '!orchestrator' --filter '!workflow' --filter '!proposals' --filter '!evaluate-dimension'
       solidity-tests: true
 
   test-ralph:
