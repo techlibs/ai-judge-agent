@@ -102,7 +102,7 @@ test.describe("Proposal Submission", () => {
     await expect(page.getByText(counterText)).toBeVisible();
   });
 
-  test("category dropdown contains all options", async ({ page }) => {
+  test("category dropdown contains all options", async ({ page: _page }) => {
     const options = await submitPage.categorySelect.locator("option").allTextContents();
     expect(options).toContain("Infrastructure");
     expect(options).toContain("Research");
@@ -112,7 +112,7 @@ test.describe("Proposal Submission", () => {
   });
 
   test("residency duration dropdown contains all options", async ({
-    page,
+    page: _page,
   }) => {
     const options = await submitPage.residencyDurationSelect
       .locator("option")

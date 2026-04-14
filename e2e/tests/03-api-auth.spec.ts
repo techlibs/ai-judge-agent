@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import {
-  TEST_API_KEY,
+  TEST_API_KEY as _TEST_API_KEY,
   API_KEY_HEADER,
   createAuthenticatedContext,
   createUnauthenticatedContext,
