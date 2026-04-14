@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-grant_evaluator = "CvjtrjA1yTdakHYxc77cfEsDHGiBDpKgQXhNXns9YVas"
+grant_evaluator = "geTVFnjX4JD1YnhDub1dg7seorknc2bZsUuCiaN7VWD"
 
 [provider]
 cluster = "localnet"
