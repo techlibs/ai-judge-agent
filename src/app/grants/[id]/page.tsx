@@ -1,5 +1,6 @@
 import { getProposalById, findExistingEvaluationJob } from "@/cache/queries";
 import { sanitizeDisplayText } from "@/lib/sanitize-html";
+import { getExplorerBaseUrl, buildIpfsUrl } from "@/lib/chain-explorer";
 import { ChainErrorBoundary } from "@/components/error-boundary";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -55,8 +56,7 @@ export default async function ProposalDetailPage({
     notFound();
   }
 
-  const pinataGateway = process.env.PINATA_GATEWAY ?? "";
-  const chainExplorerBase = "https://sepolia.basescan.org";
+  const chainExplorerBase = getExplorerBaseUrl();
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -315,18 +315,27 @@ export default async function ProposalDetailPage({
                   )}
                 </div>
 
-                {dispute.evidenceCid && (
-                  <div className="mt-3">
-                    <a
-                      href={`https://${pinataGateway}/ipfs/${dispute.evidenceCid}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      View Evidence on IPFS
-                    </a>
-                  </div>
-                )}
+                {dispute.evidenceCid && (() => {
+                  const evidenceUrl = buildIpfsUrl(dispute.evidenceCid);
+                  return evidenceUrl ? (
+                    <div className="mt-3">
+                      <a
+                        href={evidenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        View Evidence on IPFS
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="mt-3">
+                      <span className="text-sm text-gray-500">
+                        Evidence CID: {dispute.evidenceCid}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -336,42 +345,55 @@ export default async function ProposalDetailPage({
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-gray-900">Verification</h2>
         <div className="mt-4 space-y-3">
-          {proposal.proposalContentCid && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Proposal (IPFS)</span>
-              <a
-                href={`https://${pinataGateway}/ipfs/${proposal.proposalContentCid}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                {proposal.proposalContentCid.slice(0, 20)}...
-              </a>
-            </div>
-          )}
-          {proposal.evaluationContentCid && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Evaluation (IPFS)</span>
-              <a
-                href={`https://${pinataGateway}/ipfs/${proposal.evaluationContentCid}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline"
-              >
-                {proposal.evaluationContentCid.slice(0, 20)}...
-              </a>
-            </div>
-          )}
+          {proposal.proposalContentCid && (() => {
+            const proposalUrl = buildIpfsUrl(proposal.proposalContentCid);
+            return (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Proposal (IPFS)</span>
+                {proposalUrl ? (
+                  <a
+                    href={proposalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    {proposal.proposalContentCid.slice(0, 20)}...
+                  </a>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    {proposal.proposalContentCid.slice(0, 20)}...
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+          {proposal.evaluationContentCid && (() => {
+            const evalUrl = buildIpfsUrl(proposal.evaluationContentCid);
+            return (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Evaluation (IPFS)</span>
+                {evalUrl ? (
+                  <a
+                    href={evalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    {proposal.evaluationContentCid.slice(0, 20)}...
+                  </a>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    {proposal.evaluationContentCid.slice(0, 20)}...
+                  </span>
+                )}
+              </div>
+            );
+          })()}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">On-chain</span>
-            <a
-              href={`${chainExplorerBase}/address/${proposal.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:underline"
-            >
-              View on BaseScan
-            </a>
+            <span className="text-sm text-gray-600">On-chain ID</span>
+            <span className="font-mono text-sm text-gray-500">
+              {proposal.id.slice(0, 18)}...
+            </span>
           </div>
         </div>
       </div>
