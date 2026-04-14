@@ -111,7 +111,7 @@ function buildProposals(): ProposalSeed[] {
       budgetAmount: 20000 + i * 10000,
       teamSize: 3 + (i % 3),
       index: 5 + i,
-      finalScore: evaluatedScores[i - 1],
+      finalScore: evaluatedScores[i - 1] ?? 7.0,
     });
   }
 
@@ -127,7 +127,7 @@ function buildProposals(): ProposalSeed[] {
       budgetAmount: 30000 + i * 12000,
       teamSize: 3 + (i % 3),
       index: 10 + i,
-      finalScore: fundedScores[i - 1],
+      finalScore: fundedScores[i - 1] ?? 7.0,
     });
   }
 
@@ -143,7 +143,7 @@ function buildProposals(): ProposalSeed[] {
       budgetAmount: 15000 + i * 9000,
       teamSize: 2 + (i % 4),
       index: 15 + i,
-      finalScore: disputedScores[i - 1],
+      finalScore: disputedScores[i - 1] ?? 5.0,
     });
   }
 
@@ -159,7 +159,7 @@ function buildProposals(): ProposalSeed[] {
       budgetAmount: 25000 + i * 7000,
       teamSize: 3 + (i % 3),
       index: 20 + i,
-      finalScore: evalR2Scores[i - 1],
+      finalScore: evalR2Scores[i - 1] ?? 7.0,
     });
   }
 
@@ -197,7 +197,7 @@ export async function seedTestData(dbUrl: string): Promise<void> {
     const proposals = buildProposals();
 
     for (const p of proposals) {
-      const category = CATEGORIES[p.index % CATEGORIES.length];
+      const category = CATEGORIES[p.index % CATEGORIES.length] ?? "technology";
       const chainTimestamp = 1712000000 + p.index * 3600;
 
       if (hasScore(p.status) && p.finalScore !== undefined) {
@@ -249,11 +249,11 @@ export async function seedTestData(dbUrl: string): Promise<void> {
       const baseScore = p.finalScore ?? 7.0;
       const scoreVariations = [0.3, -0.2, 0.5, -0.1];
 
-      for (let d = 0; d < DIMENSIONS.length; d++) {
-        const dim = DIMENSIONS[d];
+      for (const dim of DIMENSIONS) {
+        const d = DIMENSIONS.indexOf(dim);
         const dimScore =
           Math.round(
-            Math.min(9.5, Math.max(6.0, baseScore + scoreVariations[d])) * 10
+            Math.min(9.5, Math.max(6.0, baseScore + (scoreVariations[d] ?? 0))) * 10
           ) / 10;
 
         await db.run(sql`
@@ -282,12 +282,12 @@ export async function seedTestData(dbUrl: string): Promise<void> {
       "14000000000000000000",
     ];
 
-    for (let i = 0; i < fundedProposals.length; i++) {
-      const fp = fundedProposals[i];
+    for (const [i, fp] of fundedProposals.entries()) {
       const score = fp.finalScore ?? 7.5;
       const releasePercentage = Math.round((score / 10) * 100 * 10) / 10;
       const releasedAt = 1712100000 + (i + 1) * 3600;
       const txHash = `0xabc${i + 1}def456789`;
+      const amount = fundAmounts[i] ?? "10000000000000000000";
 
       await db.run(sql`
         INSERT OR IGNORE INTO fund_releases (
@@ -295,7 +295,7 @@ export async function seedTestData(dbUrl: string): Promise<void> {
           amount, tx_hash, released_at
         ) VALUES (
           ${`${fp.id}-release`}, ${fp.id}, 0, ${score}, ${releasePercentage},
-          ${fundAmounts[i]}, ${txHash}, ${releasedAt}
+          ${amount}, ${txHash}, ${releasedAt}
         )
       `);
     }
