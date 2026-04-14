@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, ralph-unified, speckit, superpower, full-vision-roadmap]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   test-gsd:
