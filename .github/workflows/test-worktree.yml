@@ -50,7 +50,7 @@ jobs:
         run: |
           cd ${{ inputs.worktree-path }}/contracts
           if [ ! -d lib/forge-std ]; then
-            forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts --no-git --no-commit
+            forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts --no-git
           fi
 
       - name: Run Solidity tests
