@@ -62,7 +62,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit \
+          gcloud builds submit --suppress-logs \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsd:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
             --region=${{ env.GCP_REGION }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit \
+          gcloud builds submit --suppress-logs \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/speckit:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
             --region=${{ env.GCP_REGION }}
@@ -186,7 +186,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit \
+          gcloud builds submit --suppress-logs \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/superpower:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
             --region=${{ env.GCP_REGION }}
@@ -248,7 +248,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit \
+          gcloud builds submit --suppress-logs \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/ralph:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
             --region=${{ env.GCP_REGION }}
