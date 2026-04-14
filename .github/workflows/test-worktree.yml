@@ -45,6 +45,10 @@ jobs:
         if: inputs.solidity-tests
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Install Foundry dependencies
+        if: inputs.solidity-tests
+        run: cd ${{ inputs.worktree-path }}/contracts && forge install --no-git
+
       - name: Run Solidity tests
         if: inputs.solidity-tests
         run: cd ${{ inputs.worktree-path }}/contracts && forge test -vvv
