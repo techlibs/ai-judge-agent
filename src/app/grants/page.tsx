@@ -19,7 +19,7 @@ export default async function GrantsPage() {
   const scoreMap = new Map(scores.map((s) => [s.proposalId, s.scoreBps]));
 
   const totalProposals = allProposals.length;
-  const totalEvaluated = allProposals.filter((p) => p.status === "published").length;
+  const totalEvaluated = allProposals.filter((p) => p.status === "evaluated" || p.status === "publishing" || p.status === "published").length;
   const avgScore = scores.length > 0
     ? Math.round(scores.reduce((sum, s) => sum + s.scoreBps, 0) / scores.length)
     : null;

@@ -3,7 +3,7 @@ import { createHallucinationScorer } from "@mastra/evals/scorers/prebuilt";
 import { createPromptAlignmentScorerLLM } from "@mastra/evals/scorers/prebuilt";
 import { openai } from "@ai-sdk/openai";
 
-const SCORER_MODEL = openai("gpt-5.4");
+const SCORER_MODEL = openai("gpt-4o");
 
 const QUALITY_THRESHOLDS = {
   FAITHFULNESS_MIN: 0.7,

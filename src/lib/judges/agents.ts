@@ -60,7 +60,7 @@ export const judgeAgents: Record<JudgeDimension, Agent> = Object.fromEntries(
     new Agent({
       id: `judge-${dim}`,
       name: `Judge ${dim}`,
-      model: openai("gpt-5.4"),
+      model: openai("gpt-4o"),
       instructions: getJudgePrompt(dim),
       inputProcessors: [injectionGuard],
     }),
