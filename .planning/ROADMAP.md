@@ -45,7 +45,11 @@ Plans:
   3. Proposal content is stored on IPFS/Arweave with content hash anchored on-chain
   4. Proposer receives a unique proposal ID and can query evaluation status on-chain
   5. Submitting a proposal emits an event that triggers the evaluation pipeline
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 02-01-PLAN.md — Refactor Ethereum ProposalRegistry.sol for IPFS CID model with unit tests
+- [ ] 02-02-PLAN.md — Implement Solana Anchor proposal submission program with tests
+- [ ] 02-03-PLAN.md — Fuzz tests and GrantRouter integration lifecycle tests
 **UI hint**: yes
 
 ### Phase 3: AI Evaluation Engine
@@ -116,7 +120,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Scaffolding | 2/2 | Complete    | 2026-04-14 |
-| 2. On-Chain Proposal Submission | 0/TBD | Not started | - |
+| 2. On-Chain Proposal Submission | 0/3 | Not started | - |
 | 3. AI Evaluation Engine | 0/TBD | Not started | - |
 | 4. Scoring & Reasoning System | 0/TBD | Not started | - |
 | 5. zkML Verifiable Inference | 0/TBD | Not started | - |
