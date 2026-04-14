@@ -23,6 +23,17 @@ interface ExtractedProposal {
   externalLinks: string[];
 }
 
+interface VideoContextData {
+  platform: "youtube" | "loom" | "vimeo" | "unknown";
+  title: string | null;
+  author: string | null;
+  thumbnailUrl: string | null;
+  duration: number | null;
+  description: string | null;
+  transcript: string | null;
+  url: string;
+}
+
 interface GithubRepoData {
   name: string;
   description: string | null;
@@ -34,6 +45,40 @@ interface GithubRepoData {
   createdAt: string;
   updatedAt: string;
   url: string;
+}
+
+function extractVideoContextFromMessages(
+  messages: UIMessage[]
+): VideoContextData | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== "assistant") continue;
+
+    for (const part of message.parts) {
+      if (!part.type.startsWith("tool-")) continue;
+
+      const toolPart = part as Record<string, unknown>;
+      if (
+        toolPart.type !== "tool-extractVideoContext" &&
+        toolPart.type !== "dynamic-tool"
+      )
+        continue;
+
+      if (
+        toolPart.type === "dynamic-tool" &&
+        toolPart.toolName !== "extractVideoContext"
+      )
+        continue;
+
+      if (toolPart.state !== "output-available") continue;
+
+      const output = toolPart.output as Record<string, unknown> | undefined;
+      if (output && typeof output.url === "string") {
+        return output as unknown as VideoContextData;
+      }
+    }
+  }
+  return null;
 }
 
 function extractGithubRepoFromMessages(
@@ -134,6 +179,7 @@ export function ProposalChat() {
 
   const extractedProposal = extractProposalFromMessages(messages);
   const githubRepo = extractGithubRepoFromMessages(messages);
+  const videoContext = extractVideoContextFromMessages(messages);
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -288,6 +334,53 @@ export function ProposalChat() {
                   </span>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {videoContext && videoContext.platform !== "unknown" && !extractedProposal && (
+        <Card className="mt-3 border-purple-500/30 bg-purple-50/50 dark:bg-purple-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">
+              {videoContext.platform.charAt(0).toUpperCase() + videoContext.platform.slice(1)} Video Extracted:{" "}
+              {videoContext.title ? (
+                <a
+                  href={videoContext.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  {videoContext.title}
+                </a>
+              ) : (
+                <a
+                  href={videoContext.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  {videoContext.url}
+                </a>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-xs text-muted-foreground">
+            {videoContext.author && <p>By {videoContext.author}</p>}
+            {videoContext.duration && (
+              <p>{Math.round(videoContext.duration / 60)} min</p>
+            )}
+            {videoContext.description && (
+              <p>
+                {videoContext.description.length > 150
+                  ? `${videoContext.description.slice(0, 150)}...`
+                  : videoContext.description}
+              </p>
+            )}
+            {videoContext.transcript && (
+              <p className="rounded bg-purple-100/60 px-2 py-1 dark:bg-purple-900/30">
+                Transcript captured ({videoContext.transcript.length} chars)
+              </p>
             )}
           </CardContent>
         </Card>

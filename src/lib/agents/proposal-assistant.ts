@@ -5,6 +5,7 @@ import { z } from "zod";
 import { proposalSchema } from "@/lib/schemas/proposal";
 import { FIELD_LIMITS } from "@/lib/constants/proposal";
 import { extractGithubRepo } from "@/lib/agents/tools/extract-github";
+import { extractVideoContext } from "@/lib/agents/tools/extract-video";
 
 export const PROPOSAL_ASSISTANT_SYSTEM_PROMPT = `You are a friendly Proposal Assistant for IPE City Grants. Your job is to guide users through creating a grant proposal via natural conversation.
 
@@ -32,7 +33,15 @@ GitHub URL handling:
 - Use the repo description and topics to help suggest a concise Title
 - If the repo has contributor information or organization context, use that to draft Team Info
 - Always tell the user what you extracted and ask them to confirm or adjust the drafted fields
-- Add the GitHub URL to External Links automatically`;
+- Add the GitHub URL to External Links automatically
+
+VIDEO CONTEXT:
+- Whenever the user shares a YouTube, Loom, or Vimeo URL, immediately call the extractVideoContext tool with that URL
+- For YouTube videos with a transcript: summarize the transcript to draft a Description — focus on the project goals, approach, and technical details
+- For all video platforms: use the title and author to help suggest a concise project Title
+- If the video description (Vimeo) contains team or project info, use it to draft Team Info
+- Always tell the user what you extracted from the video and ask them to confirm or adjust
+- Add the video URL to External Links automatically`;
 
 const partialProposalSchema = z.object({
   title: z.string().optional().describe("The proposal title"),
@@ -138,6 +147,7 @@ export const proposalAssistant = new Agent({
     validate_proposal: validateProposalTool,
     submit_proposal: submitProposalTool,
     extractGithubRepo,
+    extractVideoContext,
   },
 });
 
@@ -145,4 +155,5 @@ export const PROPOSAL_ASSISTANT_TOOLS = {
   validate_proposal: validateProposalTool,
   submit_proposal: submitProposalTool,
   extractGithubRepo,
+  extractVideoContext,
 };
