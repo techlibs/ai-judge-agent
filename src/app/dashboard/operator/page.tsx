@@ -36,7 +36,7 @@ export default async function OperatorDashboard() {
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">User</span>
               <span className="font-medium text-gray-900">
-                {session.user?.email ?? "Unknown"}
+                {session.user?.email ?? "Not authenticated"}
               </span>
             </div>
           </div>
