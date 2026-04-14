@@ -16,6 +16,11 @@ export default defineConfig({
       exclude: ["src/**/ui/**", "src/**/*.d.ts"],
       reporter: ["text", "text-summary"],
     },
+    server: {
+      deps: {
+        inline: ["youtube-transcript"],
+      },
+    },
   },
   resolve: {
     alias: {
