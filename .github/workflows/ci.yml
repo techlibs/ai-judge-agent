@@ -11,6 +11,7 @@ jobs:
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/full-vision-roadmap
+      branch: full-vision-roadmap
       test-command: bun test
       solidity-tests: true
 
@@ -18,6 +19,7 @@ jobs:
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/speckit
+      branch: speckit
       test-command: bun run test
       solidity-tests: true
 
@@ -25,6 +27,7 @@ jobs:
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/superpower
+      branch: superpower
       test-command: bun test
       solidity-tests: true
 
@@ -32,4 +35,5 @@ jobs:
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/ralph-unified
+      branch: ralph-unified
       test-command: bun run test
