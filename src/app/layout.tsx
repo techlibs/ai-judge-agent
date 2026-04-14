@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { ErrorTracker } from "@/components/error-tracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,6 +30,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <ErrorTracker />
         <header className="border-b">
           <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
