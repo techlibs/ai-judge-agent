@@ -27,3 +27,9 @@ jobs:
       worktree-path: .worktrees/superpower
       test-command: bun test
       solidity-tests: true
+
+  test-ralph:
+    uses: ./.github/workflows/test-worktree.yml
+    with:
+      worktree-path: .worktrees/ralph-unified
+      test-command: bun run test
