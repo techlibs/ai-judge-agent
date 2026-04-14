@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { proposals } from "@/lib/db/schema";
+import { desc, count } from "drizzle-orm";
 import { ProposalInputSchema } from "@/types";
 import { uploadJson, ipfsUri } from "@/lib/ipfs/client";
 import { proposalSubmitLimiter } from "@/lib/rate-limit";
@@ -80,5 +81,37 @@ export async function POST(request: Request) {
     id,
     ipfsCid: ipfsResult.cid,
     ipfsUri: ipfsUri(ipfsResult.cid),
+  });
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+  const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get("pageSize") ?? "20")));
+
+  const db = getDb();
+
+  const [proposalRows, countResult] = await Promise.all([
+    db
+      .select()
+      .from(proposals)
+      .limit(pageSize)
+      .offset((page - 1) * pageSize)
+      .orderBy(desc(proposals.createdAt)),
+    db
+      .select({ total: count() })
+      .from(proposals),
+  ]);
+
+  const total = countResult[0]?.total ?? 0;
+
+  return NextResponse.json({
+    data: proposalRows,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
   });
 }
