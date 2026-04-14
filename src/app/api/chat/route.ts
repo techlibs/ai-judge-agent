@@ -1,6 +1,4 @@
 import { streamText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { JUDGE_ASSISTANT_SYSTEM_PROMPT } from "@/chat/prompts";
 import {
@@ -26,17 +24,15 @@ function buildSystemPrompt(proposalId: string | undefined): string {
   if (!proposalId) {
     return JUDGE_ASSISTANT_SYSTEM_PROMPT;
   }
-
-  return `${JUDGE_ASSISTANT_SYSTEM_PROMPT}
-
-CONTEXT:
-The user is viewing proposal "${proposalId}". When they ask questions without specifying a proposal, assume they mean this one. Use the getProposalData and getEvaluationScores tools with this proposal ID to retrieve relevant data.`;
+  return `${JUDGE_ASSISTANT_SYSTEM_PROMPT}\n\nCONTEXT:\nThe user is viewing proposal "${proposalId}". When they ask questions without specifying a proposal, assume they mean this one. Use the getProposalData and getEvaluationScores tools with this proposal ID to retrieve relevant data.`;
 }
 
-function selectModel() {
+async function selectModel() {
   if (process.env.ANTHROPIC_API_KEY) {
+    const { anthropic } = await import("@ai-sdk/anthropic");
     return anthropic(ANTHROPIC_MODEL);
   }
+  const { openai } = await import("@ai-sdk/openai");
   return openai(OPENAI_FALLBACK_MODEL);
 }
 
@@ -53,16 +49,13 @@ export async function POST(request: Request) {
 
   const { messages, proposalId } = parsed.data;
   const systemPrompt = buildSystemPrompt(proposalId);
+  const model = await selectModel();
 
   const result = streamText({
-    model: selectModel(),
+    model,
     system: systemPrompt,
     messages,
-    tools: {
-      getProposalData,
-      getEvaluationScores,
-      searchProposals,
-    },
+    tools: { getProposalData, getEvaluationScores, searchProposals },
     maxSteps: 5,
   });
 
