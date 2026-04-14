@@ -20,7 +20,7 @@ export default async function VerifyPage({
     where: eq(proposals.id, id),
   });
 
-  if (!proposal || proposal.status !== "published") notFound();
+  if (!proposal || (proposal.status !== "published" && proposal.status !== "evaluated")) notFound();
 
   const evals = await db.query.evaluations.findMany({
     where: eq(evaluations.proposalId, id),

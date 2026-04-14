@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { EvaluationTheater } from "@/components/evaluation-theater";
 import type { JudgeDimension } from "@/lib/constants";
 
@@ -29,9 +30,15 @@ export default function EvaluatePage() {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto py-12 px-4 text-center">
-        <h1 className="text-2xl font-bold mb-4 text-destructive">Error</h1>
+      <div className="max-w-4xl mx-auto py-12 px-4 text-center space-y-4">
+        <h1 className="text-2xl font-bold text-destructive">Unable to Start Evaluation</h1>
         <p className="text-muted-foreground">{error}</p>
+        <Link
+          href={`/grants/${params.id}`}
+          className="inline-block mt-4 text-sm text-primary underline underline-offset-4 hover:opacity-80"
+        >
+          Back to proposal
+        </Link>
       </div>
     );
   }
