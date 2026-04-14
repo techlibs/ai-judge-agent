@@ -47,3 +47,76 @@ function compareStrings(a: string, b: string): boolean {
   }
   return mismatch === 0;
 }
+
+const HMAC_ALGORITHM = "SHA-256";
+const HMAC_SIGNATURE_PREFIX = "sha256=";
+
+/**
+ * Verify HMAC-SHA256 webhook signature for data integrity.
+ * Used to authenticate incoming webhooks from trusted platforms.
+ *
+ * Expected header format: `sha256=<hex-encoded HMAC>`
+ */
+export async function verifyWebhookSignature(
+  body: string,
+  signature: string,
+  secret: string
+): Promise<boolean> {
+  if (!signature.startsWith(HMAC_SIGNATURE_PREFIX)) {
+    return false;
+  }
+
+  const providedHex = signature.slice(HMAC_SIGNATURE_PREFIX.length);
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: HMAC_ALGORITHM },
+    false,
+    ["sign"]
+  );
+
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(body)
+  );
+
+  const expectedHex = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  // Constant-time comparison to prevent timing attacks
+  return timingSafeEqual(providedHex, expectedHex);
+}
+
+/**
+ * Generate HMAC-SHA256 signature for outgoing data.
+ * Used to sign evaluation results before publishing on-chain.
+ */
+export async function signPayload(
+  payload: string,
+  secret: string
+): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: HMAC_ALGORITHM },
+    false,
+    ["sign"]
+  );
+
+  const signatureBuffer = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(payload)
+  );
+
+  const hex = Array.from(new Uint8Array(signatureBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return `${HMAC_SIGNATURE_PREFIX}${hex}`;
+}
