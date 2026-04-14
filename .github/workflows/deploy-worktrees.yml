@@ -1,6 +1,11 @@
 name: Deploy Worktrees to Cloud Run
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".worktrees/**"
+      - ".github/workflows/deploy-worktrees.yml"
   workflow_dispatch:
     inputs:
       worktree:
@@ -22,7 +27,7 @@ env:
 
 jobs:
   test-gsd:
-    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'gsd' }}
+    if: ${{ !inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'gsd' }}
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/full-vision-roadmap
@@ -30,7 +35,7 @@ jobs:
       solidity-tests: true
 
   test-speckit:
-    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'speckit' }}
+    if: ${{ !inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'speckit' }}
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/speckit
@@ -38,7 +43,7 @@ jobs:
       solidity-tests: true
 
   test-superpower:
-    if: ${{ inputs.worktree == 'all' || inputs.worktree == 'superpower' }}
+    if: ${{ !inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'superpower' }}
     uses: ./.github/workflows/test-worktree.yml
     with:
       worktree-path: .worktrees/superpower
@@ -47,7 +52,7 @@ jobs:
 
   deploy-gsd:
     needs: [test-gsd]
-    if: ${{ always() && (inputs.worktree == 'all' || inputs.worktree == 'gsd') && (!needs.test-gsd.result || needs.test-gsd.result == 'success') }}
+    if: ${{ always() && (!inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'gsd') && (!needs.test-gsd.result || needs.test-gsd.result == 'success') }}
     name: Deploy GSD (full-vision-roadmap)
     runs-on: ubuntu-latest
     permissions:
@@ -101,7 +106,7 @@ jobs:
 
   deploy-speckit:
     needs: [test-speckit]
-    if: ${{ always() && (inputs.worktree == 'all' || inputs.worktree == 'speckit') && (!needs.test-speckit.result || needs.test-speckit.result == 'success') }}
+    if: ${{ always() && (!inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'speckit') && (!needs.test-speckit.result || needs.test-speckit.result == 'success') }}
     name: Deploy Speckit
     runs-on: ubuntu-latest
     permissions:
@@ -155,7 +160,7 @@ jobs:
 
   deploy-superpower:
     needs: [test-superpower]
-    if: ${{ always() && (inputs.worktree == 'all' || inputs.worktree == 'superpower') && (!needs.test-superpower.result || needs.test-superpower.result == 'success') }}
+    if: ${{ always() && (!inputs.worktree || inputs.worktree == 'all' || inputs.worktree == 'superpower') && (!needs.test-superpower.result || needs.test-superpower.result == 'success') }}
     name: Deploy Superpower
     runs-on: ubuntu-latest
     permissions:
