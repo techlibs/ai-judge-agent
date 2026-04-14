@@ -1,12 +1,12 @@
 ---
 phase: 01-foundation-scaffolding
 verified: 2026-04-14T04:00:00Z
-status: gaps_found
-score: 8/9 must-haves verified
+status: passed
+score: 9/9 must-haves verified
 overrides_applied: 0
 gaps:
   - truth: "anchor build succeeds without errors"
-    status: failed
+    status: resolved
     reason: "Anchor 1.0.0 stores keypairs in .anchor/program-keypairs/ which is gitignored. On a fresh checkout (or after anchor regenerates the keypair), anchor build fails with 'Program ID mismatch'. The declare_id! in lib.rs has geTVFnjX4JD1YnhDub1dg7seorknc2bZsUuCiaN7VWD but the generated keypair has 2RC6cF4pmnANHAPkpoR2RcPm79Zgq8G9Sz9JKotGMvS6. Running make build exits with code 1."
     artifacts:
       - path: "programs/grant-evaluator/src/lib.rs"
