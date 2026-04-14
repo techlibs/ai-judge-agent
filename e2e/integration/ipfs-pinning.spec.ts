@@ -15,7 +15,7 @@ const UNIQUE_SUFFIX = `e2e-${Date.now()}`;
  * Verify a CID exists on Pinata via pin list API with retry.
  * The pin list API has a slight propagation delay after upload.
  */
-async function verifyPinExists(cid: string, maxRetries = 6): Promise<boolean> {
+async function _verifyPinExists(cid: string, maxRetries = 6): Promise<boolean> {
   const jwt = process.env.PINATA_JWT;
   if (!jwt) return false;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -35,7 +35,7 @@ async function verifyPinExists(cid: string, maxRetries = 6): Promise<boolean> {
 /**
  * Fetch JSON content from Pinata gateway with retry for propagation delay.
  */
-async function fetchPinnedContent(cid: string, maxRetries = 10): Promise<Record<string, unknown> | null> {
+async function _fetchPinnedContent(cid: string, maxRetries = 10): Promise<Record<string, unknown> | null> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
