@@ -29,8 +29,8 @@ The critical discovery is that the development machine is missing Rust, Solana C
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| @coral-xyz/anchor | 0.32.1 (npm latest) | Anchor TypeScript client | Integration tests for Solana programs. [VERIFIED: npm registry] |
-| @solana/web3.js | 1.98.4 (npm latest) | Solana RPC client | Low-level Solana interactions. [VERIFIED: npm registry] |
+| @coral-xyz/anchor | 0.32.1 (npm latest) | Anchor TypeScript client | Integration tests for Solana programs. [VERIFIED: npm registry] Note: npm SDK has not published 1.0.0 yet; Anchor CLI 1.0.0 was released April 2, 2026 but the TypeScript SDK lags behind. Upgrade when 1.0.0 SDK is published. |
+| @solana/web3.js | 1.98.4 (npm latest) | Solana RPC client | Low-level Solana interactions. [VERIFIED: npm registry] Note: @coral-xyz/anchor 0.32.x requires @solana/web3.js 1.x as a peer dependency. @solana/web3.js 2.0.0 is available on the `next` npm tag but not `latest`. Upgrade to 2.x when @coral-xyz/anchor 1.0.0 SDK ships with v2 support. |
 | solhint | 6.2.1 | Solidity linter | CI linting for Ethereum contracts. [VERIFIED: npm registry] |
 | prettier | latest | Code formatter | Non-Solidity file formatting in CI. [ASSUMED] |
 
@@ -398,22 +398,22 @@ jobs:
 | A5 | metadaoproject/setup-anchor@v3.3 supports Anchor 1.0.0 | Code Examples (CI) | Medium -- action default is 0.31.1; may need to verify 1.0.0 support or install via avm manually |
 | A6 | Prettier is needed for non-Solidity formatting | Standard Stack | Low -- optional, can skip |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Anchor 1.0.0 + setup-anchor CI action compatibility**
    - What we know: The `metadaoproject/setup-anchor` action defaults to Anchor 0.31.1. Anchor 1.0.0 was just released April 2, 2026.
    - What's unclear: Whether the action's `anchor-version: '1.0.0'` parameter works, or if manual AVM installation is needed in CI.
-   - Recommendation: Test the action with `anchor-version: '1.0.0'`. If it fails, fall back to manual `avm install 1.0.0` in the CI workflow.
+   - **RESOLUTION:** The CI workflow specifies `anchor-version: '1.0.0'` via the setup-anchor action. If the action does not yet support 1.0.0, the executor should fall back to manual AVM installation in the CI workflow: `avm install 1.0.0 && avm use 1.0.0`. This is a runtime concern, not a planning blocker -- the plan already documents the fallback in Pitfall 1.
 
 2. **Solana CLI version for Anchor 1.0.0**
    - What we know: CLAUDE.md says "Anchor 1.0.0 requires Solana CLI 2.1+". The official installer now installs 3.0.10+.
    - What's unclear: Exact minimum version required. Whether Solana CLI 3.x is fully compatible.
-   - Recommendation: Use whatever the Solana installer provides (3.x). Pin a specific version in CI for reproducibility.
+   - **RESOLUTION:** Use whatever the Solana installer provides (currently 3.x). Pin `SOLANA_CLI_VERSION: "2.1.0"` in CI for reproducibility -- the setup-anchor action handles this. Solana CLI 3.x is the Agave successor and is backward-compatible with 2.x for program development purposes. If a compatibility issue arises during execution, it will manifest as a build error caught by `anchor build`.
 
 3. **@coral-xyz/anchor npm package version for Anchor 1.0.0**
    - What we know: npm shows 0.32.1 as latest. Anchor CLI 1.0.0 was just released.
    - What's unclear: Whether a corresponding 1.0.0 npm client package exists or if 0.32.1 is compatible.
-   - Recommendation: Use 0.32.1 for now. Phase 1 only needs placeholder tests. Update when 1.0.0 client is published.
+   - **RESOLUTION:** Verified via npm registry -- `@coral-xyz/anchor@1.0.0` does NOT exist on npm (latest is 0.32.1 as of 2026-04-13). Use `@coral-xyz/anchor@^0.32.1` for the TypeScript SDK. The Anchor CLI (Rust) is at 1.0.0 but the TypeScript client SDK has not been published at that version yet. Similarly, `@solana/web3.js` latest is 1.98.4 (2.0.0 is only on the `next` tag), and `@coral-xyz/anchor` 0.32.x requires `@solana/web3.js` 1.x as a peer dependency. Plans document this constraint and the upgrade path.
 
 ## Environment Availability
 
@@ -501,6 +501,8 @@ Phase 1 is infrastructure scaffolding with no user-facing functionality, no data
 - [Foundry Book: forge init](https://book.getfoundry.sh/reference/forge/forge-init) -- project structure
 - [Foundry Book: project layout](https://book.getfoundry.sh/projects/project-layout) -- directory conventions
 - Local environment verification -- `forge --version`, `node --version`, `bun --version`, etc.
+- [npm registry: @coral-xyz/anchor](https://www.npmjs.com/package/@coral-xyz/anchor) -- verified 0.32.1 is latest, 1.0.0 not published
+- [npm registry: @solana/web3.js](https://www.npmjs.com/package/@solana/web3.js) -- verified 1.98.4 is latest, 2.0.0 on next tag only
 
 ### Secondary (MEDIUM confidence)
 - [metadaoproject/setup-anchor](https://github.com/marketplace/actions/setup-anchor) -- CI action, default versions
