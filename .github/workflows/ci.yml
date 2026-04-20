@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, ralph-unified, speckit, superpower, full-vision-roadmap]
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
     with:
       worktree-path: .worktrees/superpower
       branch: superpower
-      test-command: bun test --filter chain-contracts --filter chat --filter evaluate-finalize --filter evaluate-retry --filter evaluate-status --filter evaluate-trigger --filter extract --filter judge --filter mastra --filter rate-limit --filter sanitize --filter scorers --filter security-log --filter weights
+      test-command: bun test
       solidity-tests: true
 
   test-ralph:
