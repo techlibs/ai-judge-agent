@@ -1,0 +1,142 @@
+{
+  "framework": "speckit",
+  "slug": "hypercerts",
+  "title": "Hypercerts — interoperable impact funding primitive",
+  "sanitizedProposal": {
+    "title": "Hypercerts — interoperable impact funding primitive",
+    "description": "Hypercerts are a semi-fungible token standard (ERC-1155-based) for representing claims about positive impact work that can be owned, transferred, and retired. The protocol was incubated within the Gitcoin + Protocol Labs ecosystem and aims to be a standard primitive for impact funding across retroactive public goods programs, climate credits, and science funding. GitHub repository at github.com/hypercerts-org/hypercerts is currently archived (2025) after a pivot; content and docs remain public. A conference demo from DevConnect is available on YouTube. This proposal seeks funding to fork and maintain the core library for an additional year given continued adoption by downstream funders.",
+    "budgetAmount": 250000,
+    "budgetCurrency": "USD",
+    "budgetBreakdown": [
+      {
+        "category": "engineering",
+        "amount": 150000,
+        "description": "2 engineers to maintain contracts, SDK, subgraph for 12 months"
+      },
+      {
+        "category": "audit",
+        "amount": 40000,
+        "description": "Re-audit after any contract changes"
+      },
+      {
+        "category": "community",
+        "amount": 30000,
+        "description": "Community fund for downstream integrations"
+      },
+      {
+        "category": "infrastructure",
+        "amount": 30000,
+        "description": "Subgraph hosting, IPFS pinning, CI"
+      }
+    ],
+    "technicalDescription": "Solidity smart contracts implementing ERC-1155 semi-fungible tokens with fractionalization and claim metadata on IPFS. SDK in TypeScript with viem + GraphQL subgraph for indexing. Reference frontend for minting and claim viewing. Deployed on Ethereum mainnet, Optimism, Celo. Claim metadata schema defines work scope, time period, contributors, rights. Protocol has been audited (2023). Recent archive of primary repo means maintenance continuity is the core risk.",
+    "teamSize": 3,
+    "teamProfileHash": "ba33496e94f22f73",
+    "category": "public_goods"
+  },
+  "modelId": "gpt-5.4",
+  "promptVersion": "v1.0.0",
+  "dimensions": [
+    {
+      "dimension": "technical_feasibility",
+      "score": 7.4,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "architecture",
+          "scalability",
+          "security",
+          "technical_complexity",
+          "implementation_plan"
+        ]
+      },
+      "reasoningChain": "The proposal presents a credible and largely implementable technical approach built on known Web3 components. On architecture, the core design is reasonably strong: ERC-1155 is an appropriate choice for semi-fungible impact claims, and the stack described in technicalDescription—Solidity contracts, TypeScript SDK, GraphQL subgraph, IPFS metadata, and a reference frontend—forms a coherent end-to-end system. Multi-chain deployment on Ethereum mainnet, Optimism, and Celo is evidence that the architecture has already been implemented beyond concept stage. The metadata schema covering work scope, time period, contributors, and rights suggests the data model is thought through, though the proposal does not deeply specify upgrade patterns, versioning strategy, or chain interoperability details for the forked maintenance phase. On scalability, the design is moderately strong but not exceptional. ERC-1155 is efficient for tokenized claims, and use of a subgraph for indexing is standard for query performance; however, reliance on subgraph infrastructure and IPFS introduces operational dependencies, and the proposal does not discuss throughput limits, indexing lag, chain-specific scaling constraints, or how downstream adoption growth would be handled. On security, there is positive evidence because the protocol was audited in 2023 and the budget explicitly allocates $40,000 for a re-audit after contract changes. That is a strong mitigation signal. Still, the proposal gives limited detail on concrete security practices such as access control, upgrade safety, key management, monitoring, incident response, or how metadata integrity and rights semantics are protected across chains. On technical complexity, the scope is meaningful but generally proportionate to the budget: maintaining contracts, SDK, and subgraph for 12 months with 2 engineers plus infrastructure and audit funding appears plausible for a maintenance-oriented fork rather than net-new R&D. The main concern is team capacity: teamSize is 3, while the work spans smart contracts, indexing, SDK maintenance, infra, and ecosystem support, which could stretch a small team if significant changes are needed. On implementation plan, the proposal is adequate but somewhat thin. There is a clear objective—to fork and maintain the core library for an additional year given downstream adoption—and the budget breakdown aligns with that goal. Existing deployments, public docs, and a demo reduce execution uncertainty. However, there is no explicit roadmap, milestone schedule, success criteria, release plan, or governance/ownership transition plan despite the archived primary repo being identified as the core continuity risk. That omission prevents a higher score. Overall, this is a strong but not exceptional technical feasibility case: real software exists, technology choices are sensible, and audit/re-maintenance funding is included, but planning and risk treatment for long-term maintenance, scaling, and operational security are not detailed enough for top-tier confidence."
+    },
+    {
+      "dimension": "impact_potential",
+      "score": 7.4,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "reach",
+          "novelty",
+          "ecosystem_value",
+          "problem_significance",
+          "sustainability"
+        ]
+      },
+      "reasoningChain": "The proposal shows strong impact potential because it targets a broad and clearly defined beneficiary set: downstream funders and public-goods programs using interoperable impact claims across retroactive funding, climate credits, and science funding. Reach is therefore potentially high at the ecosystem-infrastructure level, even if end-user adoption numbers are not quantified. Novelty is solid: an ERC-1155-based semi-fungible primitive for impact claims, with fractionalization and standardized metadata, addresses an unmet coordination need in impact funding and improves interoperability versus fragmented program-specific approaches. Ecosystem value is high because shared contracts, SDK, subgraph, and reference tooling can enable multiple funders and projects across Ethereum, Optimism, and Celo, creating positive externalities beyond a single app. Problem significance is high: credible, transferable, and standardized representations of impact are important for retroactive public goods and related funding markets. Sustainability is mixed. Positive factors include existing deployments, prior audit, public docs, and explicit budget for one year of maintenance plus downstream integrations. However, the archived primary repository and stated pivot introduce continuity risk, and the proposal is framed mainly as maintenance rather than a growth plan with measurable adoption milestones. Because the infrastructure could underpin multiple funding ecosystems but evidence of current adoption and long-term continuation is somewhat uncertain, the overall impact potential is strong but not transformative."
+    },
+    {
+      "dimension": "cost_efficiency",
+      "score": 7.3,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "budget_allocation",
+          "cost_per_impact",
+          "sustainability",
+          "market_rates",
+          "contingency_planning"
+        ]
+      },
+      "reasoningChain": "The $250,000 budget is reasonably structured for a 12-month maintenance-focused effort, with the largest line item being $150,000 for 2 engineers maintaining contracts, SDK, and subgraph. That implies roughly $75,000 per engineer-year before considering the separate infrastructure and audit lines, which appears conservative to fair for web3/public-goods engineering rather than inflated. The $40,000 audit allocation is material but defensible because the proposal involves Solidity contracts on multiple deployed networks and explicitly anticipates re-audit after contract changes; for smart contract work this is within plausible market range, though it is somewhat high for a maintenance grant if changes are minimal. The $30,000 infrastructure line for subgraph hosting, IPFS pinning, and CI is acceptable but only moderately justified because the proposal does not quantify expected usage or vendor costs. The $30,000 community fund for downstream integrations could improve ecosystem adoption, but from a pure cost-efficiency standpoint it is the least tightly justified item because no KPI, matching mechanism, or target number of integrations is provided. On cost per impact, the proposal targets continued support of an existing interoperable primitive already deployed on Ethereum mainnet, Optimism, and Celo and used by downstream funders, so preserving a shared standard could generate good ecosystem leverage relative to cost. However, the proposal does not provide concrete adoption metrics, user counts, or quantified downstream demand, which limits confidence in ROI. Sustainability is the weakest area: the description frames this as one additional year of funded maintenance after the original repo was archived, but it does not describe a revenue model, maintenance handoff plan, service contracts, foundation backing, or other path to self-sustainability. Contingency planning is mixed: the audit line acts as a risk buffer for contract modifications, but there is no explicit reserve, no scenario planning around the archived repo continuity risk, and no explanation of how overruns would be handled. Overall, the budget looks broadly credible and not wasteful, with decent value for maintaining important public-goods infrastructure, but the absence of strong ROI evidence, weak sustainability planning, and limited detail on community/infrastructure spend keep it below the top tier."
+    },
+    {
+      "dimension": "team_capability",
+      "score": 5.8,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "teamProfileHash",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "experience",
+          "track_record",
+          "team_composition",
+          "domain_expertise",
+          "execution_capacity"
+        ]
+      },
+      "reasoningChain": "The proposal provides moderate but incomplete evidence of team capability. On experience and domain expertise, the project is clearly situated in the Gitcoin + Protocol Labs ecosystem and targets a specialized impact-funding primitive, which suggests familiarity with the public goods and retroactive funding domain. The technical scope in the proposal—ERC-1155 contracts, SDK, subgraph, IPFS metadata, and prior multi-chain deployments on Ethereum mainnet, Optimism, and Celo—also indicates that the work requires and likely benefits from relevant smart contract and web3 infrastructure expertise. On track record, there is some positive evidence: the protocol has existed previously, has public docs, a DevConnect demo, prior deployment, and a 2023 audit, all of which imply earlier delivery of a real system rather than only a concept. However, the evidence is indirect because the anonymized current team is not described by role seniority, years of experience, or explicit ownership of those prior accomplishments. Team composition is a concern. The proposal lists team size as 3, while the budget specifically funds 2 engineers for maintenance plus audit/community/infrastructure line items, but does not clearly identify who covers product ownership, ecosystem support, security coordination, or operational maintenance. The archived primary repo and stated need to fork and maintain it create additional continuity risk, and it is unclear whether the proposed team includes original maintainers or only downstream contributors. On execution capacity, the one-year maintenance scope is plausible for a small team given the budget and relatively focused objective, especially with a dedicated re-audit budget. Still, continuity risk is explicitly acknowledged in the proposal, and limited team detail prevents a stronger score. Overall, this looks like an adequate team setup with some credible prior project evidence, but with significant gaps in explicit team experience, composition clarity, and proof that the current anonymized team can sustain the protocol after the repo archive."
+    }
+  ],
+  "finalScore": 6.98,
+  "reputationMultiplier": 1,
+  "adjustedScore": 6.98,
+  "evaluatedAt": "2026-04-20T17:19:34.555Z"
+}
