@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { PinataSDK } from "pinata";
+import * as PinataPkg from "pinata";
 
-let pinataInstance: PinataSDK | undefined;
+let pinataInstance: InstanceType<typeof PinataPkg.PinataSDK> | undefined;
 
-function getPinata(): PinataSDK {
+function getPinata() {
   if (!pinataInstance) {
-    pinataInstance = new PinataSDK({
+    pinataInstance = new PinataPkg.PinataSDK({
       pinataJwt: process.env.PINATA_JWT,
       pinataGateway: process.env.PINATA_GATEWAY_URL,
     });
