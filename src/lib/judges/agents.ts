@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 import type { MastraDBMessage } from "@mastra/core/agent";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import { getJudgePrompt } from "./prompts";
 import type { JudgeDimension } from "@/lib/constants";
 
@@ -60,7 +60,7 @@ function createJudgeAgent(dim: JudgeDimension): Agent {
   return new Agent({
     id: `judge-${dim}`,
     name: `Judge ${dim}`,
-    model: anthropic("claude-sonnet-4-6"),
+    model: openai("gpt-4o"),
     instructions: getJudgePrompt(dim),
     inputProcessors: [injectionGuard],
   });

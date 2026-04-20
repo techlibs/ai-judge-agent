@@ -1,5 +1,5 @@
 import { generateObject } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import { MonitoringScoreSchema, type MonitoringScore } from "@/evaluation/schemas";
 import {
   MONITOR_SYSTEM_PROMPT,
@@ -34,7 +34,7 @@ export async function runMonitorAgent(
 
   try {
     const result = await generateObject({
-      model: anthropic(MONITOR_MODEL_ID),
+      model: openai(MONITOR_MODEL_ID),
       schema: MonitoringScoreSchema,
       system: MONITOR_SYSTEM_PROMPT,
       prompt: `Evaluate the current health and progress of the following funded project.

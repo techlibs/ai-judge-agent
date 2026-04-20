@@ -1,11 +1,11 @@
 import { createFaithfulnessScorer } from "@mastra/evals/scorers/prebuilt";
 import { createHallucinationScorer } from "@mastra/evals/scorers/prebuilt";
 import { createPromptAlignmentScorerLLM } from "@mastra/evals/scorers/prebuilt";
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import type { MastraDBMessage } from "@mastra/core/agent";
 import type { CoreSystemMessage } from "@mastra/core/llm";
 
-const SCORER_MODEL = anthropic("claude-haiku-4-5-20251001");
+const SCORER_MODEL = openai("gpt-4o");
 
 const QUALITY_THRESHOLDS = {
   FAITHFULNESS_MIN: 0.7,

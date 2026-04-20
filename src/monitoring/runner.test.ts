@@ -4,8 +4,8 @@ vi.mock("ai", () => ({
   generateObject: vi.fn(),
 }));
 
-vi.mock("@ai-sdk/anthropic", () => ({
-  anthropic: vi.fn(() => "mocked-model"),
+vi.mock("@ai-sdk/openai", () => ({
+  openai: vi.fn(() => "mocked-model"),
 }));
 
 vi.mock("@/evaluation/schemas", () => ({
@@ -16,7 +16,7 @@ vi.mock("@/evaluation/schemas", () => ({
 
 vi.mock("./agent-config", () => ({
   MONITOR_SYSTEM_PROMPT: "You are a monitor agent.",
-  MONITOR_MODEL_ID: "claude-sonnet-4-6",
+  MONITOR_MODEL_ID: "gpt-4o",
 }));
 
 import { runMonitorAgent, MonitoringTimeoutError } from "./runner";
@@ -77,7 +77,7 @@ describe("runMonitorAgent", () => {
       response: {
         id: "test",
         timestamp: new Date(),
-        modelId: "claude-sonnet-4-6",
+        modelId: "gpt-4o",
         headers: {},
       },
       toJsonResponse: vi.fn(),

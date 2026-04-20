@@ -12,8 +12,8 @@ vi.mock("@mastra/evals/scorers/prebuilt", () => ({
   })),
 }));
 
-vi.mock("@ai-sdk/anthropic", () => ({
-  anthropic: vi.fn(() => "mocked-model"),
+vi.mock("@ai-sdk/openai", () => ({
+  openai: vi.fn(() => "mocked-model"),
 }));
 
 import { runQualityScorers } from "./scorers";
@@ -54,8 +54,8 @@ describe("runQualityScorers", () => {
         run: vi.fn().mockResolvedValue({ score: 0.88 }),
       })),
     }));
-    vi.doMock("@ai-sdk/anthropic", () => ({
-      anthropic: vi.fn(() => "mocked-model"),
+    vi.doMock("@ai-sdk/openai", () => ({
+      openai: vi.fn(() => "mocked-model"),
     }));
 
     const { runQualityScorers: freshScorers } = await import("./scorers");
