@@ -45,6 +45,28 @@ jobs:
         if: inputs.solidity-tests
         uses: foundry-rs/foundry-toolchain@v1
 
+      - name: Install Foundry dependencies
+        if: inputs.solidity-tests
+        run: |
+          cd ${{ inputs.worktree-path }}/contracts
+          # Hydrate lib/ only when the branch neither tracks it directly
+          # nor declares it via git submodules (checkout already fetched
+          # submodules when submodules: recursive was used above).
+          missing=0
+          [ -d lib/forge-std ] && [ -d lib/openzeppelin-contracts ] || missing=1
+          if [ "$missing" = "1" ] && [ ! -f .gitmodules ]; then
+            # forge install requires a git repo context — create a throwaway one
+            if [ ! -d .git ]; then
+              git init -q
+              git config user.email ci@example.com
+              git config user.name ci
+              git commit -q --allow-empty -m init
+            fi
+            rm -rf lib/forge-std lib/openzeppelin-contracts
+            forge install foundry-rs/forge-std
+            forge install OpenZeppelin/openzeppelin-contracts@v5.6.1
+          fi
+
       - name: Run Solidity tests
         if: inputs.solidity-tests
         run: cd ${{ inputs.worktree-path }}/contracts && forge test -vvv
