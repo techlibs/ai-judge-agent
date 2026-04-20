@@ -1,6 +1,6 @@
 # Cross-Worktree E2E Comparison — Pyth LTIPP Proposal
 
-**Date**: 2026-04-19
+**Date**: 2026-04-19 (updated 2026-04-20 with ralph-unified findings + deploy pipeline fixes)
 **Test fixture**: `test-fixtures/real-grants/grant-02-pyth-ltipp.md` (real Arbitrum LTIPP grant; 1M ARB requested, ~66k ARB actually spent — ~93% under-spend after Dencun)
 
 ## Services tested
@@ -8,6 +8,7 @@
 | Worktree | URL | Status |
 |---|---|---|
 | GSD (full-vision-roadmap) | agent-reviewer-gsd-1010906320334.us-central1.run.app | Live |
+| Ralph-unified (consolidated) | agent-reviewer-ralph-1010906320334.us-central1.run.app | Live (HTTP 200; /api/evaluate has Mastra+AI-SDK incompat — see Addendum) |
 | Spec Kit | agent-reviewer-speckit-1010906320334.us-central1.run.app | Live |
 | Superpowers | agent-reviewer-superpower-1010906320334.us-central1.run.app | Live |
 
@@ -119,3 +120,56 @@ Pushing `d63285b` also re-triggered main CI. The original `uploadJson` error in 
 - GSD proposal: `https://agent-reviewer-gsd-1010906320334.us-central1.run.app/proposals/17`
 - GSD evaluation: `https://agent-reviewer-gsd-1010906320334.us-central1.run.app/proposals/17/evaluation`
 - Deploy pipeline commit: `d63285b ci: use async gcloud builds + polling`
+
+## Addendum (2026-04-20) — Ralph-unified + pipeline hardening
+
+### Ralph-unified E2E
+
+Ralph is the "consolidated" branch (PR #7) that merges Spec Kit's structured proposal schema with Superpowers' IPE-specific fields (residency, demo-day, community contribution) into a single unified service. After this session's fixes:
+
+- Switched from Anthropic → OpenAI provider (user directive) across `src/lib/judges/agents.ts`, `src/lib/evaluation/scorers.ts`, `src/monitoring/runner.ts`. Model pinned to `gpt-4o`.
+- Added `ws` as a direct dependency + `outputFileTracingIncludes` in `next.config.ts` to force Next standalone tracing to bundle `ws` (fixes runtime `Cannot find module 'ws'` crash on Cloud Run).
+- Service is live, `/api/health` returns `{status:"healthy"}`, `/api/evaluate` accepts a 12-field proposal schema and validates via Zod.
+
+**Known limitation**: `/api/evaluate` returns `{"error":"Evaluation failed", "proposalId":"<uuid>"}` because Mastra v1.24 expects an AI SDK v5 model provider, but ralph's app still ships `@ai-sdk/openai@^1.3.22` (v4). A fix requires upgrading to `@ai-sdk/openai@^3` **and** migrating all test mocks from AI SDK v4 to v5 conventions (~90 test files). Out of scope for this session. All other routes (proposal input validation, rate-limiting, auth) pass.
+
+### Pipeline hardening
+
+All 4 deploys (gsd, speckit, superpower, ralph) now succeed on the `Deploy Worktrees to Cloud Run` workflow:
+
+1. `gcloud builds submit` changed from sync to `--async` + `gcloud builds describe` polling → fixes the "Viewer/Owner of the project" log-streaming error that used to exit the step with 1 even though the build succeeded.
+2. All referenced secrets granted `roles/secretmanager.secretAccessor` on the Cloud Run runtime SA (`1010906320334-compute@developer.gserviceaccount.com`): `OPENAI_API_KEY`, `PINATA_JWT`, `PINATA_GATEWAY_URL`, `DEPLOYER_PRIVATE_KEY`, `RPC_URL`, `BASE_SEPOLIA_RPC_URL`, `TURSO_*`, `AUTH_SECRET`, `CRON_SECRET`, `OPERATOR_PASSWORD`, `BASESCAN_API_KEY`, `DEPLOYMENT_BLOCK`.
+3. Removed `UPSTASH_REDIS_REST_URL/TOKEN` references from workflow — secrets exist in Secret Manager but have zero versions; rate-limiting is optional and no-ops when unset.
+4. Added missing env vars to each deploy job: `NEXT_PUBLIC_CHAIN_ID`, `NEXT_PUBLIC_*_ADDRESS` (identity/evaluation/reputation/validation/milestone/dispute registries), plus per-worktree secrets (e.g. Superpower uses `TURSO_DATABASE_URL_SUPERPOWER` instead of the shared Turso instance).
+5. Synced the updated `.github/workflows/deploy-worktrees.yml` and `test-worktree.yml` to all 4 worktree branches (each branch's push-triggered deploy reads its own copy of the workflow; stale copies on worktree branches kept failing with the old sync-submit logic).
+
+### CI test status
+
+| Job | Status | Notes |
+|---|---|---|
+| test-gsd | pass | — |
+| test-speckit | pass | Required adding `forge install` step for branches without `.gitmodules` |
+| test-ralph | pass | — |
+| test-superpower | **fail** | Known bun ESM linker bug — `mock.module` + static `pinata` import triggers `Export named 'uploadJson' not found` after first problematic test module loads. Reproduces locally on bun 1.3.1 and 1.2.22. Doesn't affect runtime or deployment. Production code works identically to the other 3 worktrees. Upstream tracking: bun/oven-sh `mock.module` + dynamic-imported packages interaction. |
+
+### Side-by-side form schema (updated)
+
+| Field | GSD | Spec Kit | Superpower | Ralph (unified) |
+|---|---|---|---|---|
+| Title | ✓ | ✓ | ✓ | ✓ |
+| Description | ✓ | ✓ (10k, min 50) | ✓ | ✓ (5k, min 50) |
+| Technical description | — | ✓ | — | — (uses "problem+solution" split) |
+| Problem statement | — | — | ✓ | ✓ (≥20 chars) |
+| Proposed solution | — | — | ✓ | ✓ (≥20 chars) |
+| Category | — | 5 enum | 5 enum | 5 enum (Creative added) |
+| Team (structured) | free-text | Name/Role | Name/Role | Name/Role (min 1, max 20) |
+| Budget amount + currency | $ | $ or ETH | USDC | USD (≤1M) |
+| Budget breakdown | — | ✓ | ✓ | ✓ (min 10 chars) |
+| Timeline | — | — | ✓ | ✓ |
+| Residency duration | — | — | ✓ | ✓ (3/4/5-weeks) |
+| Demo-day deliverable | — | — | ✓ | ✓ |
+| Community contribution | — | — | ✓ | ✓ |
+| Prior IPE participation | — | — | ✓ | boolean |
+| External links | ✓ | ✓ | ✓ | max 10 URLs |
+
+**Ralph consolidates the most opinionated schema of the four** — it takes Spec Kit's structure (category enum, structured team, currency) and overlays Superpower's IPE-specific fields, with tighter Zod validation bounds.
