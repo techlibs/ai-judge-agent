@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "rotki",
+    "score": 8.07,
+    "dims": {
+      "technical_feasibility": 8.4,
+      "impact_potential": 8.3,
+      "cost_efficiency": 7.4,
+      "team_capability": 8
+    }
+  },
+  {
+    "slug": "hypercerts",
+    "score": 6.98,
+    "dims": {
+      "technical_feasibility": 7.4,
+      "impact_potential": 7.4,
+      "cost_efficiency": 7.3,
+      "team_capability": 5.8
+    }
+  },
+  {
+    "slug": "kiwi",
+    "score": 6.65,
+    "dims": {
+      "technical_feasibility": 7.3,
+      "impact_potential": 6.4,
+      "cost_efficiency": 6.4,
+      "team_capability": 6.5
+    }
+  },
+  {
+    "slug": "fake-01-moonrocket",
+    "score": 1,
+    "dims": {
+      "technical_feasibility": 1,
+      "impact_potential": 1,
+      "cost_efficiency": 1,
+      "team_capability": 1
+    }
+  },
+  {
+    "slug": "fake-02-blockverseai",
+    "score": 2.24,
+    "dims": {
+      "technical_feasibility": 2,
+      "impact_potential": 2.8,
+      "cost_efficiency": 2,
+      "team_capability": 2
+    }
+  },
+  {
+    "slug": "fake-03-nethereum",
+    "score": 2.4,
+    "dims": {
+      "technical_feasibility": 1,
+      "impact_potential": 3.5,
+      "cost_efficiency": 3,
+      "team_capability": 2
+    }
+  }
+]

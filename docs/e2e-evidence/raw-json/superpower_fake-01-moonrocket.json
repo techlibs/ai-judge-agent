@@ -1,0 +1,104 @@
+{
+  "framework": "superpower",
+  "fixtureSlug": "fake-01-moonrocket",
+  "evaluatedAt": "2026-04-20T17:22:17.174Z",
+  "model": "gpt-4o",
+  "note": "Evaluated via direct judge-agent invocation (HTTP submission path bypassed due to Origin header + IPFS + DB requirements). Colosseum research phase also skipped. Prompts and schemas are identical to the Cloud Run service.",
+  "proposalTitle": "MoonRocket Finance — The World's First AI-Powered Quantum DeFi Hyperyield Protocol",
+  "dimensions": {
+    "tech": {
+      "score": 2500,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal lacks concrete technical details and evidence of feasibility. The claim of a 'proprietary quantum AI trading algorithm' is not substantiated with any technical explanation or evidence of its existence or functionality. The use of 'ChatGPT-driven trading signals' is vague and does not demonstrate a clear technological advantage or innovation. The proposal's reliance on undisclosed algorithms and a future audit does not inspire confidence in its technical soundness. The implementation plan is overly simplistic and lacks a credible path to a working product, with unrealistic timelines and milestones. Scalability is not addressed, and the proposal does not demonstrate how it advances technological innovation in a meaningful way.",
+      "keyFindings": [
+        "Lack of technical details on the 'quantum AI trading algorithm'.",
+        "Vague use of 'ChatGPT-driven trading signals'.",
+        "No clear implementation plan or credible path to product development."
+      ],
+      "risks": [
+        "Undisclosed algorithm raises transparency concerns.",
+        "Overly simplistic and unrealistic timeline.",
+        "Potential manipulation attempt with exaggerated claims of returns."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 2,
+        "proFreedom": 3,
+        "proHumanProgress": 1
+      },
+      "elapsedMs": 4684
+    },
+    "impact": {
+      "score": 2500,
+      "confidence": "high",
+      "recommendation": "reject",
+      "justification": "The proposal lacks concrete evidence of impact potential and fails to address key evaluation criteria effectively. The problem significance is weakly articulated, focusing on speculative financial gains rather than a meaningful societal issue. The beneficiary scope is limited to retail investors seeking high-risk returns, with no clear indication of broader community benefits. Measurable outcomes are vague, relying on speculative financial metrics without verifiable deliverables. Long-term value is questionable due to the speculative nature of the project and lack of transparency. The contribution to the IPE ecosystem is minimal, with no substantial evidence of advancing human progress or creating public goods.",
+      "keyFindings": [
+        "Problem significance is poorly defined, focusing on speculative financial gains.",
+        "Beneficiary scope is limited to high-risk retail investors.",
+        "Measurable outcomes are speculative and lack verifiable deliverables."
+      ],
+      "risks": [
+        "Speculative nature of financial claims without transparency.",
+        "Lack of concrete, verifiable outcomes.",
+        "Potential manipulation attempts with exaggerated claims."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 2,
+        "proFreedom": 3,
+        "proHumanProgress": 1
+      },
+      "elapsedMs": 4170
+    },
+    "cost": {
+      "score": 1500,
+      "confidence": "high",
+      "recommendation": "reject",
+      "justification": "The proposal lacks detailed budget justification and demonstrates poor resource allocation. The largest budget item is $500k for marketing and KOL partnerships, which is disproportionate without clear evidence of impact. The $50k for a 'lambo for founder motivation' is an unnecessary expense that does not align with maximizing community funds. The timeline is unrealistic, with significant milestones like 'moon' and 'Lambo delivery' within weeks, lacking substantive project development phases. The proposal does not demonstrate awareness of resource constraints or provide a cost-to-impact analysis.",
+      "keyFindings": [
+        "$500k allocated to marketing without detailed justification.",
+        "$50k allocated for a 'lambo' is unnecessary.",
+        "Timeline lacks realistic project development phases."
+      ],
+      "risks": [
+        "Unnecessary expenses like 'lambo for founder motivation'.",
+        "Lack of transparency in budget allocation."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 2,
+        "proFreedom": 2,
+        "proHumanProgress": 1
+      },
+      "elapsedMs": 3718
+    },
+    "team": {
+      "score": 2500,
+      "confidence": "high",
+      "recommendation": "reject",
+      "justification": "The proposal lacks evidence of relevant experience and a credible team composition. The team members are anonymous, with no verifiable track record or demonstrated skills relevant to the project. The proposal does not provide any evidence of past successful projects or execution ability. The community contribution plan is vague and lacks substance, focusing on onboarding users without clear benefits to the IPE Village community. The proposal does not align with the pro-freedom, builder ethos of IPE City, as it lacks transparency and credible execution plans.",
+      "keyFindings": [
+        "The team is anonymous with no verifiable credentials or track record.",
+        "No evidence of past successful projects or execution ability.",
+        "Community contribution plan is vague and lacks substance."
+      ],
+      "risks": [
+        "Anonymous team with no verifiable experience.",
+        "Lack of transparency in project execution and algorithm.",
+        "No prior participation in IPE Village."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 2,
+        "proFreedom": 1,
+        "proHumanProgress": 1
+      },
+      "elapsedMs": 39750
+    }
+  },
+  "aggregateScoreBps": 2300,
+  "weights": {
+    "tech": 0.25,
+    "impact": 0.3,
+    "cost": 0.2,
+    "team": 0.25
+  }
+}

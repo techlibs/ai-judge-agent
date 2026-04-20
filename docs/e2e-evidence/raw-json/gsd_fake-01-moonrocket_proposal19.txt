@@ -1,0 +1,38 @@
+GSD evaluation — Proposal 19 (MoonRocket Finance, fake-01)
+===========================================================
+URL:      https://agent-reviewer-gsd-1010906320334.us-central1.run.app/proposals/19/evaluation
+Captured: 2026-04-20
+IPFS CID: Qmbbg2RkYBUpfuLv4AnoMQzyrEzAf8n8dRkQKRcxHHXhDy
+Owner:    0xa7cEd6c599403B5BA0066f45074C5a5EbC70f742 (deployer / agent)
+averageScore (on-chain feedback): 9
+
+Scores
+------
+Technical Feasibility (25%): 6/100  — Insufficient — Reject
+Impact Potential      (30%): 8/100  — Insufficient — Reject
+Cost Efficiency       (20%): 12/100 — Insufficient — Reject
+Team Capability       (25%): 12/100 — Insufficient — Reject
+
+Overall weighted: 9/100 — Insufficient
+
+Judge narratives (verbatim from /proposals/19/evaluation)
+---------------------------------------------------------
+
+TECH 6/100 (Insufficient, Reject):
+"The proposal provides essentially no credible technical architecture, implementation plan, or engineering detail. Core claims rely on vague buzzwords like 'quantum AI trading algorithm,' 'ChatGPT-driven trading signals,' and a 'patented arbitrage loop' without any description of system design, data pipelines, model methodology, execution environment, smart contract logic, security assumptions, or risk controls. The timeline is not a real technical plan, and the budget is overwhelmingly non-technical. Key feasibility issues include undisclosed algorithmic details, unrealistic guarantees of returns, no mention of audits or infrastructure, no explanation of how arbitrage would function sustainably, and no technical deliverables beyond promotional activity. On technical merits alone, this is close to non-evaluable and appears infeasible as presented."
+
+IMPACT 8/100 (Insufficient, Reject):
+"The proposal shows virtually no credible public-benefit impact and provides no measurable plan aligned with IPE City's mission beyond speculative token promotion. Its stated outcomes focus on investor returns, hype, and price appreciation rather than technological innovation, decentralization, or meaningful human progress. Claims such as guaranteed 100x returns, zero risk, undisclosed proprietary trading logic, and a deliverable of a 'livestream chart going up' are not credible impact indicators. The only concrete scale metric mentioned is onboarding 10k 'degens,' but this reflects speculative user acquisition rather than clear societal, civic, or ecosystem benefit. Overall, the proposal's impact case is insufficient and weakly connected to IPE City values."
+
+COST 12/100 (Insufficient, Reject):
+"The proposal provides a nominal budget, but it is fundamentally weak on cost efficiency. Most spending is directed toward speculative token promotion rather than durable product development or measurable public benefit. The largest line items—$500k for KOL marketing and $200k for CEX listings—have poor cost justification given the absence of credible technical disclosure, operational milestones, or verifiable deliverables. The inclusion of a $50k 'founder lambo' is an explicitly non-programmatic expense and strongly undermines budget discipline. The timeline and deliverables are not serious enough to tie spending to outcomes, and the claimed returns are unsupported, making the cost-to-impact ratio highly unfavorable and the overspend risk extreme."
+
+TEAM 12/100 (Insufficient, Reject):
+(Team narrative not captured mid-stream; final score visible in UI radar and overall aggregate.)
+
+Rank-order
+----------
+GSD scores MoonRocket (fake) 9/100 vs. rotki (real) 70/100 — 61-point delta.
+All four judges correctly mark Insufficient/Reject. $50k "founder lambo" line item,
+anonymous team, undisclosed algorithm, and 100x-guaranteed-returns claims are each
+called out explicitly in the justifications.
