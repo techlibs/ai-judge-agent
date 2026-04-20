@@ -1,0 +1,21 @@
+{
+  "proposal": {
+    "title": "BlockVerseAI Universal — Leveraging Synergistic Web4 Paradigms",
+    "description": "BlockVerseAI is a next-generation holistic AI-native blockchain metaverse synergy platform that empowers stakeholders across the entire value chain to unlock unprecedented opportunities through decentralized intelligence. Our vision disrupts the status quo by delivering a transformative experience at the intersection of AI, blockchain, the metaverse, quantum computing, and regenerative finance. We architect scalable, modular, composable primitives that enable the next paradigm shift in trust minimization. Stakeholders will benefit from frictionless synergy while we deliver on our mission to ignite the renaissance of decentralized human flourishing through cutting-edge innovation and world-class thought leadership.",
+    "problemStatement": "The world lacks a unified AI-blockchain-metaverse synergy layer that delivers true decentralized value.",
+    "proposedSolution": "Phase 1 we will build a foundational primitive. Phase 2 we will scale it. Phase 3 we will go to market. The technology stack is TBD but will leverage best-in-class frameworks across multiple layers. Our approach is holistic and user-centric. We will iterate rapidly using agile methodologies and publish thought leadership on Mirror.xyz throughout the grant period.",
+    "teamMembers": [
+      { "name": "Brad Synergy", "role": "Chief Vision Officer" },
+      { "name": "Ashley Disruption", "role": "Chief Paradigm Officer" }
+    ],
+    "budgetAmount": 500000,
+    "budgetBreakdown": "Resource allocation is optimized for impact across workstreams. Detailed line items will be made available quarterly to grant administrators upon request.",
+    "timeline": "Q1 kickoff. Q2 alpha. Q3 beta. Q4 TBD.",
+    "category": "infrastructure",
+    "residencyDuration": "5-weeks",
+    "demoDayDeliverable": "Keynote presentation on our vision and roadmap.",
+    "communityContribution": "Thought leadership content.",
+    "priorIpeParticipation": false,
+    "links": []
+  }
+}
