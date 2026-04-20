@@ -62,10 +62,21 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit --suppress-logs \
+          BUILD_ID=$(gcloud builds submit --async \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/gsd:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
-            --region=${{ env.GCP_REGION }}
+            --region=${{ env.GCP_REGION }} \
+            --format='value(id)')
+          echo "Build ID: $BUILD_ID"
+          while true; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format='value(status)')
+            echo "Status: $STATUS"
+            case "$STATUS" in
+              SUCCESS) break ;;
+              FAILURE|TIMEOUT|CANCELLED|INTERNAL_ERROR|EXPIRED) echo "Build failed: $STATUS"; exit 1 ;;
+            esac
+            sleep 15
+          done
 
       - name: Deploy to Cloud Run
         run: |
@@ -81,7 +92,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
 
       - name: Show deployment URL
         run: |
@@ -124,10 +135,21 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit --suppress-logs \
+          BUILD_ID=$(gcloud builds submit --async \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/speckit:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
-            --region=${{ env.GCP_REGION }}
+            --region=${{ env.GCP_REGION }} \
+            --format='value(id)')
+          echo "Build ID: $BUILD_ID"
+          while true; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format='value(status)')
+            echo "Status: $STATUS"
+            case "$STATUS" in
+              SUCCESS) break ;;
+              FAILURE|TIMEOUT|CANCELLED|INTERNAL_ERROR|EXPIRED) echo "Build failed: $STATUS"; exit 1 ;;
+            esac
+            sleep 15
+          done
 
       - name: Deploy to Cloud Run
         run: |
@@ -143,7 +165,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,AUTH_SECRET=AUTH_SECRET:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest,CRON_SECRET=CRON_SECRET:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,AUTH_SECRET=AUTH_SECRET:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,CRON_SECRET=CRON_SECRET:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
 
       - name: Show deployment URL
         run: |
@@ -186,10 +208,21 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit --suppress-logs \
+          BUILD_ID=$(gcloud builds submit --async \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/superpower:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
-            --region=${{ env.GCP_REGION }}
+            --region=${{ env.GCP_REGION }} \
+            --format='value(id)')
+          echo "Build ID: $BUILD_ID"
+          while true; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format='value(status)')
+            echo "Status: $STATUS"
+            case "$STATUS" in
+              SUCCESS) break ;;
+              FAILURE|TIMEOUT|CANCELLED|INTERNAL_ERROR|EXPIRED) echo "Build failed: $STATUS"; exit 1 ;;
+            esac
+            sleep 15
+          done
 
       - name: Deploy to Cloud Run
         run: |
@@ -205,7 +238,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest"
 
       - name: Show deployment URL
         run: |
@@ -248,10 +281,21 @@ jobs:
 
       - name: Build and push image
         run: |
-          gcloud builds submit --suppress-logs \
+          BUILD_ID=$(gcloud builds submit --async \
             --tag ${{ env.GAR_LOCATION }}/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/ralph:${{ github.sha }} \
             --project=${{ env.GCP_PROJECT_ID }} \
-            --region=${{ env.GCP_REGION }}
+            --region=${{ env.GCP_REGION }} \
+            --format='value(id)')
+          echo "Build ID: $BUILD_ID"
+          while true; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format='value(status)')
+            echo "Status: $STATUS"
+            case "$STATUS" in
+              SUCCESS) break ;;
+              FAILURE|TIMEOUT|CANCELLED|INTERNAL_ERROR|EXPIRED) echo "Build failed: $STATUS"; exit 1 ;;
+            esac
+            sleep 15
+          done
 
       - name: Deploy to Cloud Run
         run: |
@@ -267,7 +311,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
 
       - name: Show deployment URL
         run: |
