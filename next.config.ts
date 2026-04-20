@@ -40,7 +40,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["ws"],
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./node_modules/ws/**/*"],
+  },
   async headers() {
     return [
       {
