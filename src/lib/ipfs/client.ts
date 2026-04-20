@@ -1,27 +1,14 @@
 import { z } from "zod";
+import { PinataSDK } from "pinata";
 
-// Dynamic import of the pinata SDK is done lazily inside getPinata() to avoid
-// Bun 1.3.12 module-linker crashes in test contexts. We type pinataInstance as
-// a minimal structural interface rather than ReturnType<typeof ...> so bun's
-// ESM linker can resolve this module's exports without ever touching `pinata`.
-interface PinataClientLike {
-  upload: { public: { json: (data: unknown) => { name: (n: string) => Promise<{ cid: string }> } } };
-  gateways: { public: { get: (cid: string) => Promise<{ data: unknown }> } };
-}
+let pinataInstance: PinataSDK | undefined;
 
-let pinataInstance: PinataClientLike | undefined;
-
-async function getPinata(): Promise<PinataClientLike> {
+function getPinata(): PinataSDK {
   if (!pinataInstance) {
-    // Indirection via variable prevents bun's static analyzer from resolving
-    // `pinata` at module link time; evaluation is deferred to actual call.
-    const pkg = "pinata";
-    const mod = await import(/* @vite-ignore */ pkg);
-    const SDK = mod.PinataSDK;
-    pinataInstance = new SDK({
+    pinataInstance = new PinataSDK({
       pinataJwt: process.env.PINATA_JWT,
       pinataGateway: process.env.PINATA_GATEWAY_URL,
-    }) as unknown as PinataClientLike;
+    });
   }
   return pinataInstance;
 }
