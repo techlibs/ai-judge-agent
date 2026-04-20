@@ -92,7 +92,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
 
       - name: Show deployment URL
         run: |
@@ -165,7 +165,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,AUTH_SECRET=AUTH_SECRET:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest,CRON_SECRET=CRON_SECRET:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,AUTH_SECRET=AUTH_SECRET:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,CRON_SECRET=CRON_SECRET:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest"
 
       - name: Show deployment URL
         run: |
@@ -238,7 +238,7 @@ jobs:
             --max-instances 3 \
             --no-invoker-iam-check \
             --set-env-vars "NODE_ENV=production" \
-            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest"
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,PINATA_JWT=PINATA_JWT:latest,DEPLOYER_PRIVATE_KEY=DEPLOYER_PRIVATE_KEY:latest,TURSO_DATABASE_URL=TURSO_DATABASE_URL:latest,TURSO_AUTH_TOKEN=TURSO_AUTH_TOKEN:latest"
 
       - name: Show deployment URL
         run: |
