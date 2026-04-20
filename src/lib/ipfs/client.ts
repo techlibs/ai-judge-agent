@@ -13,8 +13,12 @@ let pinataInstance: PinataClientLike | undefined;
 
 async function getPinata(): Promise<PinataClientLike> {
   if (!pinataInstance) {
-    const { PinataSDK } = await import("pinata");
-    pinataInstance = new PinataSDK({
+    // Indirection via variable prevents bun's static analyzer from resolving
+    // `pinata` at module link time; evaluation is deferred to actual call.
+    const pkg = "pinata";
+    const mod = await import(/* @vite-ignore */ pkg);
+    const SDK = mod.PinataSDK;
+    pinataInstance = new SDK({
       pinataJwt: process.env.PINATA_JWT,
       pinataGateway: process.env.PINATA_GATEWAY_URL,
     }) as unknown as PinataClientLike;
