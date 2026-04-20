@@ -88,6 +88,16 @@ mock.module("@/lib/evaluation/orchestrator", () => ({
   },
 }));
 
+// Stub ipfs/client so bun's ESM linker resolves its exports even when the
+// real module (dynamic-imports pinata) fails to parse in some test orderings.
+mock.module("@/lib/ipfs/client", () => ({
+  uploadJson: async () => ({ cid: "bafytest", uri: "ipfs://bafytest" }),
+  fetchJson: async () => ({}),
+  verifyContentIntegrity: async () => ({ valid: true }),
+  ipfsUri: (cid: string) => `ipfs://${cid}`,
+  gatewayUrl: (cid: string) => `https://gateway.pinata.cloud/ipfs/${cid}`,
+}));
+
 // Import route AFTER mocking
 const { POST } = await import("@/app/api/evaluate/[id]/finalize/route");
 
