@@ -40,6 +40,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  serverExternalPackages: ["ws"],
   async headers() {
     return [
       {
