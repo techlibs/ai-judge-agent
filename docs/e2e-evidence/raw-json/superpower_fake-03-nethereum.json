@@ -1,0 +1,104 @@
+{
+  "framework": "superpower",
+  "fixtureSlug": "fake-03-nethereum",
+  "evaluatedAt": "2026-04-20T17:22:52.068Z",
+  "model": "gpt-4o",
+  "note": "Evaluated via direct judge-agent invocation (HTTP submission path bypassed due to Origin header + IPFS + DB requirements). Colosseum research phase also skipped. Prompts and schemas are identical to the Cloud Run service.",
+  "proposalTitle": "Nethereum Protocol v2 — A Clean-Room Reimplementation of Ethereum from Scratch",
+  "dimensions": {
+    "tech": {
+      "score": 3500,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal outlines an ambitious plan to reimplement the Ethereum protocol stack with significant improvements. However, the technical feasibility is questionable due to several critical gaps and unrealistic claims. The timeline is overly optimistic, suggesting a complete rewrite and launch within five weeks, which is not credible given the complexity of the task. The use of AI-assisted code generation is mentioned but lacks detail on how it will be applied effectively. The proposal also claims a 1000x throughput improvement without providing evidence or a clear technical path to achieve this. Additionally, the team composition is dubious, with unverified claims about key members. The budget allocation is inadequate for the scope of work described, particularly for infrastructure and auditing. Overall, the proposal lacks a credible implementation plan and sufficient technical detail to support its claims.",
+      "keyFindings": [
+        "The proposal claims a 1000x throughput improvement without technical evidence.",
+        "The timeline for rewriting and launching a new protocol is unrealistic.",
+        "The team composition includes unverified claims about key members."
+      ],
+      "risks": [
+        "Unrealistic timeline and scope for a complete protocol rewrite.",
+        "Lack of detailed technical plan for AI-assisted code generation.",
+        "Unverified team credentials and involvement."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 3,
+        "proFreedom": 2,
+        "proHumanProgress": 2
+      },
+      "elapsedMs": 7084
+    },
+    "impact": {
+      "score": 4000,
+      "confidence": "medium",
+      "recommendation": "reject",
+      "justification": "The proposal aims to address significant issues with Ethereum, such as speed and cost, which are important problems. However, the proposal lacks concrete evidence of feasibility and measurable outcomes. The claim of replacing Ethereum within 18 months is ambitious but not substantiated with a clear plan or evidence of capability. The proposal does not provide verifiable deliverables or long-term value beyond the grant period. Additionally, the contribution to the IPE ecosystem is unclear, as the proposal does not specify how it will strengthen the community or create public goods.",
+      "keyFindings": [
+        "Addresses significant issues with Ethereum's speed and cost.",
+        "Proposes a complete reimplementation of Ethereum with improvements."
+      ],
+      "risks": [
+        "Lack of confirmed team members and advisors.",
+        "Unsubstantiated claims of replacing Ethereum within 18 months.",
+        "No concrete, verifiable deliverables or long-term value."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 6,
+        "proFreedom": 5,
+        "proHumanProgress": 4
+      },
+      "elapsedMs": 4724
+    },
+    "cost": {
+      "score": 3500,
+      "confidence": "medium",
+      "recommendation": "reject",
+      "justification": "The proposal lacks detailed budget justification and demonstrates poor resource allocation. The $15,000 budget is primarily allocated to cloud infrastructure and pizza, with no clear explanation of how these expenses directly contribute to the project's ambitious goals. The timeline is unrealistic given the scope of work, and there is no evidence of cost-to-impact analysis or efficiency signals. The proposal does not demonstrate an awareness of resource constraints, and the allocation of funds does not appear to maximize output per dollar.",
+      "keyFindings": [
+        "Budget lacks detailed justification for cloud infrastructure and pizza expenses.",
+        "Timeline is unrealistic for the scope of rewriting and launching a new protocol.",
+        "No evidence of cost-to-impact analysis or efficiency signals."
+      ],
+      "risks": [
+        "Unrealistic timeline for project scope.",
+        "Lack of confirmed team members and advisors.",
+        "Insufficient budget justification."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 5,
+        "proFreedom": 3,
+        "proHumanProgress": 4
+      },
+      "elapsedMs": 4727
+    },
+    "team": {
+      "score": 3000,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal lacks concrete evidence of the team's capability to execute such an ambitious project. The team claims to have deep experience but provides no verifiable credentials or past achievements. The mention of 'Satoshi Nakamoto' and an unconfirmed advisor role for 'Vitalik Buterin' raises credibility concerns. There is no evidence of prior successful project delivery or participation in similar initiatives. The proposal also lacks a clear community contribution plan beyond onboarding developers, which is vague and unsubstantiated.",
+      "keyFindings": [
+        "No verifiable team credentials or past achievements provided.",
+        "Unconfirmed advisor role for Vitalik Buterin.",
+        "No evidence of prior successful project delivery or participation in similar initiatives."
+      ],
+      "risks": [
+        "Credibility concerns with team composition (e.g., 'Satoshi Nakamoto').",
+        "Lack of verifiable track record or execution ability.",
+        "Unsubstantiated claims of onboarding all Ethereum developers."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 3,
+        "proFreedom": 2,
+        "proHumanProgress": 2
+      },
+      "elapsedMs": 3057
+    }
+  },
+  "aggregateScoreBps": 3525,
+  "weights": {
+    "tech": 0.25,
+    "impact": 0.3,
+    "cost": 0.2,
+    "team": 0.25
+  }
+}

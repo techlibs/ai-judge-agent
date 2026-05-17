@@ -1,0 +1,96 @@
+{
+  "framework": "superpower",
+  "fixtureSlug": "hypercerts",
+  "evaluatedAt": "2026-04-20T17:20:10.554Z",
+  "model": "gpt-4o",
+  "note": "Evaluated via direct judge-agent invocation (HTTP submission path bypassed due to Origin header + IPFS + DB requirements). Colosseum research phase also skipped. Prompts and schemas are identical to the Cloud Run service.",
+  "proposalTitle": "Hypercerts — on-chain impact certificates (ERC-1155)",
+  "dimensions": {
+    "tech": {
+      "score": 7800,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "The proposal for Hypercerts demonstrates a strong technical foundation and a clear implementation plan. The use of ERC-1155 tokens is appropriate for creating semi-fungible impact certificates, and the integration with existing funding programs shows foresight in scalability and adoption. The project is technically innovative, leveraging blockchain technology to solve a real-world problem in public-goods funding transparency. The timeline and budget allocation are realistic, with a focus on engineering and integration, which are critical for success. The open-source nature of the project aligns well with IPE City's pro-technology and pro-human progress values.",
+      "keyFindings": [
+        "The use of ERC-1155 tokens is suitable for semi-fungible impact certificates.",
+        "The project includes a clear implementation plan with a 6-month timeline.",
+        "Integration with existing funding programs enhances scalability and adoption potential."
+      ],
+      "risks": [
+        "The GitHub repository is archived, which may indicate a pivot or change in focus."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 7,
+        "proHumanProgress": 8
+      },
+      "elapsedMs": 3346
+    },
+    "impact": {
+      "score": 8500,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "The proposal addresses a significant problem in the public-goods funding ecosystem by creating a unified, verifiable on-chain record of funding and impact. This has the potential to streamline and enhance transparency in funding processes, benefiting a wide range of stakeholders. The project promises measurable outcomes through the deployment of ERC-1155 tokens and the creation of a registry and UI. The long-term value is evident as it aims to integrate with existing funding programs, ensuring sustainability beyond the grant period. Additionally, the open-source nature of the project contributes to the IPE ecosystem by providing tools that can be adopted by other grant programs, fostering innovation and collaboration.",
+      "keyFindings": [
+        "Addresses fragmentation in public-goods funding history.",
+        "Proposes a verifiable on-chain record using ERC-1155 tokens.",
+        "Integrates with existing funding programs for sustainability."
+      ],
+      "risks": [
+        "Potential technical challenges in integrating with multiple platforms.",
+        "Dependence on adoption by existing funding programs."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 9,
+        "proFreedom": 8,
+        "proHumanProgress": 9
+      },
+      "elapsedMs": 3571
+    },
+    "cost": {
+      "score": 7200,
+      "confidence": "high",
+      "recommendation": "fund",
+      "justification": "The proposal provides a clear budget breakdown with 60% allocated to engineering, which is justified given the technical nature of the project. The allocation for research, community engagement, audits, and integration is sensible and aligns with the project's goals. The timeline is realistic for the scope of work, and the team shows awareness of resource constraints by focusing on essential components like smart contracts and UI development. The cost-to-impact ratio is reasonable, as the project aims to create a standardized tool that could significantly enhance transparency and accountability in public-goods funding.",
+      "keyFindings": [
+        "Budget is clearly broken down into engineering, research, audits, and integration.",
+        "Timeline is realistic and aligns with project phases.",
+        "Project aims to create a standardized tool for public-goods funding transparency."
+      ],
+      "risks": [],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 7,
+        "proHumanProgress": 8
+      },
+      "elapsedMs": 3621
+    },
+    "team": {
+      "score": 7200,
+      "confidence": "high",
+      "recommendation": "fund",
+      "justification": "The team behind Hypercerts demonstrates relevant experience and a solid composition for the proposed project. Holke Brammer, as the research lead, and the Network Goods team from Protocol Labs bring credible expertise, particularly in blockchain and decentralized technologies. The proposal indicates a clear division of roles, with a focus on engineering, research, and community engagement, which are crucial for the project's success.\n\nThe team has a track record of involvement with Protocol Labs, suggesting they have experience in executing complex projects. However, there is no explicit mention of past projects shipped by this specific team, which slightly impacts the evaluation.\n\nTheir commitment to the IPE Village residency is evident, with a clear plan to deliver a live mint flow demonstration. The community contribution plan is strong, offering open-source specifications and reference contracts that can benefit the broader IPE City community and beyond.\n\nOverall, the team embodies the builder ethos of IPE City, focusing on practical implementation and community strengthening through open-source contributions.",
+      "keyFindings": [
+        "Relevant experience with Protocol Labs and blockchain technologies.",
+        "Clear team roles covering technical and community aspects.",
+        "Commitment to IPE Village with a planned live demonstration."
+      ],
+      "risks": [
+        "No explicit mention of past projects shipped by this team."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 7,
+        "proHumanProgress": 7
+      },
+      "elapsedMs": 3428
+    }
+  },
+  "aggregateScoreBps": 7740,
+  "weights": {
+    "tech": 0.25,
+    "impact": 0.3,
+    "cost": 0.2,
+    "team": 0.25
+  }
+}

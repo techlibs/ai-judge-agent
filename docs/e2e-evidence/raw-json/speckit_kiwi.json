@@ -1,0 +1,134 @@
+{
+  "framework": "speckit",
+  "slug": "kiwi",
+  "title": "Kiwi News — attestation-based crypto news curation via kiwistand",
+  "sanitizedProposal": {
+    "title": "Kiwi News — attestation-based crypto news curation via kiwistand",
+    "description": "Kiwi News is an experimental, community-curated news feed for crypto/web3 content. Readers with an NFT pass submit story links, upvote, and comment. Upvotes are cryptographic attestations stored in kiwistand — a small, open P2P attestation network built by attestate (github.com/attestate/kiwistand). Demo on YouTube walks through the posting flow and the kiwistand attestation primitive. The project has been running continuously for ~2 years with a small but consistent daily user base and is referenced as a case study in decentralized social protocol discussions.",
+    "budgetAmount": 120000,
+    "budgetCurrency": "USD",
+    "budgetBreakdown": [
+      {
+        "category": "salaries",
+        "amount": 90000,
+        "description": "1 full-time engineer for 12 months"
+      },
+      {
+        "category": "infrastructure",
+        "amount": 15000,
+        "description": "Hosting, domain, backup nodes"
+      },
+      {
+        "category": "design_and_docs",
+        "amount": 15000,
+        "description": "Frontend polish, protocol docs"
+      }
+    ],
+    "technicalDescription": "Node.js server running a small P2P attestation network (kiwistand) where each node maintains a set of signed messages (story submissions, upvotes, comments) and reconciles them with peers. Message format uses EIP-712 signatures so attestations are verifiable without trusting any node. Frontend is a lightweight server-rendered HTML site. Persistence via flat-file + SQLite. Limited scale (hundreds of active users) is a known constraint — the protocol is deliberately small and resilient rather than high-throughput.",
+    "teamSize": 1,
+    "teamProfileHash": "739737685b8ae79b",
+    "category": "social_protocol"
+  },
+  "modelId": "gpt-5.4",
+  "promptVersion": "v1.0.0",
+  "dimensions": [
+    {
+      "dimension": "technical_feasibility",
+      "score": 7.3,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "architecture",
+          "scalability",
+          "security",
+          "technical_complexity",
+          "implementation_plan"
+        ]
+      },
+      "reasoningChain": "The proposal presents a credible and already-partially-validated technical approach. On architecture, the system is clearly defined: a Node.js server coordinates a small P2P attestation network (kiwistand), nodes reconcile signed messages with peers, EIP-712 signatures provide verifiable attestations, and the frontend is a lightweight server-rendered HTML site with flat-file + SQLite persistence. These choices are coherent for an experimental community-curated news product and match the stated goal of resilience and simplicity over high throughput. On scalability, the proposal is appropriately scoped but limited: it explicitly states support is intended for only hundreds of active users, and flat-file + SQLite plus peer reconciliation could become bottlenecks beyond that range. This is acceptable for the current use case, but it constrains future growth and reduces the score somewhat. On security, the use of signed attestations and trust-minimized verification is a meaningful strength, but the proposal does not discuss broader security issues such as Sybil resistance around NFT-pass gating, abuse/spam controls, key management, node hardening, moderation edge cases, or backup/recovery procedures beyond mentioning backup nodes. On technical complexity, the design is modest and reasonably aligned with a one-engineer, $120k budget, especially since the project has reportedly been running for about two years with a small daily user base, which lowers execution risk. On implementation plan, there is evidence of an existing demo, continuous operation, and prior real-world usage, which strongly supports feasibility, but there is not a detailed roadmap of milestones, testing, deployment upgrades, or protocol evolution. Overall, this is a strong but not exceptional technical plan: practical, proven at small scale, and implementable, with the main gaps being limited scalability and incomplete security/planning detail."
+    },
+    {
+      "dimension": "impact_potential",
+      "score": 6.4,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "reach",
+          "novelty",
+          "ecosystem_value",
+          "problem_significance",
+          "sustainability"
+        ]
+      },
+      "reasoningChain": "The proposal shows moderate impact potential. On reach, the description and technicalDescription explicitly frame Kiwi News as a small, experimental product with a 'small but consistent daily user base' and a known scale constraint of only 'hundreds of active users,' which limits near-term audience size even though the target audience—crypto/web3 readers and curators—is clear. On novelty, the project has a meaningful differentiator: community news curation backed by cryptographic attestations stored on a small open P2P network using EIP-712 signatures, which is more novel than a standard news aggregator and may serve as a practical example of decentralized social primitives. On ecosystem value, the proposal contributes an open attestation-based use case and has reportedly been referenced as a case study in decentralized social protocol discussions, suggesting positive externalities for experimentation and protocol design beyond the product itself. On problem significance, better curation and credibility for crypto/web3 news is relevant, but it is not as foundational as core infrastructure or mass-access tooling, so the ecosystem-wide importance is moderate rather than high. On sustainability, the project has already operated continuously for around 2 years, which is a strong signal of persistence, and the budget includes protocol docs and infrastructure rather than only short-lived growth spending; however, long-term impact is constrained by a one-person team, limited scale by design, and no clear plan in the provided data for expanding adoption beyond the current niche. Overall, this is a credible, interesting niche social protocol project with lasting experimental value, but its deliberately limited scale and modest beneficiary count keep it below the strong-impact tier."
+    },
+    {
+      "dimension": "cost_efficiency",
+      "score": 6.4,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "budget_allocation",
+          "cost_per_impact",
+          "sustainability",
+          "market_rates",
+          "contingency_planning"
+        ]
+      },
+      "reasoningChain": "The proposal requests $120,000 total, with a simple and mostly coherent breakdown: $90,000 for 1 full-time engineer over 12 months, $15,000 for infrastructure, and $15,000 for design/docs. On budget allocation, the salary line is generally reasonable for a solo builder maintaining and improving an existing product, and the concentration of spend on engineering matches the technical scope. However, the non-salary items are only lightly justified; for a lightweight server-rendered site using flat-file + SQLite persistence and a deliberately small network serving hundreds of active users, $15,000 in infrastructure appears somewhat high unless backup-node redundancy or heavy ops needs are clearer. The additional $15,000 for frontend polish and protocol docs may be useful, but the expected deliverables and impact of that spend are not specified in detail. On cost per impact, the project does have positive efficiency signals: it is already live, has been running for about 2 years, has a small but consistent daily user base, and builds on an existing open P2P attestation network, which reduces execution risk versus a net-new concept. That said, the proposal itself acknowledges limited scale, so the ecosystem return is likely niche rather than broad, making the ROI moderate rather than strong at this budget level. On sustainability, no explicit revenue model, post-grant funding plan, or path to self-support is provided, which weakens long-term cost efficiency. On market rates, $90,000 for a full-time engineer for a year is broadly in line with or even below common market rates, which is a favorable efficiency signal. On contingency planning, there is no explicit reserve, buffer, or pricing-in of risks, so the budget lacks evidence of structured contingency management. Overall, this is an adequate and fairly lean budget anchored by a reasonable engineering cost and an already-operational product, but unclear justification for some line items, limited projected scale, and no sustainability or contingency detail keep it in the mid range rather than the strong range."
+    },
+    {
+      "dimension": "team_capability",
+      "score": 6.5,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "teamProfileHash",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "experience",
+          "track_record",
+          "team_composition",
+          "domain_expertise",
+          "execution_capacity"
+        ]
+      },
+      "reasoningChain": "The proposal shows meaningful relevant experience and some demonstrated delivery: the project is described as having run continuously for about 2 years, with a small but consistent daily user base, a demo, and references as a case study in decentralized social protocol discussions. That supports track record and domain familiarity in crypto/web3 social systems. The technical description also indicates practical competence with Node.js, P2P reconciliation, EIP-712 signatures, and lightweight persistence choices, suggesting the builder understands both the protocol design and implementation constraints. However, team capability is limited by the stated team size of 1. A solo full-time engineer can plausibly maintain and incrementally improve a small existing system, especially given the modest stated scale of hundreds of active users, but there are clear gaps in redundancy and breadth of skills. The budget allocates most funds to one engineer, with separate amounts for frontend polish and docs, which partially mitigates coverage gaps but does not indicate a fully staffed team across engineering, design, operations, and growth. Domain expertise appears solid for decentralized attestation-based social/news curation, yet the anonymized profile provides no direct evidence of broader prior comparable project delivery beyond this product itself. Overall, this is stronger than an unproven team because there is an existing live system and sustained operation, but weaker than a high-scoring team due to single-person concentration risk and limited explicit evidence of a broader track record."
+    }
+  ],
+  "finalScore": 6.65,
+  "reputationMultiplier": 1,
+  "adjustedScore": 6.65,
+  "evaluatedAt": "2026-04-20T17:19:44.594Z"
+}

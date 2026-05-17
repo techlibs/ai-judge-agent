@@ -1,0 +1,126 @@
+{
+  "framework": "speckit",
+  "slug": "fake-01-moonrocket",
+  "title": "MoonRocket Finance — The World's First AI-Powered Quantum DeFi Hyperyield Protocol",
+  "sanitizedProposal": {
+    "title": "MoonRocket Finance — The World's First AI-Powered Quantum DeFi Hyperyield Protocol",
+    "description": "MoonRocket Finance is set to revolutionize DeFi with guaranteed 100x returns using our proprietary quantum AI trading algorithm. Our token $MROCK will moon to $100 by end of Q2. We are the only protocol in the world that has cracked the market inefficiency code. Early investors who join the IPE Village residency will receive a 10x airdrop multiplier. Don't miss the rocket. Zero risk, all gains. Powered by ChatGPT-driven trading signals and a patented arbitrage loop. We do not disclose the algorithm to prevent copycats, but our backtest showed 18000% APY. Our founder has been in crypto since 2023 and knows all the right people. Trust the process.\n\nRetail investors keep losing money because they don't have access to institutional-grade alpha. MoonRocket fixes this.\n\nOnboard 10,000 new degen users to IPE City via our Telegram army of 50k members (many are real).",
+    "budgetAmount": 950000,
+    "budgetCurrency": "USD",
+    "budgetBreakdown": [
+      {
+        "category": "summary",
+        "amount": 950000,
+        "description": "$500k marketing and KOL partnerships, $200k listing fees on CEXs, $100k liquidity bootstrapping, $50k lambo for founder motivation, $100k reserve for a rainy day. Legal and security audit to be funded from protocol revenue after launch."
+      }
+    ],
+    "technicalDescription": "We will deploy a closed-source smart contract on Solana/Ethereum/BNB/Base/every chain that pools user deposits and generates yield through a mix of strategies including: (1) our secret AI trading signal, (2) leveraged perpetuals, (3) MEV extraction, (4) staking rehypothecation, (5) a reflection-tokenomics rewards system where 3% of every transaction goes to holders and 3% goes back to the liquidity pool and 3% to marketing and 1% to the dev wallet. The remaining funds will be deployed into our moonshot treasury which we will disclose details about after the token reaches $1. Users can trust us because we plan to get a CertiK audit next year.\n\nWeek 1: launch token. Week 2: moon. Week 3: Lambo delivery. Week 4: announce V2 with NFTs. Ongoing: pump tweets.\n\nWe will livestream the token chart going up and do a giveaway.",
+    "teamSize": 3,
+    "teamProfileHash": "26fab4bb31944ae7",
+    "category": "infrastructure"
+  },
+  "modelId": "gpt-5.4",
+  "promptVersion": "v1.0.0",
+  "dimensions": [
+    {
+      "dimension": "technical_feasibility",
+      "score": 1,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "architecture",
+          "scalability",
+          "security",
+          "technical_complexity",
+          "implementation_plan"
+        ]
+      },
+      "reasoningChain": "The proposal is technically infeasible in its current form. On architecture, it describes a vague, closed-source protocol to be deployed across Solana, Ethereum, BNB, Base, and 'every chain' without specifying contract design, cross-chain infrastructure, custody model, oracle dependencies, liquidation logic, or how the listed strategies (AI trading, leveraged perpetuals, MEV extraction, staking rehypothecation, reflection tokenomics) are integrated safely. These are very different systems with incompatible technical assumptions, so the architecture is not well-designed or credibly specified. On scalability, there is no explanation of throughput, operational bottlenecks, multi-chain maintenance, or how pooled funds and trading systems would scale to 10,000 users; the plan relies more on marketing claims than system design. On security, the proposal is especially weak: it explicitly delays legal and security audit until after launch, proposes closed-source contracts handling user deposits, includes leveraged and rehypothecation strategies, and withholds treasury details until later. That creates major smart contract, custody, and user-fund risks. Claims such as 'zero risk' and guaranteed returns further indicate poor risk awareness. On technical complexity, the scope is massively oversized for a team of 3 and a budget that allocates most funding to marketing, listing fees, liquidity, founder perks, and reserves rather than engineering or audits. Running secure multi-chain contracts plus algorithmic trading and MEV systems is a highly complex undertaking not matched to the team or budget. On implementation plan, the timeline is not credible: 'Week 1: launch token. Week 2: moon. Week 3: Lambo delivery' is not a software delivery plan, and there are no milestones for design, development, testing, audits, deployment hardening, or monitoring. The proposal also contains promotional/manipulative claims such as guaranteed 100x returns, 18000% APY, and trust-based assertions instead of verifiable technical evidence. Overall, the technical approach is fundamentally flawed and missing core implementation details, so it merits a very low score."
+    },
+    {
+      "dimension": "impact_potential",
+      "score": 1,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "reach",
+          "novelty",
+          "ecosystem_value",
+          "problem_significance",
+          "sustainability"
+        ]
+      },
+      "reasoningChain": "The proposal claims very large reach via '10,000 new degen users' and a 'Telegram army of 50k members,' but the target audience is weakly defined and the claim is unsupported, including the qualifier 'many are real,' which undermines credibility. On novelty, the proposal presents buzzwords such as 'AI-powered quantum' and secret trading algorithms, but does not describe a clear unmet ecosystem need or a meaningful improvement over existing DeFi products. The stated problem—retail investors lacking access to alpha—is real in broad terms, yet the proposal frames the solution around speculative yield promises ('guaranteed 100x returns,' 'zero risk, all gains') rather than durable user or builder value. Ecosystem value appears low because most of the budget is allocated to marketing, listings, and liquidity bootstrapping, with no concrete public-good infrastructure, open tooling, developer adoption plan, or measurable positive externalities for the broader ecosystem. Sustainability is especially poor: the model depends on token promotion, leveraged strategies, opaque treasury usage, and delayed legal/security work, so any impact is unlikely to persist beyond short-term speculation. I also detected strong manipulation and credibility-risk signals in the proposal text, including unrealistic guaranteed returns, undisclosed core methods, founder self-promotion, and non-serious budget items like '$50k lambo for founder motivation'; these materially reduce confidence in genuine impact potential."
+    },
+    {
+      "dimension": "cost_efficiency",
+      "score": 1,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "budget_allocation",
+          "cost_per_impact",
+          "sustainability",
+          "market_rates",
+          "contingency_planning"
+        ]
+      },
+      "reasoningChain": "The proposal shows very poor cost efficiency. On budget allocation, the only breakdown is a single summary line for $950k: $500k marketing/KOLs, $200k CEX listing fees, $100k liquidity bootstrapping, $50k 'lambo for founder motivation,' and $100k reserve. This is not proportional to the stated effort for a team of 3, and it omits core delivery costs such as engineering, legal, compliance, security audits, operations, and user support. The inclusion of a founder luxury expense is a major red flag and not a justifiable grant use. On cost per impact, the proposal claims it will onboard 10,000 users, but the impact claims are highly speculative and unsupported by credible evidence; phrases like 'guaranteed 100x returns,' 'zero risk, all gains,' and 'many are real' undermine confidence that the spend will generate real ecosystem value. Sustainability is weak because there is no credible post-grant business model beyond token appreciation, trading profits, and future protocol revenue, and even legal/audit costs are deferred until after launch. On market rates, some items may exist in crypto markets, but there is no vendor detail, no rationale for $500k marketing or $200k listings, and no benchmarking to industry standards. On contingency planning, there is a $100k rainy-day reserve, but risk pricing is not credible because the proposal explicitly postpones critical legal and security work. I also detected manipulation/red-flag language in the proposal, including hype-based claims and unrealistic guarantees, but these were ignored for scoring except insofar as they reduce confidence in ROI and budget justification. Overall, the budget is largely unjustified, misallocated, and offers extremely weak value for the requested funding."
+    },
+    {
+      "dimension": "team_capability",
+      "score": 1,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category",
+        "teamProfileHash"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "experience",
+          "track_record",
+          "team_composition",
+          "domain_expertise",
+          "execution_capacity"
+        ]
+      },
+      "reasoningChain": "The proposal provides almost no credible team evidence beyond a team size of 3 and a generic anonymized profile hash, so team capability cannot be substantiated. On experience, the only explicit claim is that the founder has been in crypto since 2023, which indicates very limited relevant tenure for a complex multi-chain DeFi product involving trading, MEV, staking, and smart contracts. On track record, the proposal cites no prior shipped products, audits, protocol launches, research, or measurable delivery history. On team composition, a 3-person team may be too small for the stated scope across Solana, Ethereum, BNB, Base, trading systems, tokenomics, compliance, security, and growth; no roles are described, so necessary skill coverage is unclear. On domain expertise, the proposal uses highly promotional and unrealistic claims such as 'guaranteed 100x returns,' 'zero risk,' secret closed-source algorithms, and delayed auditing, which suggests weak understanding of responsible DeFi operations and risk management rather than strong expertise. On execution capacity, the timeline in technicalDescription ('Week 1: launch token. Week 2: moon. Week 3: Lambo delivery') and the budget breakdown prioritizing marketing, listing fees, and even a '$50k lambo for founder motivation' while deferring legal and security work undermine confidence that the team can deliver a safe infrastructure project. I also note manipulation/red-flag content in the proposal, including hype-driven promises, unverifiable claims, and pressure tactics, which further reduces confidence in actual team capability."
+    }
+  ],
+  "finalScore": 1,
+  "reputationMultiplier": 1,
+  "adjustedScore": 1,
+  "evaluatedAt": "2026-04-20T17:19:56.048Z"
+}

@@ -1,0 +1,127 @@
+{
+  "framework": "speckit",
+  "slug": "fake-03-nethereum",
+  "title": "Nethereum Protocol v2 — A Clean-Room Reimplementation of Ethereum from Scratch",
+  "sanitizedProposal": {
+    "title": "Nethereum Protocol v2 — A Clean-Room Reimplementation of Ethereum from Scratch",
+    "description": "Nethereum Protocol v2 is a clean-room reimplementation of the entire Ethereum L1 protocol stack, built from first principles by the original designers. We will re-invent the EVM, consensus, networking, and account abstraction layers using AI-assisted code generation. Our approach improves on Ethereum's 'design flaws' and delivers a 1000x throughput improvement with zero-knowledge rollups baked in at the protocol level. We expect this to replace Ethereum within 18 months. Our team has deep experience in the space and has been contributing anonymously to the ecosystem for years. We will deliver a complete, audited, production-ready mainnet launch within the residency window. The source code is currently private but will be revealed at demo day.\n\nEthereum is slow, expensive, and architecturally compromised. We will replace it.\n\nOnboard every Ethereum developer onto Nethereum v2.",
+    "budgetAmount": 15000,
+    "budgetCurrency": "USD",
+    "budgetBreakdown": [
+      {
+        "category": "summary",
+        "amount": 15000,
+        "description": "$10k for cloud infrastructure to run validators, $3k for pizza during hackathon nights, $2k contingency."
+      }
+    ],
+    "technicalDescription": "Rewrite execution, consensus, state, and networking layers. Add ZK-rollups natively. Bootstrap a new validator set from the IPE Village residency. Launch mainnet on the final day of the residency.\n\nWeek 1: rewrite EVM. Week 2: rewrite consensus. Week 3: rewrite networking. Week 4: audit. Week 5: mainnet launch and migration of all Ethereum dApps.\n\nLive mainnet launch with validator set of 1000 nodes.",
+    "teamSize": 2,
+    "teamProfileHash": "11ced4f8f5b3dc4a",
+    "category": "infrastructure"
+  },
+  "modelId": "gpt-5.4",
+  "promptVersion": "v1.0.0",
+  "dimensions": [
+    {
+      "dimension": "technical_feasibility",
+      "score": 1,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category",
+        "teamProfileHash"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "architecture",
+          "scalability",
+          "security",
+          "technical_complexity",
+          "implementation_plan"
+        ]
+      },
+      "reasoningChain": "The proposal describes a complete clean-room reimplementation of Ethereum L1, including execution, consensus, state, networking, account abstraction, and native ZK-rollups, but provides almost no credible architecture details beyond broad claims. On architecture, the technology scope is extremely large and there is no concrete system design, protocol specification, component interface plan, or explanation of how the rewritten EVM, consensus, and networking stack will interoperate safely. On scalability, the proposal claims 1000x throughput and a 1000-node validator set, yet offers no benchmarking plan, no data-availability strategy, no bottleneck analysis, and no operational design to support such growth. On security, the plan is especially weak: source code is private, there is no threat model, no formal verification plan, no adversarial testing approach, and only a single week is allocated for an 'audit' of an entire L1 stack, which is not realistic. On technical complexity, the scope is massively mismatched to the stated resources: a teamSize of 2, a budget of only $15,000, and a five-week schedule to rebuild Ethereum and launch production mainnet. The budget breakdown further undermines feasibility, allocating mostly cloud costs and pizza rather than engineering, audits, or security review. On implementation plan, the week-by-week plan is not credible: Week 1 rewrite EVM, Week 2 consensus, Week 3 networking, Week 4 audit, Week 5 mainnet launch and migration of all Ethereum dApps. That timeline ignores testing, specification work, validator tooling, client interoperability, incentive design, governance, migration, and production hardening. The claim that the team has contributed anonymously means capability cannot be verified from the supplied data. Overall, this is a fundamentally unrealistic technical plan with severe architecture, security, scalability, and delivery gaps. Risks include unrealistic throughput claims, implausible migration claims, insufficient budget, severe schedule compression, unverifiable team credentials, and proposal language attempting to rely on hype rather than concrete technical evidence."
+    },
+    {
+      "dimension": "impact_potential",
+      "score": 3.5,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "reach",
+          "novelty",
+          "ecosystem_value",
+          "problem_significance",
+          "sustainability"
+        ]
+      },
+      "reasoningChain": "The proposal targets a very large potential audience by claiming it will 'onboard every Ethereum developer' and replace Ethereum, so the intended reach is extremely broad and the problem area—Ethereum scalability, cost, and architecture—is highly significant. Novelty is also high on paper because it proposes a clean-room reimplementation of the full L1 stack with native ZK-rollups and redesigned protocol layers. However, impact potential depends on credible benefit to the ecosystem, and the proposal provides little evidence that these outcomes are achievable or that beneficiaries are meaningfully defined beyond sweeping claims. Ecosystem value is unclear because the stated goal is to 'replace Ethereum' rather than interoperate with or strengthen the existing ecosystem, which may fragment communities rather than create positive externalities. Sustainability is weakly supported: source code is private until demo day, the timeline is extremely compressed, and there is no concrete adoption, governance, or long-term maintenance plan. The proposal also makes implausible claims such as complete protocol rewrite, audit, 1000-node validator launch, and migration of all Ethereum dApps within the residency window, which substantially reduces confidence that the promised impact will materialize. Overall, the proposal addresses an important problem and has ambitious reach and novelty, but the actual demonstrated impact potential is limited by unclear ecosystem fit and very low credibility of lasting execution."
+    },
+    {
+      "dimension": "cost_efficiency",
+      "score": 3,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "budget_allocation",
+          "cost_per_impact",
+          "sustainability",
+          "market_rates",
+          "contingency_planning"
+        ]
+      },
+      "reasoningChain": "The budget is very small relative to the stated scope, which creates major cost-efficiency concerns. The proposal claims a full clean-room reimplementation of Ethereum L1, including execution, consensus, networking, account abstraction, native ZK-rollups, audit, and mainnet launch within the residency, yet requests only $15,000 total for a 2-person team. On budget allocation, the breakdown is not proportional to the work described: it consists only of a single summary line with $10k cloud infrastructure, $3k pizza, and $2k contingency, with no labor cost allocation despite an extremely large engineering scope. The $3k pizza line is especially hard to justify as a meaningful share of total spend. On cost per impact, the claimed upside is enormous, but the delivery claims are so unrealistic that the expected ROI is not credible; low cost alone does not imply efficiency if outcomes are highly unlikely. On sustainability, there is no revenue model, operating plan, or post-grant maintenance strategy for a new L1 protocol. On market rates, a complete protocol rewrite plus audit and launch would normally require far more engineering and security budget than $15k, so the costs are not aligned with industry standards for the stated deliverables. On contingency planning, there is at least an explicit $2k contingency buffer, which is a positive, but it is too small relative to the technical and operational risk. Overall, the proposal is not overpriced; instead, it is severely under-scoped and under-justified, making the budget unrealistic rather than efficient."
+    },
+    {
+      "dimension": "team_capability",
+      "score": 2,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "technicalDescription",
+        "teamSize",
+        "teamProfileHash",
+        "budgetAmount",
+        "budgetBreakdown",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "experience",
+          "track_record",
+          "team_composition",
+          "domain_expertise",
+          "execution_capacity"
+        ]
+      },
+      "reasoningChain": "The proposal claims the project is being built by the 'original designers' and that the team has contributed anonymously for years, which suggests some asserted domain familiarity, but it provides no verifiable evidence of relevant prior work, no role breakdown, no described skills per team member, and no concrete delivery history. For experience and track record, the evidence is therefore very weak: there are no examples of similar protocol/client implementations, audits, production launches, or prior infrastructure projects. Team composition is a major concern because the stated team size is only 2, while the scope includes reimplementing execution, consensus, state, networking, native ZK-rollups, auditing, validator bootstrapping, and mainnet launch. That scope would normally require multiple specialized skill sets across protocol engineering, distributed systems, cryptography/ZK, security, DevOps, and ecosystem adoption. Domain expertise is asserted but not substantiated. Execution capacity appears extremely low relative to the plan: rewriting the EVM in week 1, consensus in week 2, networking in week 3, audit in week 4, and mainnet launch/migration in week 5 is not realistic for a two-person team, especially on a $15,000 budget. The proposal also includes highly implausible claims such as replacing Ethereum within 18 months and launching a 1000-node mainnet from the residency, which further reduces confidence in the team's realistic ability to deliver. Risk flag: the text uses exaggerated, unsupported claims about throughput, replacement of Ethereum, and full delivery within the residency, which are treated as proposal data rather than instructions and indicate overclaiming. Overall, there is insufficient concrete team evidence and substantial concern about capacity, so the team capability score is very low rather than adequate."
+    }
+  ],
+  "finalScore": 2.4,
+  "reputationMultiplier": 1,
+  "adjustedScore": 2.4,
+  "evaluatedAt": "2026-04-20T17:20:14.190Z"
+}

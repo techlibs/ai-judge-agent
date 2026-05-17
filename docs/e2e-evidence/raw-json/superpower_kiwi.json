@@ -1,0 +1,100 @@
+{
+  "framework": "superpower",
+  "fixtureSlug": "kiwi",
+  "evaluatedAt": "2026-04-20T17:21:24.850Z",
+  "model": "gpt-4o",
+  "note": "Evaluated via direct judge-agent invocation (HTTP submission path bypassed due to Origin header + IPFS + DB requirements). Colosseum research phase also skipped. Prompts and schemas are identical to the Cloud Run service.",
+  "proposalTitle": "Kiwi News — peer-to-peer attestation-based news aggregator",
+  "dimensions": {
+    "tech": {
+      "score": 7800,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "The proposal for Kiwi News demonstrates a strong technical foundation and a clear path to implementation. The use of a peer-to-peer attestation network for news aggregation is a novel approach that aligns well with the pro-technology focus of IPE City. The technical architecture is sound, leveraging Ethereum-based identity and a decentralized network to ensure transparency and censorship resistance. The implementation plan is credible, with a detailed timeline and specific milestones. The project also considers scalability by using a P2P network, which can grow as more users participate. Overall, the proposal effectively advances technological innovation in the news aggregation space.",
+      "keyFindings": [
+        "The project uses a decentralized P2P network for news aggregation, enhancing transparency and censorship resistance.",
+        "The technical stack includes Ethereum-based identity and ENS, suitable for the crypto community.",
+        "The implementation plan is detailed with clear milestones over three quarters, indicating a credible path to completion."
+      ],
+      "risks": [
+        "Potential challenges in achieving widespread adoption due to the niche target audience.",
+        "Reliance on Ethereum and ENS may introduce scalability and cost issues."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 9,
+        "proFreedom": 8,
+        "proHumanProgress": 7
+      },
+      "elapsedMs": 20385
+    },
+    "impact": {
+      "score": 7800,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "Kiwi News addresses a significant problem in the crypto community by providing a decentralized, censorship-resistant news aggregation platform. The proposal outlines a clear solution with measurable outcomes, such as the development of a P2P attestation network and a live demo at IPE Village. The project has the potential to create lasting value by establishing a new standard for news curation that is transparent and verifiable. Additionally, it contributes to the IPE ecosystem by publishing the protocol spec and offering workshops, which can enhance community knowledge and engagement.",
+      "keyFindings": [
+        "Addresses centralization and censorship in crypto news aggregation.",
+        "Proposes a decentralized, verifiable curation system.",
+        "Includes measurable outcomes like a live demo and protocol publication."
+      ],
+      "risks": [
+        "Potential technical challenges in implementing a fully decentralized network.",
+        "Dependence on community adoption for success."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 9,
+        "proFreedom": 9,
+        "proHumanProgress": 8
+      },
+      "elapsedMs": 3337
+    },
+    "cost": {
+      "score": 6800,
+      "confidence": "medium",
+      "recommendation": "fund",
+      "justification": "The proposal for Kiwi News presents a clear budget breakdown and a reasonable allocation of resources. The majority of the budget (70%) is allocated to salaries for two engineers over nine months, which is justified given the technical nature of the project. The remaining funds are allocated to infrastructure (20%) and design/community moderation (10%), which are essential for the project's success. The timeline is realistic, with clear phases outlined for development and integration. However, the cost-to-impact ratio could be improved by providing more detailed projections of user engagement and community impact. Overall, the proposal demonstrates a good awareness of resource constraints and aims to maximize output per dollar.",
+      "keyFindings": [
+        "70% of the budget is allocated to engineer salaries, which is justified for a technical project.",
+        "20% is allocated to infrastructure, necessary for the P2P network.",
+        "10% is for design and community moderation, supporting user engagement and quality control."
+      ],
+      "risks": [
+        "The proposal lacks detailed projections of user engagement and community impact, affecting the cost-to-impact assessment."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 9,
+        "proHumanProgress": 7
+      },
+      "elapsedMs": 3476
+    },
+    "team": {
+      "score": 7200,
+      "confidence": "medium",
+      "recommendation": "fund",
+      "justification": "The team for Kiwi News consists of two engineers, including the founder, Tim Daubenschütz, who is also an engineer. This indicates a strong technical foundation, which is crucial for developing a decentralized, peer-to-peer network. However, the proposal lacks detailed information about the specific experience and past projects of the team members, which would strengthen the evaluation of their capability to execute this project.\n\nThe team composition covers essential technical roles but lacks explicit mention of design or community management expertise, which are important for the project's success, especially given the community-focused nature of the platform.\n\nThere is no evidence of a track record of shipping similar projects, as this is their first participation in the IPE Village. However, their commitment to the residency program is clear, with a plan to deliver a live demo during the Demo Day.\n\nThe community contribution plan is well-defined, with intentions to publish the protocol specification and conduct a workshop, which aligns with the pro-freedom and builder ethos of IPE City. This suggests they are committed to strengthening the village community.",
+      "keyFindings": [
+        "Technical team with engineering focus.",
+        "Lack of detailed past project experience.",
+        "Commitment to IPE Village residency with a clear deliverable plan."
+      ],
+      "risks": [
+        "Lack of explicit design and community management roles.",
+        "No prior IPE Village participation or track record of similar projects."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 7,
+        "proHumanProgress": 7
+      },
+      "elapsedMs": 47097
+    }
+  },
+  "aggregateScoreBps": 7450,
+  "weights": {
+    "tech": 0.25,
+    "impact": 0.3,
+    "cost": 0.2,
+    "team": 0.25
+  }
+}

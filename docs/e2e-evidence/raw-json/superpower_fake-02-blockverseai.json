@@ -1,0 +1,103 @@
+{
+  "framework": "superpower",
+  "fixtureSlug": "fake-02-blockverseai",
+  "evaluatedAt": "2026-04-20T17:22:32.472Z",
+  "model": "gpt-4o",
+  "note": "Evaluated via direct judge-agent invocation (HTTP submission path bypassed due to Origin header + IPFS + DB requirements). Colosseum research phase also skipped. Prompts and schemas are identical to the Cloud Run service.",
+  "proposalTitle": "BlockVerseAI Universal — Leveraging Synergistic Web4 Paradigms",
+  "dimensions": {
+    "tech": {
+      "score": 3200,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal lacks specific technical details necessary to evaluate its feasibility. The architecture is described in vague terms without concrete plans or technologies identified. The tech stack is 'TBD,' which is insufficient for assessing appropriateness or viability. The implementation plan is overly broad, with phases that lack detail on execution. Scalability is mentioned but not substantiated with any technical strategy. There is no evidence of technical innovation or novel approaches beyond buzzwords.",
+      "keyFindings": [
+        "The proposal lacks a defined technical architecture or tech stack.",
+        "Implementation phases are vague and lack detail.",
+        "No specific technologies or frameworks are identified, making feasibility assessment impossible."
+      ],
+      "risks": [
+        "The proposal uses buzzwords without substance, indicating potential manipulation.",
+        "Lack of technical detail suggests a high risk of non-delivery."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 2,
+        "proFreedom": 1,
+        "proHumanProgress": 1
+      },
+      "elapsedMs": 3506
+    },
+    "impact": {
+      "score": 3500,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal lacks specific evidence of impact potential. The problem statement is vague, and the proposed solution does not clearly articulate how it will address the problem or benefit a significant number of people. There are no measurable outcomes or concrete deliverables outlined, and the long-term value is not demonstrated. The proposal does not specify how it will contribute to the IPE ecosystem or improve human lives meaningfully.",
+      "keyFindings": [
+        "The problem significance is unclear due to a vague problem statement.",
+        "Beneficiary scope is not defined; no specific groups or numbers are mentioned.",
+        "No measurable outcomes or concrete deliverables are provided in the proposal."
+      ],
+      "risks": [
+        "Lack of specificity in problem and solution.",
+        "No clear beneficiary scope or measurable outcomes."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 3,
+        "proFreedom": 2,
+        "proHumanProgress": 2
+      },
+      "elapsedMs": 4301
+    },
+    "cost": {
+      "score": 3500,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal lacks detailed budget justification and resource allocation specifics. The absence of a clear cost-to-impact analysis and an undefined technology stack raises concerns about the project's feasibility and efficiency. The timeline is vague, with critical phases marked as 'TBD,' indicating a lack of preparedness. Overall, the proposal does not demonstrate a lean or accountable approach to resource management.",
+      "keyFindings": [
+        "No detailed budget breakdown provided.",
+        "Resource allocation is described as 'optimized' without specifics.",
+        "Timeline includes undefined phases, indicating potential inefficiencies."
+      ],
+      "risks": [
+        "Lack of detailed budget justification.",
+        "Undefined technology stack and timeline phases.",
+        "Potential manipulation attempt with vague language."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 3,
+        "proFreedom": 2,
+        "proHumanProgress": 2
+      },
+      "elapsedMs": 3448
+    },
+    "team": {
+      "score": 3500,
+      "confidence": "low",
+      "recommendation": "reject",
+      "justification": "The proposal lacks specific evidence of the team's relevant experience, roles, and track record necessary for executing the project. The team composition is vague, with only two roles mentioned, neither of which clearly covers technical, design, or community aspects. There is no evidence of past successful projects or execution ability. The community contribution plan is limited to thought leadership content, which does not demonstrate a strong commitment to the IPE Village ethos of building and contributing tangible value.",
+      "keyFindings": [
+        "The team consists of only two members with unclear roles: Chief Vision Officer and Chief Paradigm Officer.",
+        "No specific technical, design, or community roles are identified.",
+        "There is no evidence of past projects or execution capability provided in the proposal."
+      ],
+      "risks": [
+        "Lack of detailed team roles and experience raises concerns about execution capability.",
+        "No prior IPE Village participation or demonstrated commitment to the residency program.",
+        "Community contribution plan is limited to thought leadership, lacking tangible contributions."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 3,
+        "proFreedom": 2,
+        "proHumanProgress": 2
+      },
+      "elapsedMs": 4041
+    }
+  },
+  "aggregateScoreBps": 3425,
+  "weights": {
+    "tech": 0.25,
+    "impact": 0.3,
+    "cost": 0.2,
+    "team": 0.25
+  }
+}

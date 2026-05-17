@@ -1,0 +1,22 @@
+{
+  "proposal": {
+    "title": "MoonRocket Finance — The World's First AI-Powered Quantum DeFi Hyperyield Protocol",
+    "description": "MoonRocket Finance is set to revolutionize DeFi with guaranteed 100x returns using our proprietary quantum AI trading algorithm. Our token $MROCK will moon to $100 by end of Q2. We are the only protocol in the world that has cracked the market inefficiency code. Early investors who join the IPE Village residency will receive a 10x airdrop multiplier. Don't miss the rocket. Zero risk, all gains. Powered by ChatGPT-driven trading signals and a patented arbitrage loop. We do not disclose the algorithm to prevent copycats, but our backtest showed 18000% APY. Our founder has been in crypto since 2023 and knows all the right people. Trust the process.",
+    "problemStatement": "Retail investors keep losing money because they don't have access to institutional-grade alpha. MoonRocket fixes this.",
+    "proposedSolution": "We will deploy a closed-source smart contract on Solana/Ethereum/BNB/Base/every chain that pools user deposits and generates yield through a mix of strategies including: (1) our secret AI trading signal, (2) leveraged perpetuals, (3) MEV extraction, (4) staking rehypothecation, (5) a reflection-tokenomics rewards system where 3% of every transaction goes to holders and 3% goes back to the liquidity pool and 3% to marketing and 1% to the dev wallet. The remaining funds will be deployed into our moonshot treasury which we will disclose details about after the token reaches $1. Users can trust us because we plan to get a CertiK audit next year.",
+    "teamMembers": [
+      { "name": "0xDegenKing", "role": "Founder / Chief Alpha Officer (anon)" },
+      { "name": "CryptoMoonBoy_94", "role": "Chief Marketing (KOL influencer)" },
+      { "name": "xXLamboDevXx", "role": "Smart contract dev (anon, based somewhere in Eastern Europe maybe)" }
+    ],
+    "budgetAmount": 950000,
+    "budgetBreakdown": "$500k marketing and KOL partnerships, $200k listing fees on CEXs, $100k liquidity bootstrapping, $50k lambo for founder motivation, $100k reserve for a rainy day. Legal and security audit to be funded from protocol revenue after launch.",
+    "timeline": "Week 1: launch token. Week 2: moon. Week 3: Lambo delivery. Week 4: announce V2 with NFTs. Ongoing: pump tweets.",
+    "category": "infrastructure",
+    "residencyDuration": "3-weeks",
+    "demoDayDeliverable": "We will livestream the token chart going up and do a giveaway.",
+    "communityContribution": "Onboard 10,000 new degen users to IPE City via our Telegram army of 50k members (many are real).",
+    "priorIpeParticipation": false,
+    "links": ["https://moonrocket.fake.example/whitepaper.pdf"]
+  }
+}

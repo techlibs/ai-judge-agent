@@ -1,0 +1,93 @@
+{
+  "framework": "superpower",
+  "fixtureSlug": "rotki",
+  "evaluatedAt": "2026-04-20T17:19:56.585Z",
+  "model": "gpt-4o",
+  "note": "Evaluated via direct judge-agent invocation (HTTP submission path bypassed due to Origin header + IPFS + DB requirements). Colosseum research phase also skipped. Prompts and schemas are identical to the Cloud Run service.",
+  "proposalTitle": "rotki — local-first privacy-preserving portfolio tracker",
+  "dimensions": {
+    "tech": {
+      "score": 8500,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "The proposal for rotki demonstrates a technically sound and innovative approach to solving privacy issues in crypto portfolio tracking. The use of a local-first architecture ensures user data privacy, which is a significant advancement over existing cloud-based solutions. The choice of a Python backend with Electron for cross-platform distribution is appropriate and feasible, given the project's requirements. The team has a clear implementation plan with monthly releases and a 12-month funding cycle, indicating a credible path to a working product. The project also aligns well with IPE City's pro-technology focus by providing a reference implementation for privacy-preserving design, which can serve as a foundation for further innovation in the ecosystem.",
+      "keyFindings": [
+        "Local-first architecture enhances user privacy.",
+        "Python + Electron stack is suitable for cross-platform distribution.",
+        "Continuous development since 2017 indicates project viability and commitment."
+      ],
+      "risks": [
+        "Potential challenges in maintaining cross-platform compatibility with Electron."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 9,
+        "proFreedom": 8,
+        "proHumanProgress": 7
+      },
+      "elapsedMs": 3309
+    },
+    "impact": {
+      "score": 7800,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "The proposal addresses a significant problem in the crypto space: the lack of privacy-preserving portfolio tracking options. By offering a local-first solution, rotki directly benefits privacy-conscious crypto users, a growing demographic. The project's open-source nature and AGPL-3.0 license ensure that it contributes to the broader community by providing a reference implementation for privacy-preserving design. The deliverables, including accountant-grade reports and a live demo, are concrete and verifiable. The project's long-term value is supported by its continuous maintenance since 2017 and its potential to influence other projects within the IPE ecosystem through workshops and community engagement.",
+      "keyFindings": [
+        "Addresses significant privacy concerns in crypto portfolio tracking.",
+        "Directly benefits privacy-conscious crypto users.",
+        "Open-source and AGPL-3.0 licensed, promoting community contribution and sustainability."
+      ],
+      "risks": [],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 9,
+        "proHumanProgress": 7
+      },
+      "elapsedMs": 10548
+    },
+    "cost": {
+      "score": 7200,
+      "confidence": "high",
+      "recommendation": "fund",
+      "justification": "The proposal for rotki demonstrates a solid understanding of cost efficiency with a clear budget breakdown and sensible resource allocation. The majority of the budget (70%) is allocated to salaries for five full-time engineers, which is justified given the technical nature of the project and the need for continuous development and maintenance. The remaining budget is split between infrastructure (15%) and UX/design and community operations (15%), which are reasonable allocations to support the project's goals.\n\nThe cost-to-impact ratio appears favorable, as the project aims to deliver a privacy-preserving portfolio tracker that fills a significant gap in the market. The timeline is realistic, with monthly releases and a 12-month funding cycle, indicating an awareness of resource constraints and a commitment to accountability.\n\nOverall, the proposal is lean and maximizes output per dollar, with no apparent unnecessary expenses.",
+      "keyFindings": [
+        "70% of budget allocated to salaries for 5 FTE engineers, justified by technical demands.",
+        "15% allocated to infrastructure, supporting CI, packaging, and hosting needs.",
+        "15% allocated to UX/design and community operations, enhancing user experience and engagement."
+      ],
+      "risks": [],
+      "ipeAlignment": {
+        "proTechnology": 8,
+        "proFreedom": 9,
+        "proHumanProgress": 8
+      },
+      "elapsedMs": 4003
+    },
+    "team": {
+      "score": 8500,
+      "confidence": "high",
+      "recommendation": "strong_fund",
+      "justification": "The team behind rotki demonstrates strong capability and alignment with IPE City's values. The founder, Lefteris Karapetsas, and a team of full-time engineers have maintained the project since 2017, indicating a solid track record of execution and commitment. The project has a significant open-source presence with 3.8k GitHub stars, showcasing community engagement and technical credibility. The team is well-composed with multiple engineers, covering necessary technical roles. Although this is their first IPE Village participation, their plan to contribute through workshops and reference implementations aligns well with community-building goals. The team's focus on privacy-preserving technology and open-source principles embodies the builder ethos of IPE City.",
+      "keyFindings": [
+        "The team has maintained the project since 2017, indicating strong execution ability.",
+        "The project has 3.8k GitHub stars, showing community engagement and technical credibility.",
+        "The team consists of a founder and four full-time engineers, covering necessary technical roles."
+      ],
+      "risks": [
+        "First-time participation in IPE Village, which may require adaptation to the community's dynamics."
+      ],
+      "ipeAlignment": {
+        "proTechnology": 9,
+        "proFreedom": 9,
+        "proHumanProgress": 8
+      },
+      "elapsedMs": 3827
+    }
+  },
+  "aggregateScoreBps": 8030,
+  "weights": {
+    "tech": 0.25,
+    "impact": 0.3,
+    "cost": 0.2,
+    "team": 0.25
+  }
+}

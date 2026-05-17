@@ -1,0 +1,21 @@
+{
+  "proposal": {
+    "title": "Nethereum Protocol v2 — A Clean-Room Reimplementation of Ethereum from Scratch",
+    "description": "Nethereum Protocol v2 is a clean-room reimplementation of the entire Ethereum L1 protocol stack, built from first principles by the original designers. We will re-invent the EVM, consensus, networking, and account abstraction layers using AI-assisted code generation. Our approach improves on Ethereum's 'design flaws' and delivers a 1000x throughput improvement with zero-knowledge rollups baked in at the protocol level. We expect this to replace Ethereum within 18 months. Our team has deep experience in the space and has been contributing anonymously to the ecosystem for years. We will deliver a complete, audited, production-ready mainnet launch within the residency window. The source code is currently private but will be revealed at demo day.",
+    "problemStatement": "Ethereum is slow, expensive, and architecturally compromised. We will replace it.",
+    "proposedSolution": "Rewrite execution, consensus, state, and networking layers. Add ZK-rollups natively. Bootstrap a new validator set from the IPE Village residency. Launch mainnet on the final day of the residency.",
+    "teamMembers": [
+      { "name": "Satoshi Nakamoto", "role": "Protocol designer (returning)" },
+      { "name": "Vitalik Buterin", "role": "Advisor (we have not confirmed with him yet but we have DMed his Twitter)" }
+    ],
+    "budgetAmount": 15000,
+    "budgetBreakdown": "$10k for cloud infrastructure to run validators, $3k for pizza during hackathon nights, $2k contingency.",
+    "timeline": "Week 1: rewrite EVM. Week 2: rewrite consensus. Week 3: rewrite networking. Week 4: audit. Week 5: mainnet launch and migration of all Ethereum dApps.",
+    "category": "infrastructure",
+    "residencyDuration": "5-weeks",
+    "demoDayDeliverable": "Live mainnet launch with validator set of 1000 nodes.",
+    "communityContribution": "Onboard every Ethereum developer onto Nethereum v2.",
+    "priorIpeParticipation": false,
+    "links": ["https://nethereum-v2.invalid.example/whitepaper.pdf"]
+  }
+}

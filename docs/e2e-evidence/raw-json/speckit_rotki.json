@@ -1,0 +1,136 @@
+{
+  "framework": "speckit",
+  "slug": "rotki",
+  "title": "rotki — privacy-preserving local-first crypto portfolio tracker",
+  "sanitizedProposal": {
+    "title": "rotki — privacy-preserving local-first crypto portfolio tracker",
+    "description": "rotki is an open-source, AGPL-3.0 licensed, local-first portfolio tracking, accounting, and management application for crypto assets. It has been maintained continuously since 2017 with monthly releases and ~3.8k GitHub stars at github.com/rotki/rotki. Unlike SaaS portfolio trackers, rotki runs entirely on the user's machine — transaction history, balances, tax reports, and DeFi positions are computed locally and encrypted at rest. It is a reference implementation of the local-first privacy-preserving pattern cited in ENS, Gitcoin, and Optimism governance. Prior public-goods funding includes Optimism RetroPGF rounds 2 and 3 (~30,000+ OP), Octant epochs, and Gitcoin Grants. Demo video on the official YouTube channel shows the v1.6.1 end-to-end flow.",
+    "budgetAmount": 300000,
+    "budgetCurrency": "USD",
+    "budgetBreakdown": [
+      {
+        "category": "salaries",
+        "amount": 210000,
+        "description": "5 full-time engineers for 12 months, ~70% of budget"
+      },
+      {
+        "category": "infrastructure",
+        "amount": 45000,
+        "description": "CI, release signing, macOS/Windows/Linux packaging, storage"
+      },
+      {
+        "category": "design_and_community",
+        "amount": 45000,
+        "description": "UX/design contractor and community management"
+      }
+    ],
+    "technicalDescription": "Python backend + Electron/Vue frontend. Ingests exchange APIs (Binance, Coinbase, Kraken, 20+), EVM chain data (Ethereum, Optimism, Arbitrum, Polygon, Base) and DeFi protocol adapters (Uniswap v2/v3, Aave, Compound, Curve, etc). Local encrypted SQLite for transaction history. Accountant-grade tax report generator. CI/CD with signed macOS/Windows/Linux builds. 8-year release history on GitHub. Architecture: modular adapter pattern per exchange/protocol; price resolver with historical caching; async job runner for chain scans.",
+    "teamSize": 5,
+    "teamProfileHash": "0f64d1091629aac4",
+    "category": "infrastructure"
+  },
+  "modelId": "gpt-5.4",
+  "promptVersion": "v1.0.0",
+  "dimensions": [
+    {
+      "dimension": "technical_feasibility",
+      "score": 8.4,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "architecture",
+          "scalability",
+          "security",
+          "technical_complexity",
+          "implementation_plan"
+        ]
+      },
+      "reasoningChain": "The proposal presents a strong and largely proven technical approach. On architecture, the stack choice of a Python backend with Electron/Vue frontend is conventional and implementable for a cross-platform desktop product, and the stated modular adapter pattern per exchange/protocol is an appropriate design for a system that must integrate many heterogeneous APIs and DeFi protocols. The use of local encrypted SQLite aligns well with the local-first/privacy-preserving product goal, while historical price caching and an async job runner for chain scans indicate thought given to data retrieval latency and workload separation. On scalability, the proposal is credible for its stated use case because computation is performed on the user's machine and the adapter-based design should support incremental addition of exchanges, chains, and protocols. However, there are still bottleneck risks: chain scans, historical accounting, and many protocol integrations can become resource-intensive on end-user devices, and the proposal does not provide quantitative performance targets, sync benchmarks, or detailed strategies for handling very large portfolios and API rate limits. On security, the proposal scores well for mentioning local execution, encryption at rest, and signed macOS/Windows/Linux builds, all of which are relevant to a desktop finance application. Still, security treatment is not comprehensive in the provided data: there is no explicit discussion of key management, secure secret storage, update-channel hardening, dependency auditing, sandboxing, or threat modeling for exchange API credentials and transaction data. On technical complexity, the work is ambitious but appropriate for an existing mature project: the team of 5 is not starting from zero, and the proposal cites continuous maintenance since 2017, monthly releases, and an 8-year release history, which significantly de-risks execution. The budget breakdown also appears plausible for sustaining engineering and packaging/release work. On implementation plan, the strongest evidence is prior execution rather than a future milestone plan: monthly releases, signed cross-platform builds, and a demo of v1.6.1 show a clear path from concept to working software and ongoing delivery capability. The main gap is that the proposal does not include a detailed roadmap, milestones, or explicit technical risk mitigation plan for the next funding period. Overall, this is a strong technical proposal with demonstrated implementation capacity and a sound architecture, but it falls short of exceptional because scalability and security details are only partially specified and the forward-looking implementation plan is not deeply articulated."
+    },
+    {
+      "dimension": "impact_potential",
+      "score": 8.3,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "reach",
+          "novelty",
+          "ecosystem_value",
+          "problem_significance",
+          "sustainability"
+        ]
+      },
+      "reasoningChain": "The proposal shows strong impact potential because it targets a broad and clearly defined audience: crypto users who need portfolio tracking, accounting, tax reporting, and DeFi position management across centralized exchanges and multiple EVM chains. Reach is supported by concrete adoption signals in the description, including continuous maintenance since 2017, monthly releases, and roughly 3.8k GitHub stars, which indicates an existing user and contributor base rather than only speculative future demand. The technical scope also suggests wide applicability, with support for 20+ exchanges, major EVM networks such as Ethereum, Optimism, Arbitrum, Polygon, and Base, and major DeFi protocols like Uniswap, Aave, Compound, and Curve. On novelty, the core differentiation is meaningful even if not entirely unique: rotki is positioned as a privacy-preserving, local-first alternative to SaaS portfolio trackers, with all computation and encrypted data storage on the user machine. That addresses a real unmet need for users who do not want to expose sensitive financial histories to centralized providers. Ecosystem value is high because the project is open source under AGPL-3.0, functions as public digital infrastructure, and advances privacy-preserving local-first design patterns referenced in ENS, Gitcoin, and Optimism governance. This creates positive externalities beyond direct users by offering a credible reference implementation and reducing dependence on closed custodial analytics tools. Problem significance is high: crypto users face fragmented data across exchanges, wallets, chains, and DeFi protocols, and accurate accounting/tax reporting is a persistent pain point with direct financial and compliance implications. Sustainability is also a strength, with an 8-year development history, monthly releases, signed multi-platform builds, modular architecture, and prior support from RetroPGF, Octant, and Gitcoin demonstrating resilience beyond a one-off grant cycle. The main constraint on a higher score is that the proposal does not quantify forward-looking impact metrics such as projected user growth, integrations unlocked, or ecosystem-level adoption outcomes during the grant period, so some impact remains inferred from historical traction rather than explicitly measured."
+    },
+    {
+      "dimension": "cost_efficiency",
+      "score": 7.4,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetCurrency",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "budget_allocation",
+          "cost_per_impact",
+          "sustainability",
+          "market_rates",
+          "contingency_planning"
+        ]
+      },
+      "reasoningChain": "The proposal shows generally good cost efficiency for a mature open-source infrastructure product, but not enough detail for an excellent score. On budget allocation, the $300,000 total is broken into salaries ($210,000, 70%), infrastructure ($45,000, 15%), and design_and_community ($45,000, 15%). This is a plausible high-level split for a software product with a Python backend, Electron/Vue frontend, CI/CD, signed multi-platform builds, exchange and DeFi integrations, and ongoing maintenance. However, the salary line states '5 full-time engineers for 12 months' while the total salary amount implies roughly $42,000 per engineer-year, which is low for many markets and suggests either geographic wage arbitrage, partial compensation, or under-specification. That lowers confidence in market-rate alignment and realism. On cost per impact, the project has strong evidence of ecosystem value: continuous maintenance since 2017, monthly releases, ~3.8k GitHub stars, prior public-goods funding, and broad support for major exchanges, EVM chains, and DeFi protocols. A privacy-preserving, local-first portfolio tracker with tax/accounting functionality can create meaningful user and ecosystem benefit, so the expected return on funding appears solid. On sustainability, the proposal references long-term maintenance history and prior grants, which supports execution durability, but it does not present a clear revenue model, self-sustaining plan, or pathway to reduce dependence on grants after this funding round. On market rates, infrastructure at $45,000 for CI, release signing, packaging across macOS/Windows/Linux, and storage is not obviously excessive, but there is insufficient line-item detail to verify efficiency. Similarly, $45,000 for UX/design contractor and community management may be reasonable, yet it is not broken down by scope, hours, or deliverables. On contingency planning, there is no explicit reserve, risk buffer, or discussion of unexpected costs despite the complexity of maintaining exchange adapters, chain integrations, and desktop distribution. Overall, this looks like a credible and fairly lean budget for an established project with demonstrated impact, but the limited granularity, unclear salary assumptions, and absence of explicit sustainability/contingency details keep it in the good-not-exceptional range."
+    },
+    {
+      "dimension": "team_capability",
+      "score": 8,
+      "inputDataConsidered": [
+        "title",
+        "description",
+        "budgetAmount",
+        "budgetBreakdown",
+        "technicalDescription",
+        "teamSize",
+        "teamProfileHash",
+        "category"
+      ],
+      "rubricApplied": {
+        "criteria": [
+          "experience",
+          "track_record",
+          "team_composition",
+          "domain_expertise",
+          "execution_capacity"
+        ]
+      },
+      "reasoningChain": "The proposal shows a strong team capability signal despite anonymized individual profiles. On experience and domain expertise, the project has been maintained continuously since 2017, with monthly releases, a complex technical stack (Python backend, Electron/Vue frontend, exchange API integrations, multi-chain EVM support, DeFi protocol adapters, encrypted local storage, and tax reporting), and positioning as a privacy-preserving local-first crypto portfolio tracker. Delivering and maintaining this breadth of infrastructure over years strongly implies relevant technical and domain knowledge in crypto data ingestion, portfolio accounting, privacy-preserving architecture, and cross-platform application delivery. On track record, the proposal cites an 8-year release history, monthly releases, ~3.8k GitHub stars, an official demo of v1.6.1, and prior public-goods funding from Optimism RetroPGF, Octant, and Gitcoin Grants; these are credible indicators that the team has already shipped and sustained a similar product at meaningful scale. On team composition, the planned team size of 5 full-time engineers is appropriate for an established codebase with ongoing integrations and maintenance, and the budget also includes UX/design contractor and community management, which suggests some non-engineering support. However, because the team data is anonymized and no role-by-role breakdown is provided, there is limited direct evidence that all required specialties are fully covered across backend, frontend, protocol integrations, product, QA, and operations. On execution capacity, the requested $300k budget with 70% allocated to salaries, plus infrastructure and design/community support, appears broadly aligned with a 12-month delivery plan for an existing mature project rather than a greenfield build. The long maintenance history reduces delivery risk. Overall, this is a strong team with demonstrated shipping capacity and clear domain familiarity, but not exceptional because individual team experience, responsibilities, and prior comparable outputs by specific members are not explicitly described."
+    }
+  ],
+  "finalScore": 8.07,
+  "reputationMultiplier": 1,
+  "adjustedScore": 8.07,
+  "evaluatedAt": "2026-04-20T17:19:22.081Z"
+}
