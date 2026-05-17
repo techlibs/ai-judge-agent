@@ -75,8 +75,8 @@
 
 ## Notes
 
-- **Primary source:** `.worktrees/speckit/` — most complete, cleanest architecture
-- **Mastra source:** `.worktrees/superpower/` — only working Mastra integration
-- **Flexibility patterns:** `.worktrees/full-vision-roadmap/` — wave-based execution
+- **Primary source:** `/Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/speckit/` — most complete, cleanest architecture
+- **Mastra source:** `/Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/superpower/` — only working Mastra integration
+- **Flexibility patterns:** `/Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/full-vision-roadmap/` — wave-based execution
 - **Critical bugs to fix:** hardcoded reputation lookup (speckit), invalid model name "gpt-5.4" (gsd), missing API auth (all), resource exhaustion on SSE (speckit)
 - Always read worktree code before implementing — extract, don't reinvent

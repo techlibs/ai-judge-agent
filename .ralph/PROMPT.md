@@ -47,16 +47,24 @@ Work through `.ralph/fix_plan.md` in priority order. For each task:
 
 ### How to Read Worktrees
 
+The source worktrees are in the parent repo. Use absolute paths:
+
 ```bash
 # Browse speckit (primary source)
-ls .worktrees/speckit/src/
-cat .worktrees/speckit/src/app/page.tsx
+ls /Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/speckit/src/
+cat /Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/speckit/src/app/page.tsx
 
 # Compare implementations
-diff .worktrees/speckit/src/lib/evaluation.ts .worktrees/superpower/src/lib/evaluation.ts
+diff /Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/speckit/src/lib/evaluation.ts /Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/superpower/src/lib/evaluation.ts
 
 # Find Mastra integration (superpower only)
-grep -r "mastra" .worktrees/superpower/src/ --include="*.ts" --include="*.tsx"
+grep -r "mastra" /Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/superpower/src/ --include="*.ts" --include="*.tsx"
+```
+
+**Shorthand:** You can also use `WORKTREES_ROOT` defined below:
+```bash
+WORKTREES_ROOT="/Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees"
+ls $WORKTREES_ROOT/speckit/src/
 ```
 
 ## Key Principles
@@ -71,7 +79,7 @@ grep -r "mastra" .worktrees/superpower/src/ --include="*.ts" --include="*.tsx"
 ## Protected Files (DO NOT MODIFY)
 - .ralph/ (entire directory and all contents)
 - .ralphrc (project configuration)
-- .worktrees/ (source worktrees — READ ONLY)
+- /Users/libardo/carlos/projects/ipe-city/agent-reviewer/.worktrees/ (source worktrees — READ ONLY, in parent repo)
 - .planning/ (GSD artifacts)
 - docs/ (reference documentation)
 - contracts/ (deployed smart contracts)
