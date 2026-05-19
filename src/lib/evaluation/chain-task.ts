@@ -55,12 +55,12 @@ export async function runChainSubmissionTask(args: {
       evaluationContentCid: evaluationCid,
     });
 
-    // finalScore on chain = 0-100 scale (scaleScoreToChain multiplies by 100 → 0-10000 bps)
-    const finalScore = evaluation.aggregateScoreBps / 100;
+    // Contract takes per-mille (0-1000). aggregateScoreBps is 0-10000 → divide by 10.
+    const finalScoreMille = evaluation.aggregateScoreBps / 10;
 
     const { txHash } = await submitEvaluationOnChain({
       proposalIdHex,
-      finalScore,
+      finalScoreMille,
       proposalContentCid: proposalCid,
       evaluationContentCid: evaluationCid,
     });

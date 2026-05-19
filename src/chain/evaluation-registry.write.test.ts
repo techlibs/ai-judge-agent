@@ -17,12 +17,12 @@ describe("submitEvaluationOnChain", () => {
     writeContract.mockReset();
   });
 
-  it("calls submitScore with scaled args and returns tx hash", async () => {
+  it("passes per-mille finalScore through to submitScore", async () => {
     writeContract.mockResolvedValueOnce("0xdead");
     const { submitEvaluationOnChain } = await import("./evaluation-registry");
     const result = await submitEvaluationOnChain({
       proposalIdHex: "0xabc",
-      finalScore: 72,
+      finalScoreMille: 720,
       proposalContentCid: "bafyP",
       evaluationContentCid: "bafyE",
     });
@@ -32,10 +32,38 @@ describe("submitEvaluationOnChain", () => {
     if (!call) throw new Error("writeContract not called");
     expect(call.functionName).toBe("submitScore");
     expect(call.args[0]).toBe("0xabc");
-    expect(call.args[2]).toBe(7200);     // 72 * 100
+    expect(call.args[2]).toBe(720);
     expect(call.args[3]).toBe(10000);    // default reputation 1 * 10000
     expect(call.args[4]).toBe("bafyP");
     expect(call.args[5]).toBe("bafyE");
+  });
+
+  it("clamps finalScore at contract max of 1000", async () => {
+    writeContract.mockResolvedValueOnce("0xfeed");
+    const { submitEvaluationOnChain } = await import("./evaluation-registry");
+    await submitEvaluationOnChain({
+      proposalIdHex: "0xabc",
+      finalScoreMille: 9999,
+      proposalContentCid: "p",
+      evaluationContentCid: "e",
+    });
+    const call = writeContract.mock.calls.at(0)?.[0];
+    if (!call) throw new Error("writeContract not called");
+    expect(call.args[2]).toBe(1000);
+  });
+
+  it("rounds fractional finalScore to nearest integer", async () => {
+    writeContract.mockResolvedValueOnce("0xbeef");
+    const { submitEvaluationOnChain } = await import("./evaluation-registry");
+    await submitEvaluationOnChain({
+      proposalIdHex: "0xabc",
+      finalScoreMille: 770.4,
+      proposalContentCid: "p",
+      evaluationContentCid: "e",
+    });
+    const call = writeContract.mock.calls.at(0)?.[0];
+    if (!call) throw new Error("writeContract not called");
+    expect(call.args[2]).toBe(770);
   });
 
   it("propagates wallet errors", async () => {
@@ -44,7 +72,7 @@ describe("submitEvaluationOnChain", () => {
     await expect(
       submitEvaluationOnChain({
         proposalIdHex: "0xabc",
-        finalScore: 50,
+        finalScoreMille: 500,
         proposalContentCid: "p",
         evaluationContentCid: "e",
       }),

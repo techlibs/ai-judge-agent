@@ -119,7 +119,8 @@ export async function getEvaluationEvents(fromBlock?: bigint) {
 export async function submitEvaluationOnChain(args: {
   readonly proposalIdHex: Hex;
   readonly fundingRoundId?: Hex;
-  readonly finalScore: number;
+  /** Per-mille score (0–1000). Contract reverts above 1000. */
+  readonly finalScoreMille: number;
   readonly reputationMultiplier?: number;
   readonly proposalContentCid: string;
   readonly evaluationContentCid: string;
@@ -127,6 +128,7 @@ export async function submitEvaluationOnChain(args: {
   const wallet = getWalletClient();
   const account = wallet.account;
   if (!account) throw new Error("wallet client has no account");
+  const clampedScore = Math.max(0, Math.min(1000, Math.round(args.finalScoreMille)));
   const txHash = await wallet.writeContract({
     address: getEvaluationRegistryAddress(),
     abi: EVALUATION_REGISTRY_ABI,
@@ -134,7 +136,7 @@ export async function submitEvaluationOnChain(args: {
     args: [
       args.proposalIdHex,
       args.fundingRoundId ?? zeroHash,
-      scaleScoreToChain(args.finalScore),
+      clampedScore,
       scaleReputationToChain(args.reputationMultiplier ?? 1),
       args.proposalContentCid,
       args.evaluationContentCid,
