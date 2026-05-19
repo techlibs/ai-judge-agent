@@ -129,6 +129,8 @@ export async function submitEvaluationOnChain(args: {
   const account = wallet.account;
   if (!account) throw new Error("wallet client has no account");
   const clampedScore = Math.max(0, Math.min(1000, Math.round(args.finalScoreMille)));
+  // Base Sepolia eth_estimateGas is flaky for this contract — pass explicit gas
+  // limit to skip the estimate. submitScore observed ~280k gas; 600k is safe headroom.
   const txHash = await wallet.writeContract({
     address: getEvaluationRegistryAddress(),
     abi: EVALUATION_REGISTRY_ABI,
@@ -143,6 +145,7 @@ export async function submitEvaluationOnChain(args: {
     ],
     account,
     chain: null,
+    gas: 600_000n,
   });
   return { txHash };
 }
