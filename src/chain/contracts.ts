@@ -1,4 +1,12 @@
-import { createPublicClient, http, isAddress, type Address } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  isAddress,
+  type Address,
+  type WalletClient,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { base, baseSepolia } from "viem/chains";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "84532");
@@ -31,6 +39,30 @@ export const publicClient = createPublicClient({
   chain: chainConfig.chain,
   transport: http(RPC_URL),
 });
+
+let cachedWalletClient: WalletClient | undefined;
+
+export function getWalletClient(): WalletClient {
+  if (cachedWalletClient) return cachedWalletClient;
+  const rawKey = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!rawKey) {
+    throw new Error(
+      "DEPLOYER_PRIVATE_KEY environment variable is required for on-chain writes",
+    );
+  }
+  const normalized = (rawKey.startsWith("0x") ? rawKey : `0x${rawKey}`) as `0x${string}`;
+  const account = privateKeyToAccount(normalized);
+  cachedWalletClient = createWalletClient({
+    account,
+    chain: chainConfig.chain,
+    transport: http(RPC_URL),
+  });
+  return cachedWalletClient;
+}
+
+export function resetWalletClientForTest(): void {
+  cachedWalletClient = undefined;
+}
 
 function getAddressFromEnv(envVar: string): Address {
   const value = process.env[envVar];

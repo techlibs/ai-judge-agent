@@ -13,14 +13,26 @@ vi.mock("@/lib/rate-limit", () => ({
   checkProposalSubmitLimit: vi.fn(),
 }));
 
+vi.mock("@/lib/evaluation-store", () => ({
+  saveEvaluation: vi.fn(),
+}));
+
+vi.mock("@/lib/evaluation/chain-task", () => ({
+  dispatchChainSubmission: vi.fn(),
+}));
+
 import { submitProposal, type ActionState } from "./actions";
 import { headers } from "next/headers";
 import { runEvaluationWorkflow } from "@/lib/evaluation/workflow";
 import { checkProposalSubmitLimit } from "@/lib/rate-limit";
+import { saveEvaluation } from "@/lib/evaluation-store";
+import { dispatchChainSubmission } from "@/lib/evaluation/chain-task";
 
 const mockedHeaders = vi.mocked(headers);
 const mockedRunWorkflow = vi.mocked(runEvaluationWorkflow);
 const mockedRateLimit = vi.mocked(checkProposalSubmitLimit);
+const mockedSave = vi.mocked(saveEvaluation);
+const mockedDispatch = vi.mocked(dispatchChainSubmission);
 
 function buildValidFormData(): FormData {
   const fd = new FormData();
@@ -194,5 +206,31 @@ describe("submitProposal", () => {
     await submitProposal(PREV_STATE, buildValidFormData());
 
     expect(mockedRateLimit).toHaveBeenCalledWith("unknown");
+  });
+
+  it("persists evaluation with chain.status=pending after workflow succeeds", async () => {
+    await submitProposal(PREV_STATE, buildValidFormData());
+    expect(mockedSave).toHaveBeenCalledTimes(1);
+    const saved = mockedSave.mock.calls.at(0)?.[0];
+    if (!saved) throw new Error("saveEvaluation not called");
+    expect(saved.chain).toEqual({ status: "pending" });
+    expect(saved.aggregateScoreBps).toBe(7500);
+    expect(saved.proposalIdHex).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+
+  it("dispatches background chain submission after persistence", async () => {
+    await submitProposal(PREV_STATE, buildValidFormData());
+    expect(mockedDispatch).toHaveBeenCalledTimes(1);
+    const arg = mockedDispatch.mock.calls.at(0)?.[0];
+    if (!arg) throw new Error("dispatchChainSubmission not called");
+    expect(arg.evaluation.aggregateScoreBps).toBe(7500);
+    expect(arg.proposal.title).toContain("workspace");
+  });
+
+  it("does not persist or dispatch when workflow throws", async () => {
+    mockedRunWorkflow.mockRejectedValue(new Error("boom"));
+    await submitProposal(PREV_STATE, buildValidFormData());
+    expect(mockedSave).not.toHaveBeenCalled();
+    expect(mockedDispatch).not.toHaveBeenCalled();
   });
 });

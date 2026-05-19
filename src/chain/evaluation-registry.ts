@@ -1,8 +1,9 @@
-import { type Hex, encodeFunctionData, keccak256, toHex } from "viem";
+import { type Hex, encodeFunctionData, keccak256, toHex, zeroHash } from "viem";
 import {
   publicClient,
   getEvaluationRegistryAddress,
   getDeploymentBlock,
+  getWalletClient,
 } from "./contracts";
 
 const EVALUATION_REGISTRY_ABI = [
@@ -113,6 +114,49 @@ export async function getEvaluationEvents(fromBlock?: bigint) {
     eventName: "EvaluationSubmitted",
     fromBlock: startBlock,
   });
+}
+
+export async function submitEvaluationOnChain(args: {
+  readonly proposalIdHex: Hex;
+  readonly fundingRoundId?: Hex;
+  readonly finalScore: number;
+  readonly reputationMultiplier?: number;
+  readonly proposalContentCid: string;
+  readonly evaluationContentCid: string;
+}): Promise<{ txHash: Hex }> {
+  const wallet = getWalletClient();
+  const account = wallet.account;
+  if (!account) throw new Error("wallet client has no account");
+  const txHash = await wallet.writeContract({
+    address: getEvaluationRegistryAddress(),
+    abi: EVALUATION_REGISTRY_ABI,
+    functionName: "submitScore",
+    args: [
+      args.proposalIdHex,
+      args.fundingRoundId ?? zeroHash,
+      scaleScoreToChain(args.finalScore),
+      scaleReputationToChain(args.reputationMultiplier ?? 1),
+      args.proposalContentCid,
+      args.evaluationContentCid,
+    ],
+    account,
+    chain: null,
+  });
+  return { txHash };
+}
+
+export async function awaitEvaluationConfirmation(
+  txHash: Hex,
+  timeoutMs = 120_000,
+): Promise<{ blockNumber: number }> {
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash: txHash,
+    timeout: timeoutMs,
+  });
+  if (receipt.status !== "success") {
+    throw new Error(`tx ${txHash} reverted`);
+  }
+  return { blockNumber: Number(receipt.blockNumber) };
 }
 
 export { EVALUATION_REGISTRY_ABI };

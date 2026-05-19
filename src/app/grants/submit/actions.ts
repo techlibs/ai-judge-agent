@@ -5,6 +5,9 @@ import { proposalFormSchema } from "./schema";
 import type { ProposalFormErrors } from "./schema";
 import { runEvaluationWorkflow } from "@/lib/evaluation/workflow";
 import { checkProposalSubmitLimit } from "@/lib/rate-limit";
+import { saveEvaluation } from "@/lib/evaluation-store";
+import { computeProposalId } from "@/chain/evaluation-registry";
+import { dispatchChainSubmission } from "@/lib/evaluation/chain-task";
 
 export interface ActionState {
   success: boolean;
@@ -79,10 +82,21 @@ export async function submitProposal(
   try {
     const proposalId = crypto.randomUUID();
 
-    const result = await runEvaluationWorkflow({
-      id: proposalId,
-      ...parsed.data,
+    const proposal = { id: proposalId, ...parsed.data };
+    const result = await runEvaluationWorkflow(proposal);
+
+    await saveEvaluation({
+      proposalId,
+      proposalIdHex: computeProposalId("web-form", proposalId),
+      title: proposal.title,
+      aggregateScoreBps: result.aggregateScoreBps,
+      dimensions: result.dimensions,
+      anomalyFlags: result.anomalyFlags,
+      evaluatedAt: result.evaluatedAt,
+      chain: { status: "pending" },
     });
+
+    dispatchChainSubmission({ proposal, evaluation: result });
 
     return {
       success: true,
