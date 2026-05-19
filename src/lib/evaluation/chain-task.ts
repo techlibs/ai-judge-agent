@@ -8,10 +8,18 @@ import { getPinataClient } from "@/ipfs/client";
 import type { EvaluationResult } from "@/lib/evaluation/workflow";
 import type { ProposalInput } from "@/lib/evaluation/workflow";
 
-async function pinJson(data: unknown): Promise<string> {
+async function pinJson(data: unknown, label: string): Promise<string> {
   const pinata = getPinataClient();
   const result = await pinata.upload.json(data as Record<string, unknown>);
-  return result.cid;
+  const cid = (result as { cid?: string; IpfsHash?: string }).cid
+    ?? (result as { IpfsHash?: string }).IpfsHash
+    ?? "";
+  if (!cid || cid === "pending") {
+    throw new Error(
+      `pinata returned non-final cid for ${label}: ${JSON.stringify(result)}`,
+    );
+  }
+  return cid;
 }
 
 export async function runChainSubmissionTask(args: {
@@ -22,8 +30,8 @@ export async function runChainSubmissionTask(args: {
   const proposalIdHex = computeProposalId("web-form", proposal.id);
 
   try {
-    const [proposalCid, evaluationCid] = await Promise.all([
-      pinJson({
+    const proposalCid = await pinJson(
+      {
         version: 1,
         externalId: proposal.id,
         platformSource: "web-form",
@@ -34,8 +42,11 @@ export async function runChainSubmissionTask(args: {
         budgetAmount: proposal.budgetAmount,
         category: proposal.category,
         submittedAt: evaluation.evaluatedAt,
-      }),
-      pinJson({
+      },
+      "proposal",
+    );
+    const evaluationCid = await pinJson(
+      {
         version: 1,
         proposalId: proposal.id,
         aggregateScoreBps: evaluation.aggregateScoreBps,
@@ -47,8 +58,12 @@ export async function runChainSubmissionTask(args: {
         })),
         anomalyFlags: evaluation.anomalyFlags,
         evaluatedAt: evaluation.evaluatedAt,
-      }),
-    ]);
+      },
+      "evaluation",
+    );
+    console.log(
+      `[chain-task] pinned proposal=${proposalCid} evaluation=${evaluationCid} for ${proposal.id}`,
+    );
 
     await updateChainStatus(proposal.id, {
       proposalContentCid: proposalCid,
