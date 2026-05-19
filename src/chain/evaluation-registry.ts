@@ -145,7 +145,10 @@ export async function submitEvaluationOnChain(args: {
     ],
     account,
     chain: null,
-    gas: 600_000n,
+    gas: 400_000n,
+    // Base Sepolia base fee ~0.005 gwei. Cap fees low so 0.0001 ETH balance covers ~10 txs.
+    maxFeePerGas: 100_000_000n, // 0.1 gwei
+    maxPriorityFeePerGas: 1_000_000n, // 0.001 gwei
   });
   return { txHash };
 }
